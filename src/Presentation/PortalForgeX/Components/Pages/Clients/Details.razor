@@ -1,9 +1,8 @@
 ﻿@page "/client/{Id:guid}"
 
 @using PortalForgeX.Shared.Features.Clients;
-    using PortalForgeX.Shared.Facades;
-    using PortalForgeX.Shared.Constants;
-    using PortalForgeX.Shared.Features.Clients
+@using PortalForgeX.Shared.Facades;
+@using PortalForgeX.Shared.Constants;
 
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
