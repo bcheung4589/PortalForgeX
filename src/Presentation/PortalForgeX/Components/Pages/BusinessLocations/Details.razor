@@ -1,8 +1,8 @@
 ﻿@page "/businesslocation/{Id:int}"
 
-@using PortalForgeX.Shared.Features.BusinessLocations;
-@using PortalForgeX.Shared.Constants;
-@using PortalForgeX.Shared.Facades;
+@using PortalForgeX.Shared.Features.BusinessLocations
+@using PortalForgeX.Shared.Constants
+@using PortalForgeX.Shared.Facades
 
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]

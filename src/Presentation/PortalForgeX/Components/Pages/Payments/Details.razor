@@ -1,6 +1,6 @@
 ﻿@page "/payment/{Id:guid}"
 
-@using PortalForgeX.Shared.Features.Payments;
+@using PortalForgeX.Shared.Features.Payments
 
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
