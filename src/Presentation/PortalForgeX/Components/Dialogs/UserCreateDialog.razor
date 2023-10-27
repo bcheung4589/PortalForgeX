@@ -1,0 +1,180 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Domain.Entities.Identity
+
+@inherits FormPage<ApplicationUser>
+
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<ApplicationRole> RoleManager
+
+<button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+    <span class="fas fa-plus"></span>
+    Create
+</button>
+<Dialog @ref="Dialog">
+    <Header>
+        <h1>Create user</h1>
+        <span class="text-muted">Fill in the user details.</span>
+    </Header>
+    <Body>
+        <EditForm FormName="CreateUserForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+            <FluentValidationValidator />
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.Email" class="form-control form-control-solid" id="emailInput" placeholder="Email" required />
+                        <HelpTextTool Content="Input the user email." />
+                        <label for="emailInput">Email*</label>
+                        <ValidationMessage For="(() => Model!.Email)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Password" type="password" class="form-control form-control-solid" id="passwordInput" placeholder="Password" required />
+                        <HelpTextTool Content="Input the user password." />
+                        <label for="passwordInput">Password*</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="PasswordConfirm" type="password" class="form-control form-control-solid" id="passwordConfirmInput" placeholder="Confirm password" required />
+                        <HelpTextTool Content="Confirm the user password." />
+                        <label for="passwordConfirmInput">Confirm password*</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="mb-3">
+                        <HelpTextTool Content="Select the roles for this user." />
+                        <label>Roles</label>
+                        @if (UserRoles.Any())
+                        {
+                            var inputId = "cbRole";
+                            var checkboxId = inputId;
+                            var i = 0;
+                            @foreach (var role in UserRoles)
+                            {
+                                i += 1;
+                                checkboxId = inputId + i;
+
+                                <span class="form-check form-check-custom form-check-solid">
+                                    <input @oninput="(e) => OnChanged(e, role.Key.Id)"
+                                           class="form-check-input" checked="@UserRoles[role.Key]" id="@checkboxId" type="checkbox" />
+                                    <label for="@checkboxId" class="form-check-label">
+                                        @role.Key.Name
+                                        <span class="text-muted small">(@role.Key.RoleType)</span>
+                                    </label>
+                                </span>
+                            }
+                        }
+                        else
+                        {
+                            <span>No roles found.</span>
+                        }
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                        <InputCheckbox class="form-check-input me-1" id="isActiveInput" @bind-Value="Model!.IsActive" placeholder="Active" />
+                        <label class="form-check-label text-muted" for="isActiveInput">Active</label>
+                        <HelpTextTool Content="Indicates if the user is an active user." />
+                        <ValidationMessage For="(() => Model!.IsActive)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputTextArea class="form-control form-control-solid" id="remarksInput" @bind-Value="Model!.Remarks" placeholder="Remarks" maxlength="500" style="height: 100px"></InputTextArea>
+                        <label for="remarksInput">Remarks</label>
+                        <span class="chars-counter">500 chars left</span>
+                        <HelpTextTool Content="Remarks." />
+                        <ValidationMessage For="(() => Model!.Remarks)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col text-end">
+                    <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                    <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                </div>
+            </div>
+        </EditForm>
+    </Body>
+</Dialog>
+
+@code {
+
+    protected Dialog Dialog = null!;
+    protected override ApplicationUser InitModel => new() { IsActive = true };
+    protected string Password = null!;
+    protected string PasswordConfirm = null!;
+    protected IDictionary<ApplicationRole, bool> UserRoles = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        UserRoles = RoleManager.Roles.OrderBy(x => x.Name).ToDictionary(x => x, x => false);
+    }
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+            {
+                if (string.IsNullOrWhiteSpace(Password))
+                {
+                    ToastService.ShowError("Password is required.");
+                    return;
+                }
+
+                if (Password != PasswordConfirm)
+                {
+                    ToastService.ShowError("Password did not match confirmation password.");
+                    return;
+                }
+
+                Model.UserName = Model.Email;
+                var result = await UserManager.CreateAsync(Model, Password);
+                if (result.Succeeded)
+                {
+                    var user = await UserManager.FindByNameAsync(Model.UserName!);
+                    if (user is null)
+                    {
+                        return;
+                    }
+
+                    var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key);
+                    if (selectedRoles is not null && selectedRoles.Any())
+                    {
+                        _ = await UserManager.AddToRolesAsync(user, selectedRoles.Select(x => x.Name!));
+                    }
+
+                    Navigation.NavigateTo($"/user/{user?.Id}");
+                }
+                else
+                {
+                    foreach (var errorMessage in result.Errors)
+                    {
+                        ToastService.ShowError(errorMessage.Description);
+                    }
+                }
+            });
+
+    protected void OnChanged(ChangeEventArgs args, string key)
+    {
+        var role = UserRoles.FirstOrDefault(x => x.Key.Id == key).Key;
+        if (role is null)
+        {
+            return;
+        }
+
+        UserRoles[role] = !UserRoles[role];
+    }
+
+}

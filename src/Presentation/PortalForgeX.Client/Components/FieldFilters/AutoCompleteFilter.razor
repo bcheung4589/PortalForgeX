@@ -1,0 +1,124 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="field-filter autocomplete-filter mb-2">
+    <label for="@inputId">@DisplayName</label>
+
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <HelpTextTool Content="@HelpText" />
+    }
+
+    <input @bind="Model.DisplayValue" @oninput="@(e => OnChange(e))" class="@($"form-control {CssClass}")" id="@inputId" type="text" placeholder="Use * as wildcard." list="@datalistId" autocomplete="on" />
+    <datalist id="@datalistId" style="display: none">
+        @if (Model.Options is not null && Model.Options.Any())
+        {
+            foreach (var option in Model.Options)
+            {
+                <option label="@option.Key" value="@option.Value" />
+            }
+        }
+    </datalist>
+
+    @if (appliedFilterDisplayValue is not null)
+    {
+        <span class="badge bg-light text-dark cmd-filter-remove" role="button" title="Click to remove filter." @onclick="Reset">
+            @appliedFilterDisplayValue
+            <span class="fas fa-xmark ms-1 text-danger"></span>
+        </span>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public AutoCompleteFieldFilter Model { get; set; } = default!;
+
+    [Parameter]
+    public string DisplayName { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public object? AppliedFilter { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    [Parameter]
+    public EventCallback LoadOptionsCallback { get; set; }
+
+    protected string inputId => DisplayName?.Replace(" ", "") + "AutoCompleteFilterInput";
+    protected string datalistId => $"{inputId}-DataList";
+    protected string? appliedFilterDisplayValue;
+    protected IJSObjectReference? jsObjectReference;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+        if (firstRender)
+        {
+            jsObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+                "./Components/FieldFilters/AutoCompleteFilter.razor.js");
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (AppliedFilter is null || Model.Options is null || !Model.Options.Any())
+        {
+            return;
+        }
+
+        var optionKey = AppliedFilter.ToString();
+        if (optionKey is null)
+        {
+            return;
+        }
+
+        appliedFilterDisplayValue = (Model.Options.ContainsKey(optionKey))
+            ? Model.Options?[optionKey]
+            : optionKey;
+    }
+
+    protected async Task Reset()
+    {
+        Model.Reset();
+        AppliedFilter = null;
+        appliedFilterDisplayValue = null;
+
+        await ResetCallback.InvokeAsync();
+    }
+
+    protected async Task OnChange(ChangeEventArgs e)
+    {
+        Model.DisplayValue = e.Value?.ToString();
+
+        if (Model.DisplayValue?.Length < 1)
+        {
+            return;
+        }
+
+        await LoadOptionsCallback.InvokeAsync();
+        Model.DisplayValue = Model.DisplayValue?.Trim('*');
+
+        /*
+         * Get the ID from the option value as only the key gets passed.
+         */
+        if (jsObjectReference is not null)
+        {
+            var optionId = await jsObjectReference.InvokeAsync<string>("getOptionValue", datalistId, Model.DisplayValue);
+            if (optionId is not null)
+            {
+                Model.Value = optionId;
+            }
+        }
+    }
+
+}

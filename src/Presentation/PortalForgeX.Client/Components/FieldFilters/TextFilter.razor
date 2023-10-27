@@ -1,0 +1,57 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="field-filter text-filter mb-2">
+    <label for="@inputId">@DisplayName</label>
+
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <HelpTextTool Content="@HelpText" />
+    }
+
+    <InputText @bind-Value="Model.Value" class="@($"form-control {CssClass}")" id="@inputId" maxlength="@MaxLength" placeholder="Use * as wildcard." />
+
+    @if (AppliedFilter is not null)
+    {
+        <span class="badge bg-light text-dark cmd-filter-remove" role="button" title="Click to remove filter." @onclick="Reset">
+            @DisplayName: @AppliedFilter
+            <span class="fas fa-xmark ms-1 text-danger"></span>
+        </span>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public IFieldFilter<string?> Model { get; set; } = default!;
+
+    [Parameter]
+    public string DisplayName { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public object? AppliedFilter { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public int? MaxLength { get; set; }
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    protected string inputId => DisplayName?.Replace(" ", "") + "TextFilterInput";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+        => await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+    protected async Task Reset()
+    {
+        Model.Reset();
+        AppliedFilter = null;
+
+        await ResetCallback.InvokeAsync();
+    }
+}

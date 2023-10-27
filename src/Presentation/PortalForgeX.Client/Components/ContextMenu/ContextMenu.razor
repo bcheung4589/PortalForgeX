@@ -1,0 +1,84 @@
+﻿@typeparam TEntity where TEntity : class
+
+@attribute [CascadingTypeParameter(nameof(TEntity))]
+
+@inject IJSRuntime JSRuntime
+
+<CascadingValue Value="this">
+    <div class="align-self-center position-relative text-end">
+        <button class="context-menu-button btn px-2" type="button" data-bs-target="#@SubjectId" data-bs-toggle="collapse" aria-controls="@SubjectId" aria-expanded="false">
+            <span class="fas fa-ellipsis-vertical d-print-none" aria-hidden="true"></span>
+        </button>
+        <div class="context-menu collapse" id="@SubjectId">
+            <div class="list-group">
+                @ChildContent
+
+                @foreach (var item in Items)
+                {
+                    @RenderRow(item)
+                }
+            </div>
+        </div>
+    </div>
+</CascadingValue>
+
+@code {
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public TEntity Model { get; set; } = default!;
+
+    protected string SubjectId { get; } = $"UID_{Guid.NewGuid():N}";
+
+    protected List<MenuItem<TEntity>> Items = new List<MenuItem<TEntity>>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        var jsObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+            "./Components/ContextMenu/ContextMenu.razor.js");
+
+        await jsObjectReference.InvokeVoidAsync("init");
+    }
+
+    public void AddItem(MenuItem<TEntity> item)
+    {
+        Items.Add(item);
+        StateHasChanged();
+    }
+
+    private RenderFragment RenderRow(MenuItem<TEntity> item)
+    {
+        if (Items.Count < 1) return b => { };
+
+        int i = 0;
+        return b =>
+        {
+            // button
+            b.OpenElement(++i, "button"); // open button
+            b.AddAttribute(i, "class", item.CssClass);
+            b.AddAttribute(i, "type", "button");
+            b.AddAttribute(i, "data-bs-target", $"#{SubjectId}");
+            b.AddAttribute(i, "data-bs-toggle", "collapse");
+            b.AddAttribute(i, "aria-controls", SubjectId);
+            b.AddAttribute(i, "onclick", EventCallback.Factory.Create<MenuItem<TEntity>>(this, async () => await item.OnSelected.InvokeAsync(Model)));
+
+            // icon span
+            b.OpenElement(++i, "span");
+            b.AddAttribute(i, "class", $"{item.IconCss} me-2");
+            b.AddAttribute(i, "aria-hidden", "true");
+            b.CloseElement();
+
+            // text span
+            b.OpenElement(i, "span");
+            b.AddContent(++i, item.DisplayText);
+            b.CloseElement();
+
+            b.CloseElement();
+        };
+    }
+
+}

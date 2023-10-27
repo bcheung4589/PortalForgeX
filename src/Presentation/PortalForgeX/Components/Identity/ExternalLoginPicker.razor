@@ -1,0 +1,41 @@
+﻿@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Components.Pages.Account
+@using PortalForgeX.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject IdentityRedirectManager RedirectManager
+
+@if ((_externalLogins?.Count ?? 0) > 0)
+{
+    <section>
+        <h3>Use another service to log in.</h3>
+        <hr />
+        <form id="external-account" class="form-horizontal" action="/Account/PerformExternalLogin" method="post">
+            <div>
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+                <p>
+                    @foreach (var provider in _externalLogins!)
+                    {
+                        <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                    }
+                </p>
+            </div>
+        </form>
+    </section>
+}
+
+@code {
+    private IList<AuthenticationScheme>? _externalLogins;
+
+    [SupplyParameterFromQuery]
+    private string ReturnUrl { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ReturnUrl ??= "/";
+
+        _externalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+    }
+}

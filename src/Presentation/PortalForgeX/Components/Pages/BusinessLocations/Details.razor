@@ -1,0 +1,66 @@
+﻿@page "/businesslocation/{Id:int}"
+
+@using PortalForgeX.Shared.Features.BusinessLocations;
+    using PortalForgeX.Shared.Constants;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Features.BusinessLocations
+
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+
+@inject IBusinessLocationFacade BusinessLocations
+@inject NavigationManager Navigation
+
+<PageTitle>Location Details</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Clients" Url="/clients" IconCssClass="fas fa-users" />
+        <Breadcrumb DisplayText="@(Model?.Client?.Name)" Url="@($"/client/{Model?.ClientId}")" IconCssClass="fas fa-user-tie" />
+        <Breadcrumb DisplayText="@($"{Model?.Street} {Model?.HouseNr}")" IconCssClass="fas fa-building" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<LoadingArea IsLoading="IsLoading">
+    <BusinessLocationDetailsView @rendermode="RenderMode.InteractiveAuto" BusinessLocation="Model" ClientName="@Model.Client?.Name" />
+
+    <details class="mb-4 mt-2" open>
+        <summary>
+            <h4 class="d-inline-block">Checkouts (@Model.Checkouts?.Count())</h4>
+            <CheckoutCreateDialog @rendermode="RenderMode.InteractiveAuto" BusinessLocationId="Model.Id" OnSave="OnInitializedAsync"></CheckoutCreateDialog>
+            <span class="clearfix"></span>
+            <div class="text-muted">Manage the checkouts of this location.</div>
+        </summary>
+        <CheckoutsBrowser @rendermode="RenderMode.InteractiveAuto" BusinessLocation="Model" />
+    </details>
+</LoadingArea>
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected bool IsLoading;
+    protected BusinessLocationDto Model { get; set; } = null!;
+
+    /// <summary>
+    /// Load the Model on page initialization.
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        var result = await BusinessLocations.GetByIdAsync(Id);
+        if (result is null || result.Data is null)
+        {
+            Navigation.NavigateTo($"client/{Model.ClientId}");
+            return;
+        }
+
+        Model = result.Data;
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+}

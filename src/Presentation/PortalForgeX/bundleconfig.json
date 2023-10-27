@@ -1,0 +1,31 @@
+﻿[
+  {
+    "outputFileName": "wwwroot/css/app.min.css",
+    "inputFiles": [
+      "wwwroot/css/bootstrap/bootstrap.min.css",
+      "wwwroot/css/fontawesome/fontawesome.min.css",
+      "wwwroot/css/fontawesome/regular.min.css",
+      "wwwroot/css/fontawesome/solid.min.css",
+      "wwwroot/css/fonts/montserrat.css",
+      "wwwroot/css/app.css"
+    ],
+    "minify": {
+      "enabled": true,
+      "renameLocals": false
+    },
+    "sourceMap": false
+  },
+  {
+    "outputFileName": "wwwroot/scripts/app.min.js",
+    "inputFiles": [
+      "wwwroot/scripts/jquery/jquery.min.js",
+      "wwwroot/scripts/bootstrap/bootstrap.bundle.min.js",
+      "wwwroot/scripts/app.js"
+    ],
+    "minify": {
+      "enabled": true,
+      "renameLocals": true
+    },
+    "sourceMap": false
+  }
+]

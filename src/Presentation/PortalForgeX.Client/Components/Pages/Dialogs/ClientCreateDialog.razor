@@ -1,0 +1,92 @@
+﻿@using PortalForgeX.Shared.Features.Clients;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Features.Clients
+
+@inherits FormComponent<ClientDto>
+
+@inject IClientFacade Clients
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient" ShowLoadingText="false">
+    <button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+        <span class="fas fa-plus"></span>
+        Create
+    </button>
+    <Dialog @ref="Dialog">
+        <Header>
+            <h1>Register client</h1>
+            <span class="text-muted">Fill in the client details.</span>
+        </Header>
+        <Body>
+            <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputText class="form-control form-control-solid" id="nameInput" @bind-Value="Model!.Name" placeholder="Name" maxlength="100" required />
+                            <label for="nameInput">Name*</label>
+                            <span class="chars-counter">100 chars left</span>
+                            <HelpTextTool Content="Name of the client." />
+                            <ValidationMessage For="(() => Model!.Name)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                            <InputCheckbox class="form-check-input me-1" id="isActiveInput" @bind-Value="Model!.IsActive" placeholder="Active" />
+                            <label class="form-check-label text-muted" for="isActiveInput">Active</label>
+                            <HelpTextTool Content="Indicates if the client is an active client." />
+                            <ValidationMessage For="(() => Model!.IsActive)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                            <InputCheckbox class="form-check-input me-1" id="hasCustomerCarePlusInput" @bind-Value="Model!.HasCustomerCarePlus" placeholder="Customer Care+" />
+                            <label class="form-check-label text-muted" for="hasCustomerCarePlusInput">Customer Care+</label>
+                            <HelpTextTool Content="Indicates if the client is an active client." />
+                            <ValidationMessage For="(() => Model!.HasCustomerCarePlus)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputTextArea class="form-control form-control-solid" id="remarksInput" @bind-Value="Model!.Remarks" placeholder="Remarks" maxlength="500" style="height: 100px"></InputTextArea>
+                            <label for="remarksInput">Remarks</label>
+                            <span class="chars-counter">500 chars left</span>
+                            <HelpTextTool Content="Remarks." />
+                            <ValidationMessage For="(() => Model!.Remarks)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col text-end">
+                        <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                        <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                    </div>
+                </div>
+            </EditForm>
+        </Body>
+    </Dialog>
+</ModuleLoadingArea>
+
+@code {
+
+    protected Dialog Dialog = null!;
+    protected override ClientDto InitModel => new() { IsActive = true };
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await Clients.CreateAsync(Model);
+            if (result is not null && result.IsSuccess)
+            {
+                ToastService.ShowSuccess("Client was successfully created.");
+                Navigation.NavigateTo($"/client/{result.Data?.Id}");
+            }
+        });
+
+}

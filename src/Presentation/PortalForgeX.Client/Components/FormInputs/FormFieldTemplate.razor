@@ -1,0 +1,171 @@
+﻿@typeparam TViewModel
+
+@using System.Linq.Expressions
+
+@inject IJSRuntime JSRuntime
+
+@if (!InEditMode)
+{
+    @if (ViewTemplate is not null && Model is not null)
+    {
+        <div class="form-field">
+            @ViewTemplate(this)
+
+            <button class="btn d-print-none form-field-edit-cmd" type="button" title="Edit @DisplayName" @onclick="Edit">
+                <span class="fa fa-pencil-square"></span>
+            </button>
+        </div>
+    }
+    else
+    {
+        <span class="alert alert-danger" role="alert">
+            Property
+            @if (ViewTemplate is null)
+            {
+                <code>ViewTemplate</code>
+            }
+            else
+            {
+                <code>Model</code>
+            }
+            for <code>PortalForgeX.Client.Components.FormInputs.FormFieldTemplate</code> is not set!
+        </span>
+    }
+}
+else
+{
+    <div class="row">
+        <div class="col-10 pe-0">
+            <div class="form-floating">
+                @if (FieldTemplate is not null)
+                {
+                    @FieldTemplate
+                }
+                else
+                {
+                    <span class="alert alert-danger" role="alert">
+                        Property <code>FieldTemplate</code> for <code>PortalForgeX.Client.Components.FormInputs.FormFieldTemplate</code> is not set!
+                    </span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(DisplayName))
+                {
+                    <label for="@(DisplayName + "Input")">
+                        @DisplayName
+                        @if (Required)
+                        {
+                            <span>*</span>
+                        }
+                    </label>
+                }
+
+                @if (MaxLength is not null && MaxLength > 0)
+                {
+                    <span class="chars-counter">@MaxLength chars left</span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(HelpText))
+                {
+                    <HelpTextTool Content="@HelpText" />
+                }
+
+                @if (ValidationFor is not null)
+                {
+                    <ValidationMessage For="ValidationFor" />
+                }
+            </div>
+        </div>
+        <div class="col-2 p-0 text-center">
+            @if (!EditContext.GetValidationMessages().Any())
+            {
+                <button class="btn py-0 px-2" type="submit" title="Save" @onclick="SaveAsync">
+                    <span role="button" class="fa fa-floppy-disk text-success"></span>
+                </button>
+            }
+            else
+            {
+                <button class="btn py-0 px-2" type="submit" title="Save" disabled>
+                    <span role="button" class="fa fa-floppy-disk"></span>
+                </button>
+            }
+            <button class="btn py-0 px-2" type="button" title="Cancel" @onclick="CancelAsync">
+                <span role="button" class="fa fa-circle-xmark text-secondary"></span>
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+
+    [CascadingParameter]
+    public EditContext EditContext { get; set; } = null!;
+
+    [CascadingParameter]
+    public TViewModel Model { get; set; } = default!;
+
+    [CascadingParameter]
+    public RenderFragment<FormFieldTemplate<TViewModel>> ViewTemplate { get; set; } = null!;
+
+    [Parameter]
+    public string? DisplayName { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    [Parameter]
+    public int? MaxLength { get; set; }
+
+    [Parameter]
+    public Expression<Func<object>>? ValidationFor { get; set; }
+
+    [Parameter]
+    public RenderFragment FieldTemplate { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback SaveCallback { get; set; }
+
+    [Parameter]
+    public EventCallback EditCallback { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> ResetCallback { get; set; }
+
+    public bool InEditMode { get; private set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+        => await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+    protected override void OnInitialized()
+        => EditContext.SetFieldCssClassProvider(new BootstrapFieldCssClassProvider());
+
+    protected async Task CancelAsync()
+    {
+        InEditMode = false;
+        await ResetCallback.InvokeAsync(false);
+    }
+
+    protected async Task SaveAsync()
+    {
+        if (!EditContext.Validate())
+        {
+            return;
+        }
+
+        InEditMode = false;
+        await SaveCallback.InvokeAsync();
+        await ResetCallback.InvokeAsync(true);
+    }
+
+    /// <summary>
+    /// Change the template into Edit-mode.
+    /// </summary>
+    /// <returns></returns>
+    public async Task Edit()
+    {
+        InEditMode = true;
+        await EditCallback.InvokeAsync();
+    }
+}

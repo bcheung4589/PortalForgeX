@@ -1,0 +1,105 @@
+﻿@using PortalForgeX.Components.Identity
+
+<div class="nav-menu-collapse">
+    <span class="fas fa-angles-left" aria-hidden="true" role="button" onclick="document.querySelector('.compact-toggler').click()" title="Toggle Menu"></span>
+</div>
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">CRM Portal</a>
+    </div>
+</div>
+
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+
+<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+    <nav class="flex-column">
+        @* ALL AUTH *@
+        <AuthorizeView>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                    <span class="fas fa-dashboard me-2" aria-hidden="true" title="Dashboard"></span>
+                    <span>Dashboard</span>
+                </NavLink>
+            </div>
+            <div class="nav-item divider-title pt-3 ps-4">
+                <span class="text-muted fw-bold text-uppercase">
+                    Application
+                </span>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/clients">
+                    <span class="fas fa-users me-2" aria-hidden="true" title="Clients"></span>
+                    <span>Clients</span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/payments">
+                    <span class="fas fa-money-bill me-2" aria-hidden="true" title="Payments"></span>
+                    <span>Payments</span>
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        @* ADMIN *@
+        <AuthorizeView Roles="@SystemRolesNames.ADMIN">
+            <div class="nav-item divider-title pt-3 ps-4">
+                <span class="text-muted fw-bold text-uppercase">
+                    Portal
+                </span>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/users">
+                    <span class="fas fa-users-rectangle me-2" aria-hidden="true" title="Users"></span>
+                    <span>Users</span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/roles">
+                    <span class="fas fa-users-gear me-2" aria-hidden="true" title="Roles"></span>
+                    <span>Roles</span>
+                </NavLink>
+            </div>
+        </AuthorizeView>
+
+        @* PROFILE *@
+        <AuthorizeView>
+            <Authorized>
+                <div class="nav-item divider-title pt-3 ps-4">
+                    <span class="text-muted fw-bold text-uppercase">
+                        Profile
+                    </span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/Account/Manage">
+                        <span class="fas fa-user me-2" aria-hidden="true" title="Profile"></span>
+                        <span>@context.User.Identity?.Name</span>
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <LogoutForm id="logout-form" />
+                    <NavLink class="nav-link" href="#" onclick="document.getElementById('logout-form').submit(); return false;">
+                        <span class="fas fa-right-from-bracket me-2" aria-hidden="true" title="Logout"></span>
+                        <span>Logout</span>
+                    </NavLink>
+                </div>
+            </Authorized>
+            <NotAuthorized>
+                @* DISABLE REGISTER
+                <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/Account/Register">
+                <span class="bi bi-person me-2" aria-hidden="true"></span>
+                <span>Register</span>
+                </NavLink>
+                </div>
+                *@
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/Account/Login">
+                        <span class="fas fa-sign-in me-2" aria-hidden="true"></span>
+                        <span>Login</span>
+                    </NavLink>
+                </div>
+            </NotAuthorized>
+        </AuthorizeView>
+    </nav>
+</div>

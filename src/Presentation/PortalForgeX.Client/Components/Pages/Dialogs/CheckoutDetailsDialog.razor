@@ -1,0 +1,174 @@
+﻿@using PortalForgeX.Shared.Features.Checkouts
+
+@inherits FormComponent<CheckoutDto>
+
+@inject ICheckoutFacade Checkouts
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    <Dialog @ref="Dialog">
+        <Header>
+            <h1>Checkout details</h1>
+            <span class="text-muted">Manage the checkout details.</span>
+        </Header>
+        <Body>
+            <LoadingArea IsLoading="@IsLoading">
+                <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                    <FluentValidationValidator />
+                    <div class="card bg-secondary text-white mb-3">
+                        <div class="card-body">
+                            <div class="small">
+                                <span>Created:</span>
+                                <data value="@Model.CreationTime">@Model.CreationTime.ToShortDateString()</data>
+                            </div>
+                            @if (Model.LastModificationTime is not null)
+                            {
+                                <div class="small">
+                                    <span>Last Modified:</span>
+                                    <data value="@Model.LastModificationTime">@Model.LastModificationTime?.ToShortDateString()</data>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <TextFormField @bind-Value="Model.DeviceCode"
+                                           TViewModel="CheckoutDto"
+                                           DisplayName="Device Code"
+                                           HelpText="Device Code for the checkout."
+                                           Required="true"
+                                           MaxLength="50"
+                                           Model="Model"
+                                           ValidationFor="() => Model!.DeviceCode"
+                                           SaveCallback="SaveAsync">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Device Code for the checkout." />
+                                        <span class="text-muted">Device Code</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.DeviceCode">
+                                        @template.Model.DeviceCode
+                                    </data>
+                                </ViewTemplate>
+                            </TextFormField>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <TextFormField @bind-Value="Model.SoftwareVersion"
+                                           TViewModel="CheckoutDto"
+                                           DisplayName="Software Version"
+                                           HelpText="Software version installed on the machine."
+                                           MaxLength="10"
+                                           Model="Model"
+                                           ValidationFor="() => Model!.SoftwareVersion"
+                                           SaveCallback="SaveAsync">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Software version installed on the machine." />
+                                        <span class="text-muted">Software Version</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.SoftwareVersion">
+                                        @template.Model.SoftwareVersion
+                                    </data>
+                                </ViewTemplate>
+                            </TextFormField>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <CheckboxFormField @bind-Value="Model.IsActive"
+                                               TViewModel="CheckoutDto"
+                                               DisplayName="Actief"
+                                               HelpText="Indicator if the contact is active."
+                                               Model="Model"
+                                               ValidationFor="() => Model.IsActive"
+                                               SaveCallback="SaveAsync">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Indicator if the contact is active." />
+                                        <span class="text-muted">Actief</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.IsActive">
+                                        <SwitchCircleIndicator IsOn="@template.Model.IsActive" Title="Actief" OffTitle="Inactief" CssClass="ms-3 mb-2 mt-2" />
+                                    </data>
+                                </ViewTemplate>
+                            </CheckboxFormField>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <TextAreaFormField @bind-Value="Model.Remarks"
+                                               TViewModel="CheckoutDto"
+                                               DisplayName="Remarks about the contact."
+                                               HelpText="Remarks about the contact."
+                                               MaxLength="2000"
+                                               Model="Model"
+                                               SaveCallback="SaveAsync"
+                                               ValidationFor="() => Model.Remarks">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Remarks about the contact." />
+                                        <span class="text-muted">Remarks</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Remarks">
+                                        <NullableField Value="@template.Model.Remarks" />
+                                    </data>
+                                </ViewTemplate>
+                            </TextAreaFormField>
+                        </div>
+                    </div>
+                </EditForm>
+            </LoadingArea>
+            <div class="text-end">
+                <button class="btn btn-secondary" type="button" @onclick="() => Dialog.CloseDialog()" autofocus>Close</button>
+            </div>
+        </Body>
+    </Dialog>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    protected Dialog Dialog = null!;
+    protected override CheckoutDto? InitModel
+    {
+        get => Model ?? new();
+    }
+
+    public async Task Open(int checkoutId)
+    {
+        if (Model.Id != checkoutId)
+        {
+            var result = await Checkouts.GetByIdAsync(checkoutId);
+            if (result != null)
+            {
+                Model = result.Data!;
+                FormEditContext = new(Model);
+            }
+        }
+
+        await Dialog.OpenDialog();
+    }
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await Checkouts.UpdateAsync(Model.Id, Model);
+            if (result is not null && result.IsSuccess)
+            {
+                Model = result.Data!;
+                FormEditContext = new(Model);
+
+                if (OnSave.HasDelegate)
+                {
+                    await OnSave.InvokeAsync();
+                }
+
+                ToastService.ShowSuccess("Checkout was successfully updated.");
+            }
+        });
+
+}

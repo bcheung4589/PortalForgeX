@@ -1,0 +1,20 @@
+﻿@page "/"
+
+@rendermode RenderMode.InteractiveServer
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+
+<PageTitle>Home</PageTitle>
+
+<h1>Dashboard</h1>
+
+<p>Welcome to the POSCana CRM Portal.</p>
+
+<AuthorizeView>
+    <Authorized>
+        <p>Hello @context.User.Identity?.Name!</p>
+        @foreach (var claim in context.User.Claims)
+        {
+            <p>@claim.Type : @claim.Value</p>
+        }
+    </Authorized>
+</AuthorizeView>

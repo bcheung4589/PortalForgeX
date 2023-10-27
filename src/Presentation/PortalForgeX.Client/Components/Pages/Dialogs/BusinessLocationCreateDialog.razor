@@ -1,0 +1,160 @@
+﻿@using FluentValidation
+@using PortalForgeX.Shared.Features.BusinessLocations;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Features.BusinessLocations
+
+@inherits FormComponent<BusinessLocationDto>
+
+@inject IBusinessLocationFacade BusinessLocations
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient" ShowLoadingText="false">
+    <button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+        <span class="fas fa-plus"></span>
+        Create
+    </button>
+    <Dialog @ref="Dialog">
+        <Header>
+            <h1>Add location</h1>
+            <span class="text-muted">Fill in the contact details.</span>
+        </Header>
+        <Body>
+            <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.ApiKey" class="form-control form-control-solid" id="apiKeyInput" placeholder="Api Key" maxlength="100" />
+                            <label for="apiKeyInput">Api Key</label>
+                            <span class="chars-counter">100 chars left</span>
+                            <HelpTextTool Content="Api Key for the location; if left empty, it will be auto-generated." />
+                            <ValidationMessage For="(() => Model!.ApiKey)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-9">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.Street" class="form-control form-control-solid" id="streetInput" placeholder="Street" maxlength="200" required />
+                            <label for="streetInput">Street*</label>
+                            <span class="chars-counter">200 chars left</span>
+                            <HelpTextTool Content="Street name of the location." />
+                            <ValidationMessage For="(() => Model!.Street)" />
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.HouseNr" class="form-control form-control-solid" id="houseNrInput" placeholder="HouseNr" maxlength="10" required />
+                            <label for="houseNrInput">House Nr*</label>
+                            <span class="chars-counter">10 chars left</span>
+                            <HelpTextTool Content="Housenumber of the location." />
+                            <ValidationMessage For="(() => Model!.HouseNr)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-4">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.Zipcode" class="form-control form-control-solid" id="zipcodeInput" placeholder="Zipcode" maxlength="10" required />
+                            <label for="zipcodeInput">Zipcode*</label>
+                            <span class="chars-counter">10 chars left</span>
+                            <HelpTextTool Content="Zipcode of the location." />
+                            <ValidationMessage For="(() => Model!.Zipcode)" />
+                        </div>
+                    </div>
+                    <div class="col-8">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.Place" class="form-control form-control-solid" id="placeInput" placeholder="Place" maxlength="100" required />
+                            <label for="placeInput">Place*</label>
+                            <span class="chars-counter">100 chars left</span>
+                            <HelpTextTool Content="Place of the location." />
+                            <ValidationMessage For="(() => Model!.Place)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.Country" class="form-control form-control-solid" id="countryInput" placeholder="Country" maxlength="100" required />
+                            <label for="countryInput">Country*</label>
+                            <span class="chars-counter">100 chars left</span>
+                            <HelpTextTool Content="Country of the location." />
+                            <ValidationMessage For="(() => Model!.Country)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputDate @bind-Value="Model.StartDate" class="form-control form-control-solid" id="startdateInput" placeholder="Startdate" />
+                            <label for="startdateInput">Startdate*</label>
+                            <HelpTextTool Content="The date this location started working with POS/Cana." />
+                            <ValidationMessage For="(() => Model.StartDate)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                            <InputCheckbox class="form-check-input me-1" id="hasSubscriptionInput" @bind-Value="Model!.HasSubscription" placeholder="Has Subscription" />
+                            <label class="form-check-label text-muted" for="hasSubscriptionInput">Has Subscription</label>
+                            <HelpTextTool Content="Indicates if the location has a subscription." />
+                            <ValidationMessage For="(() => Model!.HasSubscription)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                            <InputCheckbox class="form-check-input me-1" id="isActiveInput" @bind-Value="Model!.IsActive" placeholder="Active" />
+                            <label class="form-check-label text-muted" for="isActiveInput">Active</label>
+                            <HelpTextTool Content="Indicates if the location is active." />
+                            <ValidationMessage For="(() => Model!.IsActive)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputTextArea class="form-control form-control-solid" id="remarksInput" @bind-Value="Model!.Remarks" placeholder="Remarks" maxlength="2000" style="height: 100px"></InputTextArea>
+                            <label for="remarksInput">Remarks</label>
+                            <span class="chars-counter">2000 chars left</span>
+                            <HelpTextTool Content="Remarks." />
+                            <ValidationMessage For="(() => Model!.Remarks)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col text-end">
+                        <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                        <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                    </div>
+                </div>
+            </EditForm>
+        </Body>
+    </Dialog>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    [Parameter]
+    public Guid ClientId { get; set; }
+
+    protected Dialog Dialog = null!;
+    protected override BusinessLocationDto InitModel => new() { ClientId = ClientId, IsActive = true, StartDate = DateTime.UtcNow };
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await BusinessLocations.CreateAsync(Model);
+            if (result is not null && result.IsSuccess)
+            {
+                ToastService.ShowSuccess("Businesslocation was successfully created.");
+                Navigation.NavigateTo($"/businesslocation/{result.Data?.Id}");
+            }
+        });
+
+}

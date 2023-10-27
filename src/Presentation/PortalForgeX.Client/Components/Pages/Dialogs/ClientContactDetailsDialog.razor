@@ -1,0 +1,198 @@
+﻿@using PortalForgeX.Shared.Features.ClientContacts
+@using PortalForgeX.Shared.Features.Clients
+
+@inherits FormComponent<ClientContactDto>
+
+@inject IClientContactFacade ClientContacts
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    <Dialog @ref="Dialog">
+        <Header>
+            <h1>Contact details</h1>
+            <span class="text-muted">Manage the contact details.</span>
+        </Header>
+        <Body>
+            <LoadingArea IsLoading="@IsLoading">
+                <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                    <FluentValidationValidator />
+                    <div class="card bg-secondary text-white mb-3">
+                        <div class="card-body">
+                            <div class="small">
+                                <span>Created:</span>
+                                <data value="@Model.CreationTime">@Model.CreationTime.ToShortDateString()</data>
+                            </div>
+                            @if (Model.LastModificationTime is not null)
+                            {
+                                <div class="small">
+                                    <span>Last Modified:</span>
+                                    <data value="@Model.LastModificationTime">@Model.LastModificationTime?.ToShortDateString()</data>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <TextFormField @bind-Value="Model.FullName"
+                                           TViewModel="ClientContactDto"
+                                           DisplayName="Name"
+                                           HelpText="Name of the contact."
+                                           Required="true"
+                                           MaxLength="100"
+                                           Model="Model"
+                                           ValidationFor="() => Model!.FullName"
+                                           SaveCallback="SaveAsync">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Name of the contact." />
+                                        <span class="text-muted">Name</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.FullName">
+                                        @template.Model.FullName
+                                    </data>
+                                </ViewTemplate>
+                            </TextFormField>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <TextFormField @bind-Value="Model.PhoneNr"
+                                           TViewModel="ClientContactDto"
+                                           DisplayName="Phonenumber"
+                                           HelpText="Phonenumber of the contact."
+                                           Required="true"
+                                           MaxLength="20"
+                                           Type="tel"
+                                           Model="Model"
+                                           ValidationFor="() => Model!.PhoneNr"
+                                           SaveCallback="SaveAsync">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Phonenumber of the contact." />
+                                        <span class="text-muted">Phonenumber</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.PhoneNr">
+                                        @template.Model.PhoneNr
+                                    </data>
+                                </ViewTemplate>
+                            </TextFormField>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <TextFormField @bind-Value="Model.Email"
+                                           TViewModel="ClientContactDto"
+                                           DisplayName="Email"
+                                           HelpText="Email of the contact."
+                                           Required="true"
+                                           MaxLength="150"
+                                           Type="email"
+                                           Model="Model"
+                                           ValidationFor="() => Model!.Email"
+                                           SaveCallback="SaveAsync">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Email of the contact." />
+                                        <span class="text-muted">Email</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Email">
+                                        @template.Model.Email
+                                    </data>
+                                </ViewTemplate>
+                            </TextFormField>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <CheckboxFormField @bind-Value="Model.IsActive"
+                                               TViewModel="ClientContactDto"
+                                               DisplayName="Actief"
+                                               HelpText="Indicator if the contact is active."
+                                               Model="Model"
+                                               ValidationFor="() => Model.IsActive"
+                                               SaveCallback="SaveAsync">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Indicator if the contact is active." />
+                                        <span class="text-muted">Actief</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.IsActive">
+                                        <SwitchCircleIndicator IsOn="@template.Model.IsActive" Title="Actief" OffTitle="Inactief" CssClass="ms-3 mb-2 mt-2" />
+                                    </data>
+                                </ViewTemplate>
+                            </CheckboxFormField>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg">
+                            <TextAreaFormField @bind-Value="Model.Remarks"
+                                               TViewModel="ClientContactDto"
+                                               DisplayName="Remarks about the contact."
+                                               HelpText="Remarks about the contact."
+                                               MaxLength="2000"
+                                               Model="Model"
+                                               SaveCallback="SaveAsync"
+                                               ValidationFor="() => Model.Remarks">
+                                <ViewTemplate Context="template">
+                                    <div>
+                                        <HelpTextTool Content="Remarks about the contact." />
+                                        <span class="text-muted">Remarks</span>
+                                    </div>
+                                    <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Remarks">
+                                        <NullableField Value="@template.Model.Remarks" />
+                                    </data>
+                                </ViewTemplate>
+                            </TextAreaFormField>
+                        </div>
+                    </div>
+                </EditForm>
+            </LoadingArea>
+            <div class="text-end">
+                <button class="btn btn-secondary" type="button" @onclick="() => Dialog.CloseDialog()" autofocus>Close</button>
+            </div>
+        </Body>
+    </Dialog>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    protected Dialog Dialog = null!;
+    protected override ClientContactDto? InitModel => Model ?? new();
+
+    public async Task Open(Guid contactId)
+    {
+        if (Model.Id != contactId)
+        {
+            var result = await ClientContacts.GetByIdAsync(contactId);
+            if (result is not null && result.IsSuccess)
+            {
+                Model = result.Data!;
+                FormEditContext = new(Model);
+            }
+        }
+
+        await Dialog.OpenDialog();
+    }
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await ClientContacts.UpdateAsync(Model.Id, Model);
+            if (result is not null && result.IsSuccess)
+            {
+                Model = result.Data!;
+                FormEditContext = new(Model);
+
+                if (OnSave.HasDelegate)
+                {
+                    await OnSave.InvokeAsync();
+                }
+
+                ToastService.ShowSuccess("Contact was successfully updated.");
+            }
+        });
+
+}

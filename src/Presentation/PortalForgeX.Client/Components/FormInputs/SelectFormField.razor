@@ -1,0 +1,133 @@
+﻿@typeparam TViewModel
+@typeparam TSourceModel
+@typeparam TValue
+
+@using System.Linq.Expressions
+
+@inherits InputSelect<TValue>
+
+<CascadingValue Value="ViewTemplate">
+    <CascadingValue Value="Model">
+        <FormFieldTemplate @ref="Template"
+                           TViewModel="TViewModel"
+                           DisplayName="@DisplayName"
+                           HelpText="@HelpText"
+                           Required="@Required"
+                           ValidationFor="@ValidationFor"
+                           SaveCallback="@SaveCallback"
+                           EditCallback="() => OnAfterRenderAsync(false)"
+                           ResetCallback="s => OnReset(s)">
+            <FieldTemplate>
+                <select class="@FormControlCssClass" id="@(DisplayName + "Input")" multiple="@typeof(TValue).IsArray" @bind="Value" @oninput="OnChanged">
+                    @if (DataSource is not null)
+                    {
+                        if (Nullable.GetUnderlyingType(typeof(TValue)) is not null)
+                        {
+                            <option value="">-</option>
+                        }
+                        foreach (var sourceItem in DataSource)
+                        {
+                            var sourceItemValue = DisplayValue(sourceItem);
+                            if (TryParseValueFromString(sourceItemValue.ToString(), out var result, out var _))
+                            {
+                                if (result.Equals(Value))
+                                {
+                                    <option value="@DisplayValue(sourceItem)" selected>@DisplayText(sourceItem)</option>
+                                    continue;
+                                }
+                                <option value="@DisplayValue(sourceItem)">@DisplayText(sourceItem)</option>
+                            }
+                        }
+                    }
+                </select>
+            </FieldTemplate>
+        </FormFieldTemplate>
+    </CascadingValue>
+</CascadingValue>
+
+@code {
+
+    [Parameter]
+    public TViewModel Model { get; set; } = default!;
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    [Parameter]
+    public string FormControlCssClass { get; set; } = FORM_CONTROL_CSS_CLASS;
+
+    [Parameter]
+    public Expression<Func<object>>? ValidationFor { get; set; }
+
+    [Parameter]
+    public IEnumerable<TSourceModel> DataSource { get; set; } = null!;
+
+    [Parameter]
+    public Func<TSourceModel, object> DisplayText { get; set; } = null!;
+
+    [Parameter]
+    public Func<TSourceModel, object> DisplayValue { get; set; } = null!;
+
+    [Parameter]
+    public RenderFragment<FormFieldTemplate<TViewModel>> ViewTemplate { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback SaveCallback { get; set; }
+
+    public FormFieldTemplate<TViewModel>? Template { get; private set; }
+
+    protected const string FORM_CONTROL_CSS_CLASS = "form-control form-control-solid";
+    protected TValue? PreviousValue;
+    protected bool HasChanged;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (HasChanged)
+        {
+            Value = PreviousValue;
+        }
+    }
+
+    protected async Task OnReset(bool saved)
+    {
+        if (HasChanged && !saved)
+        {
+            Value = PreviousValue;
+            await ValueChanged.InvokeAsync(Value);
+            EditContext.Validate();
+
+            FormControlCssClass = $"{FORM_CONTROL_CSS_CLASS} {CssClass}";
+        }
+        PreviousValue = default(TValue);
+        HasChanged = false;
+    }
+
+    protected async Task OnChanged(ChangeEventArgs args)
+    {
+        if (PreviousValue is null || (PreviousValue is not null && PreviousValue.Equals(default(TValue))))
+        {
+            PreviousValue = Value;
+        }
+
+        if (args.Value is not null)
+        {
+            if (TryParseValueFromString(args.Value?.ToString(), out var result, out var _))
+            {
+                Value = result;
+            }
+        }
+        else
+        {
+            Value = default;
+        }
+
+        HasChanged = true;
+        await ValueChanged.InvokeAsync(Value);
+        EditContext.Validate();
+
+        FormControlCssClass = $"{FORM_CONTROL_CSS_CLASS} {CssClass}";
+    }
+}

@@ -1,0 +1,314 @@
+﻿@using PortalForgeX.Shared.Features.BusinessLocations
+@using PortalForgeX.Shared.Features.Clients
+@using PortalForgeX.Shared.Features.Payments
+@using System.Collections.Generic
+
+@inherits DataComponent<PaymentDto>
+
+@inject IPaymentFacade Payments
+@inject IClientFacade Clients
+@inject IBusinessLocationFacade BusinessLocations
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    <div class="row">
+        <div class="col-lg">
+            <FieldFilterPanel IsLoading="IsLoading"
+                              ApplyCallback="@(async () => await DataPageChanged(0))"
+                              ResetCallback="ResetFilters">
+                <AutoCompleteFilter Model="@((AutoCompleteFieldFilter)Filters[nameof(PaymentDto.ClientId)])"
+                                    AppliedFilter="@GetAppliedFilter(nameof(PaymentDto.ClientId))?.Value"
+                                    ResetCallback="InitDataSourcesAsync"
+                                    DisplayName="Client"
+                                    HelpText="Filter by client name."
+                                    LoadOptionsCallback="GetClientAutoCompleteData">
+                </AutoCompleteFilter>
+                <DropdownFilter Model="@((ListedFieldFilter)Filters[nameof(PaymentDto.BusinessLocationId)])"
+                                AppliedFilter="@GetAppliedFilter(nameof(PaymentDto.BusinessLocationId))?.Value"
+                                ResetCallback="InitDataSourcesAsync"
+                                DisplayName="Location"
+                                HelpText="Filter by Location.">
+                </DropdownFilter>
+                <TextFilter Model="@((TextFieldFilter)Filters[nameof(PaymentDto.TransactionId)])"
+                            AppliedFilter="@GetAppliedFilter(nameof(PaymentDto.TransactionId))?.Value"
+                            ResetCallback="InitDataSourcesAsync"
+                            DisplayName="Transaction Id"
+                            HelpText="Filter by transaction id."
+                            MaxLength="100">
+                </TextFilter>
+                <DateFilter Model="@((DateFieldFilter)Filters[nameof(PaymentDto.PaymentPeriod)])"
+                            AppliedFilter="@GetAppliedFilter(nameof(PaymentDto.PaymentPeriod))?.Value"
+                            ResetCallback="InitDataSourcesAsync"
+                            DisplayName="Payment Period"
+                            HelpText="Period for wich the payment was fulfilled.">
+                </DateFilter>
+                <DateBetweenFilter Model="@((DateBetweenFieldFilter)Filters[nameof(PaymentDto.FulfilledDate)])"
+                                   AppliedFilter="@GetAppliedFilter(nameof(PaymentDto.FulfilledDate))?.Value"
+                                   AppliedMaxFilter="@GetAppliedFilter(nameof(PaymentDto.FulfilledDate))?.MaxValue"
+                                   ResetCallback="InitDataSourcesAsync"
+                                   DisplayName="Payment date"
+                                   HelpText="Date on wich the payment was fulfilled.">
+                </DateBetweenFilter>
+                <NumberBetweenFilter Model="@((NumberBetweenFieldFilter)Filters[nameof(PaymentDto.Amount)])"
+                                     AppliedFilter="@GetAppliedFilter(nameof(PaymentDto.Amount))?.Value"
+                                     AppliedMaxFilter="@GetAppliedFilter(nameof(PaymentDto.Amount))?.MaxValue"
+                                     ResetCallback="InitDataSourcesAsync"
+                                     DisplayName="Amount"
+                                     HelpText="Amount the payment was fulfilled."
+                                     Min="0">
+                </NumberBetweenFilter>
+                <CheckboxFilter Model="@((ListedMultiFieldFilter)Filters[nameof(PaymentDto.PaymentMethod)])"
+                                AppliedFilter="@(GetAppliedFilterValueAsList<string>(nameof(PaymentDto.PaymentMethod)))"
+                                ResetCallback="InitDataSourcesAsync"
+                                DisplayName="Payment Method"
+                                HelpText="Payment Method of the payment.">
+                </CheckboxFilter>
+            </FieldFilterPanel>
+        </div>
+        <div class="col-lg-9">
+            <LoadingArea IsLoading="@IsLoading" IsEmpty="@(DataSource is null || DataSource.Count < 1)">
+                <ChildContent>
+                    <DataGrid TEntity="PaymentDto" DataSource="@DataSource"
+                              OnPageSizeChanged="DataPageSizeChanged"
+                              OnPageChanged="DataPageChanged"
+                              OnSortChanged="DataSortChanged"
+                              OnSortReset="ResetSorting">
+                        <DetailsTemplate>
+                            @if (showDetailsId == context.Id)
+                            {
+                                <LoadingArea IsLoading="@isLoadingDetails">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <div class="col-lg-6">
+                                                <span class="text-muted">Created:</span>
+                                                <span>@context.CreationTime</span>
+                                            </div>
+
+                                            <div class="col-lg-6 text-end">
+                                                @if (context.LastModificationTime is not null)
+                                                {
+                                                    <span class="text-muted">Modified:</span>
+                                                    <span>@context.LastModificationTime</span>
+                                                }
+                                                <span class="fas fa-xmark ms-3" role="button" title="close" @onclick="() => showDetailsId = null"></span>
+                                            </div>
+
+                                            @if (context.Remarks is not null)
+                                            {
+                                                <div class="col">
+                                                    <span class="text-muted">Remarks:</span>
+                                                    <span>@context.Remarks</span>
+                                                </div>
+                                            }
+                                        </div>
+                                        <div class="card-body">
+                                            <div>
+                                                <span class="fas fa-user-tie me-1"></span>
+                                                <strong>Client:</strong>
+                                                <span class="ms-1">@context?.Client?.Name</span>
+                                            </div>
+                                            @if (context?.BusinessLocation is not null)
+                                            {
+                                                <div>
+                                                    <span class="fas fa-building me-1"></span>
+                                                    <strong>Location:</strong>
+                                                    <span class="ms-1">@context?.BusinessLocation?.Street @context?.BusinessLocation?.HouseNr (@context?.BusinessLocation?.Place)</span>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </LoadingArea>
+                            }
+                        </DetailsTemplate>
+                        <ChildContent>
+                            <DataGridColumn TEntity="PaymentDto" Field="@nameof(PaymentDto.TransactionId)" HeaderName="Trans. Id" OnSelected="(e) => NavigateTo(e)"></DataGridColumn>
+                            <DataGridColumn Field="@nameof(PaymentDto.Amount)" HeaderName="Amount" Format="{0:C}"></DataGridColumn>
+                            <DataGridColumn Field="@nameof(PaymentDto.PaymentMethod)" HeaderName="Method"></DataGridColumn>
+                            <DataGridColumn Field="@nameof(PaymentDto.PaymentPeriod)" HeaderName="Period" Format="{0:dd-MM-yyy}"></DataGridColumn>
+                            <DataGridColumn Field="@nameof(PaymentDto.FulfilledDate)" HeaderName="Fulfilled" Format="{0:dd-MM-yyy}"></DataGridColumn>
+                            <DataGridColumn Field="@nameof(PaymentDto.ClientId)" HeaderName="Details">
+                                <Template>
+                                    <span class="fas fa-eye" role="button" @onclick="async () => await ShowDetailsData(context!)"></span>
+                                </Template>
+                            </DataGridColumn>
+                            <DataGridColumn HeaderCssClass="text-end w-100px" RowCssClass="text-end">
+                                <Template>
+                                    <ContextMenu Model="@context">
+                                        <MenuItem TEntity="PaymentDto" DisplayText="Bekijken" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                        <MenuItem TEntity="PaymentDto" DisplayText="Verwijderen" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
+                                    </ContextMenu>
+                                </Template>
+                            </DataGridColumn>
+                        </ChildContent>
+                    </DataGrid>
+                </ChildContent>
+                <EmptyTemplate>
+                    <p class="text-muted">No payments found.</p>
+                </EmptyTemplate>
+            </LoadingArea>
+        </div>
+    </div>
+</ModuleLoadingArea>
+
+@code {
+
+    protected IDictionary<string, IFieldFilter> Filters = new Dictionary<string, IFieldFilter>
+    {
+        { nameof(PaymentDto.ClientId), new AutoCompleteFieldFilter(nameof(PaymentDto.ClientId)) },
+        { nameof(PaymentDto.BusinessLocationId), new ListedFieldFilter(nameof(PaymentDto.BusinessLocationId), null) },
+        { nameof(PaymentDto.TransactionId), new TextFieldFilter(nameof(PaymentDto.TransactionId)) },
+        { nameof(PaymentDto.PaymentPeriod), new DateFieldFilter(nameof(PaymentDto.PaymentPeriod)) },
+        { nameof(PaymentDto.FulfilledDate), new DateBetweenFieldFilter(nameof(PaymentDto.FulfilledDate)) },
+        { nameof(PaymentDto.Amount), new NumberBetweenFieldFilter(nameof(PaymentDto.Amount)) },
+        { nameof(PaymentDto.PaymentMethod), new ListedMultiFieldFilter(nameof(PaymentDto.PaymentMethod), PaymentMethods.AsDictionary(), 5)}
+    };
+
+    protected override async Task InitDataSourcesAsync()
+        => DataSource = (await Payments.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false, Filters.Values.ToEncodedString()))?.Data;
+
+    protected void NavigateTo(PaymentDto payment)
+        => Navigation.NavigateTo($"payment/{payment.Id}");
+
+    protected async Task Delete(PaymentDto payment)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete payment {payment.Id}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await TryRunAsync(async () =>
+        {
+            if ((await Payments.DeleteAsync(payment.Id))?.IsSuccess != true)
+            {
+                return;
+            }
+
+            ToastService.ShowSuccess($"Payment {payment.Id} was succesfully deleted.");
+
+            await InitDataSourcesAsync();
+        });
+    }
+
+    protected async Task ResetFilters()
+    {
+        foreach (var filter in Filters.Values)
+        {
+            filter.Reset();
+        }
+
+        await InitDataSourcesAsync();
+    }
+
+    protected static SearchFieldsFilter clientSearchFilter = new SearchFieldsFilter(new string[] { nameof(ClientDto.Name), nameof(ClientDto.Remarks) });
+    protected static SearchFieldsFilter locationSearchFilter = new SearchFieldsFilter(new string[] { nameof(BusinessLocationDto.ClientId) });
+    protected async Task GetClientAutoCompleteData()
+    {
+        var autoCompleteFilter = (AutoCompleteFieldFilter)Filters[nameof(PaymentDto.ClientId)];
+        clientSearchFilter.Value = autoCompleteFilter.DisplayValue;
+
+        // execute clients filter
+        var clientsDataSource = (await Clients.GetAsync(
+            pageIndex: 0, // get all
+            pageSize: 0, // get all
+            sortField: nameof(ClientDto.Name),
+            sortAsc: true,
+            filters: new List<SearchFieldsFilter>() { clientSearchFilter }.ToEncodedString(),
+            projectionFields: new string[] { nameof(ClientDto.Id), nameof(ClientDto.Name) }.ToEncodedString()
+        ))?.Data;
+
+        if (clientsDataSource is null || clientsDataSource.Entities is null)
+        {
+            return;
+        }
+
+        // fill in the datalist options
+        autoCompleteFilter.Options = clientsDataSource.Entities.ToDictionary(x => x.Id.ToString(), x => x.Name);
+
+        // check for selected client
+        ClientDto? selectedClient = null;
+        if (clientsDataSource.Count == 1)
+        {
+            // exact input
+            selectedClient = clientsDataSource.Entities.First();
+            autoCompleteFilter.Value = selectedClient.Id.ToString();
+            autoCompleteFilter.DisplayValue = selectedClient.Name;
+        }
+        else if (autoCompleteFilter.Value is not null && Guid.TryParse(autoCompleteFilter.Value, out var selectedClientId))
+        {
+            // selected from datalist
+            selectedClient = clientsDataSource.Entities.FirstOrDefault(x => x.Id == selectedClientId);
+        }
+
+        // load in business locations
+        if (selectedClient is not null)
+        {
+            // execute locations filter
+            locationSearchFilter.Value = selectedClient.Id.ToString();
+            var businessLocationDataSource = (await BusinessLocations.GetAsync(
+                pageIndex: 0, // get all
+                pageSize: 0, // get all
+                sortField: nameof(BusinessLocationDto.Street),
+                sortAsc: true,
+                filters: new List<SearchFieldsFilter>() { locationSearchFilter }.ToEncodedString(),
+                projectionFields: new string[] { nameof(BusinessLocationDto.Id), nameof(BusinessLocationDto.Street), nameof(BusinessLocationDto.HouseNr) }.ToEncodedString()
+            ))?.Data;
+
+            // fill in the datalist options
+            var businessLocationFilter = (ListedFieldFilter)Filters[nameof(PaymentDto.BusinessLocationId)];
+            if (businessLocationDataSource is not null && businessLocationDataSource.Entities is not null)
+            {
+                businessLocationFilter.Options = businessLocationDataSource.Entities.ToDictionary(x => x.Id.ToString(), x => $"{x.Street} {x.HouseNr}");
+            }
+        }
+    }
+
+    private Guid? showDetailsId;
+    private bool isLoadingDetails;
+    private IList<Guid> loadedClientIds = new List<Guid>();
+    private IList<int> loadedBusinessLocationIds = new List<int>();
+    protected async Task ShowDetailsData(PaymentDto payment)
+    {
+        if (payment.Id == showDetailsId)
+        {
+            return;
+        }
+
+        showDetailsId = payment.Id;
+        isLoadingDetails = true;
+
+        if (!loadedClientIds.Contains(payment.ClientId))
+        {
+            var client = (await Clients.GetByIdAsync(payment.ClientId))?.Data;
+            if (client is not null)
+            {
+                foreach (var item in DataSource!.Entities!.Where(x => x.ClientId.Equals(payment.ClientId)))
+                {
+                    item.Client = client;
+                }
+
+                loadedClientIds.Add(payment.ClientId);
+            }
+        }
+
+        if (payment.BusinessLocationId == null || (payment.BusinessLocationId is not null && loadedBusinessLocationIds.Contains((int)payment.BusinessLocationId)))
+        {
+            isLoadingDetails = false;
+            return;
+        }
+
+        var businessLocation = (await BusinessLocations.GetByIdAsync(payment.BusinessLocationId!.Value))?.Data;
+        if (businessLocation is not null)
+        {
+            foreach (var item in DataSource!.Entities!.Where(x => x.BusinessLocationId.Equals(payment.BusinessLocationId)))
+            {
+                item.BusinessLocation = businessLocation;
+            }
+
+            loadedBusinessLocationIds.Add((int)payment.BusinessLocationId);
+        }
+
+        isLoadingDetails = false;
+    }
+
+}

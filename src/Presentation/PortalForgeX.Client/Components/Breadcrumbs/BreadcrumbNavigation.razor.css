@@ -1,0 +1,24 @@
+﻿.breadcrumbs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+    .breadcrumbs ::deep li + li:before {
+        content: "/\00a0";
+        padding-right: 1rem;
+        padding-left: 1rem;
+        color: #6c757d;
+    }
+
+    .breadcrumbs li {
+        display: inline-block;
+    }
+
+        .breadcrumbs li .fas {
+            margin-right: 10px;
+        }
+
+        .breadcrumbs li a {
+            font-weight: bold;
+        }

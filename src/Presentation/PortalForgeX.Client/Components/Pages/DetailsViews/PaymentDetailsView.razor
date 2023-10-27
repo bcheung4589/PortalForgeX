@@ -1,0 +1,261 @@
+﻿@using PortalForgeX.Shared.Features.Payments
+
+@inherits FormComponent<PaymentDto>
+
+@inject IPaymentFacade Payments
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    <EditForm FormName="EditPaymentForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+        <FluentValidationValidator />
+        <div class="card">
+            <div class="card-header p-0">
+                <div class="col-lg-8">
+                    <h1>Payment details</h1>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="card mb-3">
+                    <div class="card-body p-0">
+                        <div class="small text-muted">
+                            <span>Created:</span>
+                            <data value="@Model.CreationTime">
+                                @Model.CreationTime.ToShortDateString()
+                            </data>
+                        </div>
+                        @if (Model.LastModificationTime is not null)
+                        {
+                            <div class="small text-muted">
+                                <span>Last Modified:</span>
+                                <data value="@Model.LastModificationTime">
+                                    @Model.LastModificationTime?.ToShortDateString()
+                                </data>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.TransactionId"
+                                               TViewModel="PaymentDto"
+                                               DisplayName="Transaction Id"
+                                               HelpText="Transaction Id for this Payment."
+                                               Required="true"
+                                               MaxLength="50"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.TransactionId"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Transaction Id for this Payment." />
+                                            <span class="text-muted">Transaction Id</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.TransactionId">
+                                            @template.Model.TransactionId
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <NumericFormField @bind-Value="Model.Amount"
+                                                  TViewModel="PaymentDto"
+                                                  TValue="decimal"
+                                                  DisplayName="Amount"
+                                                  HelpText="Payment amount."
+                                                  Required="true"
+                                                  Min="0"
+                                                  Model="Model"
+                                                  SaveCallback="SaveAsync"
+                                                  ValidationFor="() => Model.Amount">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Payment amount." />
+                                            <span class="text-muted">Amount</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Amount">
+                                            @template.Model.Amount
+                                        </data>
+                                    </ViewTemplate>
+                                </NumericFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <SelectFormField @bind-Value="Model.PaymentMethod"
+                                                 TViewModel="PaymentDto"
+                                                 TValue="string"
+                                                 TSourceModel="string"
+                                                 DataSource="PaymentMethods.AsArray()"
+                                                 DisplayText="x => x"
+                                                 DisplayValue="x => x"
+                                                 DisplayName="Payment Method"
+                                                 Required="true"
+                                                 HelpText="How the payment is done."
+                                                 Model="Model"
+                                                 SaveCallback="SaveAsync"
+                                                 ValidationFor="() => Model.PaymentMethod">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Payment Method." />
+                                            <span class="text-muted">Payment Method</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.PaymentMethod">
+                                            @template.Model.PaymentMethod
+                                        </data>
+                                    </ViewTemplate>
+                                </SelectFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <DateFormField @bind-Value="Model.PaymentPeriod"
+                                               TViewModel="PaymentDto"
+                                               TValue="DateTime"
+                                               DisplayName="Payment Period"
+                                               HelpText="The period for wich the payment is done."
+                                               Required="true"
+                                               Model="Model"
+                                               SaveCallback="SaveAsync"
+                                               ValidationFor="() => Model.PaymentPeriod">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="The period for wich the payment is done." />
+                                            <span class="text-muted">Payment Period</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.PaymentPeriod">
+                                            @template.Model.PaymentPeriod.ToShortDateString()
+                                        </data>
+                                    </ViewTemplate>
+                                </DateFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <DateFormField @bind-Value="Model.FulfilledDate"
+                                               TViewModel="PaymentDto"
+                                               TValue="DateTime"
+                                               DisplayName="Payment Date"
+                                               HelpText="The date the payment is done."
+                                               Required="true"
+                                               Model="Model"
+                                               SaveCallback="SaveAsync"
+                                               ValidationFor="() => Model.FulfilledDate">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="The date the payment is done." />
+                                            <span class="text-muted">Payment Date</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.FulfilledDate">
+                                            @template.Model.FulfilledDate.ToShortDateString()
+                                        </data>
+                                    </ViewTemplate>
+                                </DateFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextAreaFormField @bind-Value="Model.Remarks"
+                                                   TViewModel="PaymentDto"
+                                                   DisplayName="Remarks"
+                                                   HelpText="Remarks."
+                                                   MaxLength="2000"
+                                                   Model="Model"
+                                                   SaveCallback="SaveAsync"
+                                                   ValidationFor="() => Model.Remarks">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Remarks." />
+                                            <span class="text-muted">Remarks</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Remarks">
+                                            <NullableField Value="template.Model.Remarks"></NullableField>
+                                        </data>
+                                    </ViewTemplate>
+                                </TextAreaFormField>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        @if (Model.Client is not null)
+                        {
+                            <div>
+                                <h3>Client</h3>
+                                <SwitchCircleIndicator IsOn="Model.Client.IsActive"></SwitchCircleIndicator>
+                                <a class="ms-2" href="/client/@Model.ClientId">
+                                    <strong>@Model.Client.Name</strong>
+                                </a>
+                            </div>
+                        }
+
+                        @if (Model.BusinessLocation is not null)
+                        {
+                            <div class="mt-4">
+                                <h3>Location</h3>
+                                <address>
+                                    <SwitchCircleIndicator IsOn="Model.BusinessLocation.IsActive"></SwitchCircleIndicator>
+                                    <a class="ms-2" href="/businesslocation/@Model.BusinessLocationId">
+                                        <strong>
+                                            @Model.BusinessLocation.Street
+                                            <span class="ms-1">@Model.BusinessLocation.HouseNr</span>
+                                        </strong>
+                                    </a>
+                                    <br />
+                                    <span>@Model.BusinessLocation.Zipcode @Model.BusinessLocation.Place</span>
+                                    <br />
+                                    <span>@Model.BusinessLocation.Country</span>
+                                </address>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public PaymentDto Payment { get; set; } = null!;
+
+    protected override PaymentDto? InitModel => Payment;
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await Payments.UpdateAsync(Payment.Id, Model);
+            if (result != null)
+            {
+                ToastService.ShowSuccess("Payment was successfully updated.");
+                await InitDataSourcesAsync();
+            }
+        });
+
+    protected async Task DeleteAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete payment #{Model.TransactionId} ({Model.Amount})? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await TryRunAsync(async () =>
+        {
+            if ((await Payments.DeleteAsync(Payment.Id))?.IsSuccess != true)
+            {
+                return;
+            }
+
+            ToastService.ShowSuccess($"Payment {Payment.TransactionId} was succesfully deleted.");
+            Navigation.NavigateTo("payments");
+        });
+    }
+
+}

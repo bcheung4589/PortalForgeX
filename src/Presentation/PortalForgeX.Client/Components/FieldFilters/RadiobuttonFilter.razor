@@ -1,0 +1,90 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="field-filter radiobuttons-filter mb-2">
+    <label for="@inputId">@DisplayName</label>
+
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <HelpTextTool Content="@HelpText" />
+    }
+
+    @if (Model.Options is not null)
+    {
+        var radioId = inputId;
+        var i = 0;
+        <InputRadioGroup @bind-Value="Model.Value" Name="@Model.Field">
+            @foreach (var option in Model.Options)
+            {
+                if (isCollapsed && Model.CollapsedItemsCount > 0 && Model.CollapsedItemsCount == i)
+                {
+                    break;
+                }
+
+                i += 1;
+                radioId = inputId + i;
+                <span class="form-check form-check-custom form-check-solid">
+                    <InputRadio Value="@option.Key" Name="@Model.Field" class="@($"form-check-input {CssClass}")" id="@radioId" />
+                    <label for="@radioId" class="form-check-label">@option.Value</label>
+                </span>
+            }
+        </InputRadioGroup>
+
+        @if (Model.CollapsedItemsCount > 0 && Model.Options.Count() > Model.CollapsedItemsCount)
+        {
+            <div class="text-center">
+                @if (isCollapsed)
+                {
+                    <button class="btn btn-link" @onclick="() => { isCollapsed = false; }">Show more..</button>
+
+                }
+                else
+                {
+                    <button class="btn btn-link" @onclick="() => { isCollapsed = true; }">Show less..</button>
+                }
+            </div>
+        }
+    }
+
+    @if (AppliedFilter is not null)
+    {
+        <span class="badge bg-light text-dark cmd-filter-remove" role="button" title="Click to remove filter." @onclick="Reset">
+            @DisplayName: @AppliedFilter
+            <span class="fas fa-xmark ms-1 text-danger"></span>
+        </span>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public ListedFieldFilter Model { get; set; } = default!;
+
+    [Parameter]
+    public string DisplayName { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public object? AppliedFilter { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    protected string inputId => DisplayName?.Replace(" ", "") + "RadiobuttonsFilterInput";
+    protected bool isCollapsed = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+        => await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+    protected async Task Reset()
+    {
+        Model.Reset();
+        AppliedFilter = null;
+
+        await ResetCallback.InvokeAsync();
+    }
+}

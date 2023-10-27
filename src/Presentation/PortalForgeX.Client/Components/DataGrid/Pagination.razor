@@ -1,0 +1,166 @@
+﻿@typeparam TEntity where TEntity : class
+
+<div>
+
+    @* PAGES DROPDOWN *@
+    @if (_internalPagesCount > MAX_PAGES_SIZE)
+    {
+        <select @onchange="async e => await OnPageChanged.InvokeAsync(Convert.ToInt32(e.Value))" name="table-pages" class="form-select form-select-solid d-inline w-min-content me-2">
+            @for (int i = 0; i <= _internalPagesCount; i++)
+            {
+                <option value="@i" selected="@(DataSource.PageIndex == i)">@(i + 1)</option>
+            }
+        </select>
+    }
+
+    @* GO TO FIRST PAGE *@
+    @if (DataSource.PageIndex > (MAX_PAGES_SIZE / 2))
+    {
+        <button @onclick="async e => await OnPageChanged.InvokeAsync(0)" class="btn btn-secondary me-1">
+            <span class="fas fa-angles-left" aria-hidden="true"></span>
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-secondary me-1" disabled>
+            <span class="fas fa-angles-left" aria-hidden="true"></span>
+        </button>
+    }
+
+    @* GO TO PREVIOUS PAGE *@
+    @if (DataSource.PageIndex > 0)
+    {
+        <button @onclick="async e => await OnPageChanged.InvokeAsync(DataSource.PageIndex - 1)" class="btn btn-secondary">
+            <span class="fas fa-caret-left" aria-hidden="true"></span>
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-secondary" disabled>
+            <span class="fas fa-caret-left" aria-hidden="true"></span>
+        </button>
+    }
+
+    @{
+        /**
+        * Render the pagenumbers.
+        * 
+        * IF pages count is equal or smaller than the max pages to render,
+        *  just render the pagenumbers from 0 to pages count.
+        * ELSE
+        *  render the pagenumbers dynamically and keep the current position in center.
+        */
+        var displayPage = 0;
+    }
+    @if (_internalPagesCount <= MAX_PAGES_SIZE || DataSource.PageIndex <= PAGE_SIDE_SIZE)
+    {
+        var pagesCount = PagesCount;
+        if (_internalPagesCount > pagesCount)
+        {
+            pagesCount -= 1;
+        }
+
+        for (var i = 0; i <= pagesCount; i++)
+        {
+            displayPage = i + 1;
+            if (i == DataSource.PageIndex)
+            {
+                <span class="active px-3 ms-1">@displayPage</span>
+            }
+            else
+            {
+                var localIndex = i;
+                <button @onclick="async e => await OnPageChanged.InvokeAsync(localIndex)" class="btn btn-primary ms-1">@displayPage</button>
+            }
+        }
+    }
+    else
+    {
+        var pageStart = DataSource.PageIndex - PAGE_SIDE_SIZE;
+        var lastStartIndex = _internalPagesCount - MAX_PAGES_SIZE + 1;
+        if (pageStart > lastStartIndex)
+        {
+            pageStart = lastStartIndex;
+        }
+
+        var pageEnd = pageStart + MAX_PAGES_SIZE - 1;
+        if (pageEnd > _internalPagesCount)
+        {
+            pageEnd = _internalPagesCount;
+        }
+
+        for (var i = pageStart; i <= pageEnd; i++)
+        {
+            displayPage = i + 1;
+            if (i == DataSource.PageIndex)
+            {
+                <span class="active px-3 ms-1">@displayPage</span>
+            }
+            else
+            {
+                var localIndex = i;
+                <button @onclick="async e => await OnPageChanged.InvokeAsync(localIndex)" class="btn btn-primary ms-1">@displayPage</button>
+            }
+        }
+    }
+
+    @* GO TO NEXT PAGE *@
+    @if (DataSource.PageIndex < _internalPagesCount)
+    {
+        <button @onclick="async e => await OnPageChanged.InvokeAsync(DataSource.PageIndex + 1)" class="btn btn-secondary ms-1">
+            <span class="fas fa-caret-right" aria-hidden="true"></span>
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-secondary ms-1" disabled>
+            <span class="fas fa-caret-right" aria-hidden="true"></span>
+        </button>
+    }
+
+    @* GO TO LAST PAGE *@
+    @if (DataSource.PageIndex < _internalPagesCount - (MAX_PAGES_SIZE / 2))
+    {
+        <button @onclick="async e => await OnPageChanged.InvokeAsync(_internalPagesCount)" class="btn btn-secondary ms-1">
+            <span class="fas fa-angles-right" aria-hidden="true"></span>
+        </button>
+    }
+    else
+    {
+        <button class="btn btn-secondary ms-1" disabled">
+            <span class="fas fa-angles-right" aria-hidden="true"></span>
+        </button>
+    }
+
+</div>
+
+@code {
+
+    [CascadingParameter]
+    public PageModel<TEntity> DataSource { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<int> OnPageChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPageSizeChanged { get; set; }
+
+    private const int MAX_PAGES_SIZE = 7;
+    private const int PAGE_SIDE_SIZE = 3;
+
+    private int _internalPagesCount => ((DataSource.Count + DataSource.PageSize - 1) / DataSource.PageSize) - 1;
+
+    protected int PagesCount
+    {
+        get
+        {
+            var pagesCount = _internalPagesCount;
+            if (pagesCount > MAX_PAGES_SIZE)
+            {
+                pagesCount = MAX_PAGES_SIZE;
+            }
+            return pagesCount;
+        }
+    }
+
+}

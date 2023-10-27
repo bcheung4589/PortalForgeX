@@ -1,0 +1,37 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Identity
+
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+@inject IdentityRedirectManager RedirectManager
+
+@*
+    Logout fails in Blazor Web App with Identity: https://github.com/dotnet/aspnetcore/issues/51180#issuecomment-1758044665
+    - Adding another @formname= works and doesnt give errors.
+*@
+<form @onsubmit="OnSubmitAsync" @formname="logout" @formname="logout-shadow" method="post" @attributes="AdditionalAttributes" data-enhance>
+    <AntiforgeryToken />
+    <input type="hidden" name="ReturnUrl" value="@NavigationManager.Uri" />
+</form>
+
+@code {
+    [Parameter(CaptureUnmatchedValues = true)]
+    public IReadOnlyDictionary<string, object?>? AdditionalAttributes { get; set; }
+
+    [SupplyParameterFromForm]
+    private string? ReturnUrl { get; set; }
+
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private async Task OnSubmitAsync()
+    {
+        var user = HttpContext.User;
+
+        if (SignInManager.IsSignedIn(user))
+        {
+            await SignInManager.SignOutAsync();
+            RedirectManager.RedirectTo(ReturnUrl ?? "/");
+        }
+    }
+}

@@ -1,0 +1,139 @@
+﻿@typeparam TViewModel
+@typeparam TSourceModel
+@typeparam TValue
+
+@using System.Linq.Expressions
+
+@inherits InputSelect<TValue>
+
+<CascadingValue Value="ViewTemplate">
+	<CascadingValue Value="Model">
+        <FormFieldTemplate @ref="Template" 
+			TViewModel="TViewModel"
+				   DisplayName="@DisplayName"
+				   HelpText="@HelpText"
+				   Required="@Required"
+				   ValidationFor="@ValidationFor"
+				   SaveCallback="@SaveCallback"
+				   EditCallback="() => OnAfterRenderAsync(false)"
+				   ResetCallback="() => OnReset()">
+	<FieldTemplate>
+		<select class="@FormControlCssClass" id="@(DisplayName + "Input")" multiple @oninput="OnChanged" style="height: @ControlHeight" title="Kies een optie.">
+			@if (DataSource is not null)
+			{
+				foreach (var sourceItem in DataSource)
+				{
+					var sourceItemValue = DisplayValue(sourceItem);
+					if (TryParseValueFromString(sourceItemValue.ToString(), out var result, out var _))
+					{
+						if (ValueList.Contains(result))
+						{
+							<option value="@DisplayValue(sourceItem)" selected>@DisplayText(sourceItem)</option>
+							continue;
+						}
+						<option value="@DisplayValue(sourceItem)">@DisplayText(sourceItem)</option>
+					}
+				}
+			}
+		</select>
+		<div class="mt-1">
+			<button class="btn btn-primary" type="button" @onclick="Update">Selecteer</button>
+			<button class="btn btn-secondary" type="button" @onclick="OnReset">Reset</button>
+		</div>
+	</FieldTemplate>
+		</FormFieldTemplate>
+	</CascadingValue>
+</CascadingValue>
+
+@code {
+
+	[Parameter]
+	public TViewModel Model { get; set; } = default!;
+
+	[Parameter]
+	public string? HelpText { get; set; }
+
+	[Parameter]
+	public bool Required { get; set; }
+
+	[Parameter]
+	public string FormControlCssClass { get; set; } = FORM_CONTROL_CSS_CLASS;
+
+	[Parameter]
+	public string? ControlHeight { get; set; }
+
+	[Parameter]
+	public Expression<Func<object>>? ValidationFor { get; set; }
+
+	[Parameter]
+	public IList<TValue> ValueList { get; set; } = null!;
+
+	[Parameter]
+	public IEnumerable<TSourceModel> DataSource { get; set; } = null!;
+
+	[Parameter]
+	public Func<TSourceModel, object> DisplayText { get; set; } = null!;
+
+	[Parameter]
+	public Func<TSourceModel, object> DisplayValue { get; set; } = null!;
+
+	[Parameter]
+	public RenderFragment<FormFieldTemplate<TViewModel>> ViewTemplate { get; set; } = null!;
+
+	[Parameter]
+	public EventCallback SaveCallback { get; set; }
+
+	[Parameter]
+	public EventCallback<IList<TValue>> ValueListChanged { get; set; }
+
+	public FormFieldTemplate<TViewModel>? Template { get; private set; }
+
+	protected const string FORM_CONTROL_CSS_CLASS = "form-select form-control-solid form-select-solid";
+	protected IList<TValue> InternalValueList { get; set; } = new List<TValue>();
+
+	/// <summary>
+	/// ValueExpression Exception Fix
+	/// </summary>
+	private TValue _fakeProperty = default!;
+	public SelectMultiFormField()
+		=> ValueExpression = () => _fakeProperty;
+
+	protected async Task Update()
+	{
+		ValueList = new List<TValue>(InternalValueList);
+		await ValueListChanged.InvokeAsync(ValueList);
+	}
+
+	protected void OnReset()
+	{
+		ValueList = new List<TValue>();
+		InternalValueList = new List<TValue>();
+	}
+
+	protected void OnChanged(ChangeEventArgs args)
+	{
+		if (args.Value is not null)
+		{
+			var valueAsStringList = args.Value as string[];
+			if (valueAsStringList is not null)
+			{
+				InternalValueList.Clear();
+				foreach (var stringValue in valueAsStringList)
+				{
+					if (string.IsNullOrWhiteSpace(stringValue))
+					{
+						continue;
+					}
+
+					if (TryParseValueFromString(stringValue, out var result, out var _))
+					{
+						if (!InternalValueList.Contains(result))
+						{
+							InternalValueList.Add(result);
+						}
+					}
+				}
+			}
+		}
+	}
+}

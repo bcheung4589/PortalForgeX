@@ -1,0 +1,357 @@
+﻿@using PortalForgeX.Shared.Features.BusinessLocations
+
+@inherits FormComponent<BusinessLocationDto>
+
+@inject IBusinessLocationFacade BusinessLocations
+@inject IRenderContext RenderContext
+@inject IToastService ToastService
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    <div class="card">
+        <div class="card-header p-0">
+            <div class="col-lg-8">
+                <h1>@Model.Street @Model.HouseNr</h1>
+            </div>
+            <div class="col-lg-4 text-end">
+                <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <EditForm FormName="EditBusinessLocationForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="card mb-3">
+                    <div class="card-body p-0">
+                        <div class="small text-muted">
+                            <span>Created:</span>
+                            <data value="@Model.CreationTime">
+                                @Model.CreationTime.ToShortDateString()
+                            </data>
+                        </div>
+                        @if (Model.LastModificationTime is not null)
+                        {
+                            <div class="small text-muted">
+                                <span>Last Modified:</span>
+                                <data value="@Model.LastModificationTime">
+                                    @Model.LastModificationTime?.ToShortDateString()
+                                </data>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="row mb-2">
+                            <div class="col-lg">
+                                <TextFormField @bind-Value="Model.ApiKey"
+                                               TViewModel="BusinessLocationDto"
+                                               DisplayName="Api Key"
+                                               HelpText="Api Key for the location."
+                                               Required="true"
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.ApiKey"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Api Key for the location." />
+                                            <span class="text-muted">Api Key</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.ApiKey">
+                                            @template.Model.ApiKey
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <CheckboxFormField @bind-Value="Model.IsActive"
+                                                   TViewModel="BusinessLocationDto"
+                                                   DisplayName="Actief"
+                                                   HelpText="Indicator if the location is active."
+                                                   Model="Model"
+                                                   ValidationFor="() => Model.IsActive"
+                                                   SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Indicator if the location is active." />
+                                            <span class="text-muted">Actief</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.IsActive">
+                                            <SwitchCircleIndicator IsOn="@template.Model.IsActive" Title="Actief" OffTitle="Inactief" CssClass="ms-3 mb-2 mt-2" />
+                                        </data>
+                                    </ViewTemplate>
+                                </CheckboxFormField>
+                            </div>
+                            <div class="col-lg">
+                                <CheckboxFormField @bind-Value="Model.HasSubscription"
+                                                   TViewModel="BusinessLocationDto"
+                                                   DisplayName="Has Subscription"
+                                                   HelpText="Indicates if the location has a subscription."
+                                                   Model="Model"
+                                                   ValidationFor="() => Model.HasSubscription"
+                                                   SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Indicates if the location has a subscription." />
+                                            <span class="text-muted">Has Subscription</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.HasSubscription">
+                                            <SwitchCircleIndicator IsOn="@template.Model.HasSubscription" Title="Yes" OffTitle="No" CssClass="ms-3 mb-2 mt-2" />
+                                        </data>
+                                    </ViewTemplate>
+                                </CheckboxFormField>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <DateFormField @bind-Value="Model.StartDate"
+                                               TViewModel="BusinessLocationDto"
+                                               TValue="DateTime"
+                                               DisplayName="Startdate"
+                                               HelpText="The startdate of the location."
+                                               Required="true"
+                                               Model="Model"
+                                               SaveCallback="SaveAsync"
+                                               ValidationFor="() => Model.StartDate">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="The startdate of the location." />
+                                            <span class="text-muted">Startdate</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.StartDate">
+                                            @template.Model.StartDate.ToShortDateString()
+                                        </data>
+                                    </ViewTemplate>
+                                </DateFormField>
+                            </div>
+                            <div class="col-lg">
+                                <DateFormField @bind-Value="Model.EndDate"
+                                               TViewModel="BusinessLocationDto"
+                                               TValue="DateTime?"
+                                               DisplayName="Enddate"
+                                               HelpText="The enddate of the location."
+                                               Model="Model"
+                                               SaveCallback="SaveAsync"
+                                               ValidationFor="() => Model.EndDate">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="The enddate of the location." />
+                                            <span class="text-muted">Enddate</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.EndDate">
+                                            <NullableField Value="template.Model.EndDate?.ToShortDateString()" />
+                                        </data>
+                                    </ViewTemplate>
+                                </DateFormField>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <TextFormField @bind-Value="Model.IpAddress"
+                                               TViewModel="BusinessLocationDto"
+                                               DisplayName="Ip address"
+                                               HelpText="Ip address of the location."
+                                               MaxLength="50"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.IpAddress"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Ip address of the location." />
+                                            <span class="text-muted">Ip address</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" value="@template.Model.IpAddress" class="ps-4">
+                                            <NullableField Value="template.Model.IpAddress" />
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <TextAreaFormField @bind-Value="Model.Remarks"
+                                                   TViewModel="BusinessLocationDto"
+                                                   DisplayName="Remarks about the location."
+                                                   HelpText="Remarks about the location."
+                                                   MaxLength="2000"
+                                                   Model="Model"
+                                                   SaveCallback="SaveAsync"
+                                                   ValidationFor="() => Model.Remarks">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Remarks about the location." />
+                                            <span class="text-muted">Remarks</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Remarks">
+                                            <NullableField Value="@template.Model.Remarks" />
+                                        </data>
+                                    </ViewTemplate>
+                                </TextAreaFormField>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="row">
+                            <div class="col-lg">
+                                <TextFormField @bind-Value="Model.Street"
+                                               TViewModel="BusinessLocationDto"
+                                               DisplayName="Street"
+                                               HelpText="Street of the location."
+                                               Required="true"
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Street"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Street of the location." />
+                                            <span class="text-muted">Street</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" value="@template.Model.Street" class="ps-4">
+                                            @template.Model.Street
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                            <div class="col-lg">
+                                <TextFormField @bind-Value="Model.HouseNr"
+                                               TViewModel="BusinessLocationDto"
+                                               DisplayName="House Nr"
+                                               HelpText="Housenumber of the location."
+                                               Required="true"
+                                               MaxLength="10"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.HouseNr"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Housenumber of the location." />
+                                            <span class="text-muted">HouseNr</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" value="@template.Model.HouseNr" class="ps-4">
+                                            @template.Model.HouseNr
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-lg">
+                                <TextFormField @bind-Value="Model.Zipcode"
+                                               TViewModel="BusinessLocationDto"
+                                               DisplayName="Zipcode"
+                                               HelpText="Zipcode of the location."
+                                               Required="true"
+                                               MaxLength="10"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Zipcode"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Zipcode of the location." />
+                                            <span class="text-muted">Zipcode</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" value="@template.Model.Zipcode" class="ps-4">
+                                            @template.Model.Zipcode
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                            <div class="col-lg">
+                                <TextFormField @bind-Value="Model.Place"
+                                               TViewModel="BusinessLocationDto"
+                                               DisplayName="Place"
+                                               HelpText="Place of the location."
+                                               Required="true"
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Place"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Place of the location." />
+                                            <span class="text-muted">Place</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" value="@template.Model.Place" class="ps-4">
+                                            @template.Model.Place
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-lg">
+                                <TextFormField @bind-Value="Model.Country"
+                                               TViewModel="BusinessLocationDto"
+                                               DisplayName="Country"
+                                               HelpText="Country of the location."
+                                               Required="true"
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Country"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Api Key for the location." />
+                                            <span class="text-muted">Country</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" value="@template.Model.Country" class="ps-4">
+                                            @template.Model.Country
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <iframe class="rounded" style="width: 100%; height: auto; min-height: 300px; max-height: 375px;" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"
+                                src="@($"https://maps.google.com/maps?q={Model.Street} {Model.HouseNr},{Model.Zipcode},{Model.Place}&output=embed")"></iframe>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public BusinessLocationDto BusinessLocation { get; set; } = null!;
+
+    [Parameter]
+    public string ClientName { get; set; } = null!;
+
+    protected override BusinessLocationDto? InitModel => BusinessLocation;
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await BusinessLocations.UpdateAsync(BusinessLocation.Id, Model);
+            if (result != null)
+            {
+                ToastService.ShowSuccess($"Location was successfully updated.");
+                await InitDataSourcesAsync();
+            }
+        });
+
+    protected async Task DeleteAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete location {Model.Street} {Model.HouseNr}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await TryRunAsync(async () =>
+        {
+            var result = await BusinessLocations.DeleteAsync(BusinessLocation.Id);
+            if (result?.IsSuccess != true)
+            {
+                return;
+            }
+
+            ToastService.ShowSuccess($"Location {BusinessLocation.Street} {BusinessLocation.HouseNr} was succesfully deleted.");
+            Navigation.NavigateTo($"client/{BusinessLocation.ClientId}");
+        });
+    }
+
+}

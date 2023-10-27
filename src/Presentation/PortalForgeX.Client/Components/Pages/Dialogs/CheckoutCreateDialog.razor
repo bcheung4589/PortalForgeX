@@ -1,0 +1,106 @@
+﻿@using FluentValidation
+@using PortalForgeX.Shared.Features.Checkouts;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Features.Checkouts
+
+@inherits FormComponent<CheckoutDto>
+
+@inject ICheckoutFacade Checkouts
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient" ShowLoadingText="false">
+    <button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+        <span class="fas fa-plus"></span>
+        Create
+    </button>
+    <Dialog @ref="Dialog">
+        <Header>
+            <h1>Add Checkout</h1>
+            <span class="text-muted">Fill in the contact details.</span>
+        </Header>
+        <Body>
+            <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.DeviceCode" class="form-control form-control-solid" id="deviceCodeInput" placeholder="Device Code" maxlength="50" />
+                            <label for="deviceCodeInput">Device Code</label>
+                            <span class="chars-counter">50 chars left</span>
+                            <HelpTextTool Content="Device Code for the checkout; if left empty, it will be auto-generated." />
+                            <ValidationMessage For="(() => Model!.DeviceCode)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.SoftwareVersion" class="form-control form-control-solid" id="softwareVersionInput" placeholder="Software Version" maxlength="10" />
+                            <label for="softwareVersionInput">Software Version</label>
+                            <span class="chars-counter">10 chars left</span>
+                            <HelpTextTool Content="Software version installed on the machine." />
+                            <ValidationMessage For="(() => Model!.SoftwareVersion)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                            <InputCheckbox class="form-check-input me-1" id="isActiveInput" @bind-Value="Model!.IsActive" placeholder="Active" />
+                            <label class="form-check-label text-muted" for="isActiveInput">Active</label>
+                            <HelpTextTool Content="Indicates if the checkout is active." />
+                            <ValidationMessage For="(() => Model!.IsActive)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputTextArea class="form-control form-control-solid" id="remarksInput" @bind-Value="Model!.Remarks" placeholder="Remarks" maxlength="2000" style="height: 100px"></InputTextArea>
+                            <label for="remarksInput">Remarks</label>
+                            <span class="chars-counter">2000 chars left</span>
+                            <HelpTextTool Content="Remarks." />
+                            <ValidationMessage For="(() => Model!.Remarks)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col text-end">
+                        <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                        <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                    </div>
+                </div>
+            </EditForm>
+        </Body>
+    </Dialog>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    [Parameter]
+    public int BusinessLocationId { get; set; }
+
+    protected Dialog Dialog = null!;
+    protected override CheckoutDto InitModel => new() { BusinessLocationId = BusinessLocationId, IsActive = true };
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await Checkouts.CreateAsync(Model);
+            if (result is not null && result.IsSuccess)
+            {
+                await Dialog.CloseDialog();
+
+                if (OnSave.HasDelegate)
+                {
+                    await OnSave.InvokeAsync();
+                }
+
+                ToastService.ShowSuccess("Checkout was successfully created.");
+            }
+        });
+
+}

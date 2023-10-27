@@ -1,0 +1,113 @@
+﻿@using FluentValidation
+@using PortalForgeX.Shared.Features.ClientContacts;
+    using PortalForgeX.Shared.Features.ClientContacts
+
+@inherits FormComponent<ClientContactDto>
+
+@inject IClientContactFacade ClientContacts
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient" ShowLoadingText="false">
+    <button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+        <span class="fas fa-plus"></span>
+        Create
+    </button>
+    <Dialog @ref="Dialog">
+        <Header>
+            <h1>Add contact</h1>
+            <span class="text-muted">Fill in the contact details.</span>
+        </Header>
+        <Body>
+            <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model!.FullName" class="form-control form-control-solid" id="nameInput" placeholder="Name" maxlength="100" required />
+                            <label for="nameInput">Name*</label>
+                            <span class="chars-counter">100 chars left</span>
+                            <HelpTextTool Content="Name of the contact." />
+                            <ValidationMessage For="(() => Model!.FullName)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <input @bind="@Model!.PhoneNr" class="form-control form-control-solid" type="tel" id="phoneNrInput" placeholder="Phonenumber" maxlength="20" required />
+                            <label for="phoneNrInput">Phonenumber*</label>
+                            <span class="chars-counter">20 chars left</span>
+                            <HelpTextTool Content="Phonenumber of the contact." />
+                            <ValidationMessage For="(() => Model!.PhoneNr)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <input @bind="@Model!.Email" class="form-control form-control-solid" type="tel" id="emailInput" placeholder="Email" maxlength="150" />
+                            <label for="emailInput">Email</label>
+                            <span class="chars-counter">150 chars left</span>
+                            <HelpTextTool Content="Email of the contact." />
+                            <ValidationMessage For="(() => Model!.Email)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                            <InputCheckbox class="form-check-input me-1" id="isActiveInput" @bind-Value="Model!.IsActive" placeholder="Active" />
+                            <label class="form-check-label text-muted" for="isActiveInput">Active</label>
+                            <HelpTextTool Content="Indicates if the contact is an active contact." />
+                            <ValidationMessage For="(() => Model!.IsActive)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputTextArea class="form-control form-control-solid" id="remarksInput" @bind-Value="Model!.Remarks" placeholder="Remarks" maxlength="500" style="height: 100px"></InputTextArea>
+                            <label for="remarksInput">Remarks</label>
+                            <span class="chars-counter">500 chars left</span>
+                            <HelpTextTool Content="Remarks." />
+                            <ValidationMessage For="(() => Model!.Remarks)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col text-end">
+                        <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                        <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                    </div>
+                </div>
+            </EditForm>
+        </Body>
+    </Dialog>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    [Parameter]
+    public Guid ClientId { get; set; }
+
+    protected Dialog Dialog = null!;
+    protected override ClientContactDto InitModel => new() { ClientId = ClientId, IsActive = true };
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await ClientContacts.CreateAsync(Model);
+            if (result is not null && result.IsSuccess)
+            {
+                Model = InitModel;
+                await Dialog.CloseDialog();
+                await OnSave.InvokeAsync();
+
+                ToastService.ShowSuccess("Contact was successfully created.");
+            }
+        });
+
+}

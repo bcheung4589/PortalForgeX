@@ -1,0 +1,36 @@
+﻿@page "/clients"
+
+@using System.Collections.Generic
+
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+
+@inject IClientFacade Clients
+
+<PageTitle>Clients</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Clients" IconCssClass="fas fa-users" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<div class="row">
+    <div class="card p-0">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-users"></span>
+                    Clients Management
+                </h1>
+                <p class="m-0">Browse and manage the clients.</p>
+            </div>
+            <div class="col-lg-4">
+                <ClientCreateDialog @rendermode="RenderMode.InteractiveAuto" />
+            </div>
+        </div>
+        <div class="card-body pt-0">
+            <ClientsBrowser @rendermode="RenderMode.InteractiveAuto" />
+        </div>
+    </div>
+</div>

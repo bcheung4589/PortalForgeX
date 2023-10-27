@@ -1,0 +1,130 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="field-filter checkbuttons-filter mb-2">
+    <label>@DisplayName</label>
+
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <HelpTextTool Content="@HelpText" />
+    }
+
+    @if (Model.Options is not null)
+    {
+        var checkboxId = inputId;
+        var i = 0;
+        @foreach (var option in Model.Options)
+        {
+            if (isCollapsed && Model.CollapsedItemsCount > 0 && Model.CollapsedItemsCount == i)
+            {
+                break;
+            }
+
+            i += 1;
+            checkboxId = inputId + i;
+            <span class="form-check form-check-custom form-check-solid">
+                <input @oninput="(e) => OnChanged(e, option.Key)" class="form-check-input @CssClass" checked="@IsChecked(option.Value)" id="@checkboxId" type="checkbox" />
+                <label for="@checkboxId" class="form-check-label">@option.Value</label>
+            </span>
+        }
+
+        @if (Model.CollapsedItemsCount > 0 && Model.Options.Count() > Model.CollapsedItemsCount)
+        {
+            <div class="text-center">
+                @if (isCollapsed)
+                {
+                    <button class="btn btn-link" @onclick="() => { isCollapsed = false; }">Show more..</button>
+
+                }
+                else
+                {
+                    <button class="btn btn-link" @onclick="() => { isCollapsed = true; }">Show less..</button>
+                }
+            </div>
+        }
+    }
+
+    @if (AppliedFilter is not null && AppliedFilter.Any())
+    {
+        <small class="text-muted">@DisplayName: </small>
+        foreach (var appliedFilter in AppliedFilter)
+        {
+            <span class="badge bg-light text-dark cmd-filter-remove me-2">
+                @appliedFilter
+            </span>
+        }
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public ListedMultiFieldFilter Model { get; set; } = default!;
+
+    [Parameter]
+    public string DisplayName { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public IList<string>? AppliedFilter { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    protected string inputId => DisplayName?.Replace(" ", "") + "CheckbuttonsFilterInput";
+    protected bool isCollapsed = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+        => await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+    protected override void OnParametersSet()
+    {
+        base.OnParametersSet();
+
+        if (Model.Options is null || AppliedFilter is null || !AppliedFilter.Any())
+        {
+            return;
+        }
+
+        foreach (var appliedFilter in AppliedFilter.ToArray())
+        {
+            if (Model.Options.ContainsKey(appliedFilter))
+            {
+                AppliedFilter.Remove(appliedFilter);
+                AppliedFilter.Add(Model.Options[appliedFilter]);
+            }
+        }
+    }
+
+    protected bool IsChecked(string value) => Model.Value?.Contains(value) ?? false;
+
+    protected void OnChanged(ChangeEventArgs args, string value)
+    {
+        AppliedFilter ??= new List<string>();
+
+        var valueName = Model.Options?[value];
+        if (!IsChecked(value))
+        {
+            Model.Add(value);
+
+            if (valueName is string)
+            {
+                AppliedFilter.Add(valueName);
+            }
+        }
+        else
+        {
+            Model.Remove(value);
+
+            if (valueName is string)
+            {
+                AppliedFilter.Remove(valueName);
+            }
+        }
+    }
+
+}

@@ -1,0 +1,17 @@
+﻿<span class="fas fa-circle @(IsOn ? "text-success" : "text-danger") indicator @CssClass" title="@(IsOn ? Title : OffTitle)"></span>
+
+@code {
+
+	[Parameter]
+	public bool IsOn { get; set; }
+
+	[Parameter]
+	public string? CssClass { get; set; }
+
+	[Parameter]
+	public string? Title { get; set; }
+
+	[Parameter]
+	public string? OffTitle { get; set; }
+
+}

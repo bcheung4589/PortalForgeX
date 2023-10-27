@@ -1,0 +1,76 @@
+﻿@using Microsoft.AspNetCore.Components.QuickGrid
+@using PortalForgeX.Shared.Features.BusinessLocations
+@using PortalForgeX.Shared.Features.Checkouts;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Features.BusinessLocations;
+    using PortalForgeX.Shared.Features.Checkouts
+
+@inject IBusinessLocationFacade BusinessLocations
+@inject ICheckoutFacade Checkouts
+@inject IRenderContext RenderContext
+@inject IToastService ToastService
+@inject IJSRuntime JSRuntime
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    @if (BusinessLocation.Checkouts is not null && BusinessLocation.Checkouts.Any())
+    {
+        <QuickGrid Items="checkouts" Class="table table-striped">
+            <TemplateColumn Title="Name" SortBy="GridSort<CheckoutDto>.ByAscending(p => p.DeviceCode)">
+                <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                <span @onclick="async () => await DetailsDialog.Open(context.Id)" role="button" title="View details of @context.DeviceCode.">@context.DeviceCode</span>
+            </TemplateColumn>
+            <PropertyColumn Title="Software Version" Property="@(p=>p.SoftwareVersion)" Sortable="true"></PropertyColumn>
+            <TemplateColumn>
+                <ContextMenu Model="@context">
+                    <MenuItem TEntity="CheckoutDto" DisplayText="View" IconCss="fas fa-eye" OnSelected="async (e) => await DetailsDialog.Open(e.Id)"></MenuItem>
+                    <MenuItem TEntity="CheckoutDto" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                </ContextMenu>
+            </TemplateColumn>
+        </QuickGrid>
+        <CheckoutDetailsDialog @ref="DetailsDialog" OnSave="ReloadData"></CheckoutDetailsDialog>
+    }
+    else
+    {
+        <p class="text-muted">No checkouts found.</p>
+    }
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public BusinessLocationDto BusinessLocation { get; set; } = null!;
+
+    private IQueryable<CheckoutDto>? checkouts => BusinessLocation.Checkouts?.AsQueryable();
+    private CheckoutDetailsDialog DetailsDialog = null!;
+
+    /// <summary>
+    /// Reload the data after (update/delete) operations.
+    /// </summary>
+    /// <returns></returns>
+    protected async Task ReloadData()
+    {
+        var result = await BusinessLocations.GetByIdAsync(BusinessLocation.Id);
+        if (result is not null && result.Data is not null)
+        {
+            BusinessLocation = result.Data;
+        }
+    }
+
+    protected async Task DeleteAsync(CheckoutDto checkout)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete checkout {checkout.DeviceCode}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        if ((await Checkouts.DeleteAsync(checkout.Id))?.IsSuccess != true)
+        {
+            return;
+        }
+
+        ToastService.ShowSuccess($"Checkout {checkout.DeviceCode} was succesfully deleted.");
+        await ReloadData();
+    }
+
+}

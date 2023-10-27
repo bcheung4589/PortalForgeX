@@ -1,0 +1,72 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="field-filter dropdown-filter mb-2">
+    <label for="@inputId">@DisplayName</label>
+
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <HelpTextTool Content="@HelpText" />
+    }
+
+    <select @bind="Model.Value" class="form-control form-select custom-select @CssClass" id="@inputId">
+        @if (Model.Options is not null)
+        {
+            @if (Model.Value is null)
+            {
+                <option value="">-</option>
+            }
+
+            foreach (var option in Model.Options)
+            {
+                if (Model.Value is not null && Model.Value.Equals(option))
+                {
+                    <option value="@option.Key" selected>@option.Value</option>
+                    continue;
+                }
+                <option value="@option.Key">@option.Value</option>
+            }
+        }
+    </select>
+
+    @if (AppliedFilter is not null)
+    {
+        <span class="badge bg-light text-dark cmd-filter-remove" role="button" title="Click to remove filter." @onclick="Reset">
+            @DisplayName: @AppliedFilter
+            <span class="fas fa-xmark ms-1 text-danger"></span>
+        </span>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public ListedFieldFilter Model { get; set; } = default!;
+
+    [Parameter]
+    public string DisplayName { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public object? AppliedFilter { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    protected string inputId => DisplayName?.Replace(" ", "") + "DropdownFilterInput";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+        => await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+    protected async Task Reset()
+    {
+        Model.Reset();
+        AppliedFilter = null;
+
+        await ResetCallback.InvokeAsync();
+    }
+}

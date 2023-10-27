@@ -1,0 +1,35 @@
+﻿@if (Value == null || (Value is not null && string.IsNullOrWhiteSpace(Value.ToString())))
+{
+	<span class="text-muted">@NullPlaceholder</span>
+}
+else
+{
+	if (ChildContent is not null)
+	{
+		@ChildContent
+	}
+	else if (!string.IsNullOrWhiteSpace(DisplayValue))
+	{
+		@DisplayValue
+	}
+	else
+	{
+		@Value
+	}
+}
+
+@code {
+
+	[Parameter]
+	public object? Value { get; set; }
+
+	[Parameter]
+	public string? DisplayValue { get; set; }
+
+	[Parameter]
+	public string NullPlaceholder { get; set; } = "-";
+
+	[Parameter]
+	public RenderFragment? ChildContent { get; set; }
+
+}

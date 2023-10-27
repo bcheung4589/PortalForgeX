@@ -1,0 +1,26 @@
+﻿@typeparam TEntity where TEntity : class
+
+@code {
+
+    [CascadingParameter]
+    private ContextMenu<TEntity> Parent { get; set; } = null!;
+
+    [Parameter]
+    public string DisplayText { get; set; } = null!;
+
+    [Parameter]
+    public string? IconCss { get; set; }
+
+    [Parameter]
+    public string? CssClass { get; set; } = "list-group-item list-group-item-action align-items-center";
+
+    [Parameter]
+    public EventCallback<TEntity> OnSelected { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Parent.AddItem(this);
+    }
+
+}

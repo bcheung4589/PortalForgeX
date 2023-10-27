@@ -1,0 +1,128 @@
+﻿@using PortalForgeX.Shared.Features.Clients
+@using System.Collections.Generic
+
+@inherits DataComponent<ClientDto>
+
+@inject IClientFacade Clients
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    <div class="row">
+        <div class="col-lg-3">
+            <FieldFilterPanel IsLoading="IsLoading"
+                              ApplyCallback="InitDataSourcesAsync"
+                              ResetCallback="ResetFilters">
+                <TextFilter Model="@((TextFieldFilter)Filters[nameof(ClientDto.Name)])"
+                            AppliedFilter="@GetAppliedFilter(nameof(ClientDto.Name))?.Value"
+                            ResetCallback="InitDataSourcesAsync"
+                            DisplayName="Name"
+                            HelpText="Filter by client name."
+                            MaxLength="100">
+                </TextFilter>
+                <SwitchFilter Model="@((SwitchFieldFilter)Filters[nameof(ClientDto.IsActive)])"
+                              AppliedFilter="@GetAppliedFilter(nameof(ClientDto.IsActive))?.Value"
+                              ResetCallback="InitDataSourcesAsync"
+                              DisplayName="Active"
+                              HelpText="Filter by active clients.">
+                </SwitchFilter>
+                <SwitchFilter Model="@((SwitchFieldFilter)Filters[nameof(ClientDto.HasCustomerCarePlus)])"
+                              AppliedFilter="@GetAppliedFilter(nameof(ClientDto.HasCustomerCarePlus))?.Value"
+                              ResetCallback="InitDataSourcesAsync"
+                              DisplayName="Customer Care+"
+                              HelpText="Filter by CC+ clients.">
+                </SwitchFilter>
+                <DateFilter Model="@((DateFieldFilter)Filters[nameof(ClientDto.CreationTime)])"
+                            AppliedFilter="@GetAppliedFilter(nameof(ClientDto.CreationTime))?.Value"
+                            ResetCallback="InitDataSourcesAsync"
+                            DisplayName="Registered On"
+                            HelpText="Filter by registered date.">
+                </DateFilter>
+            </FieldFilterPanel>
+        </div>
+        <div class="col-lg">
+            <LoadingArea IsLoading="@IsLoading" IsEmpty="@(DataSource is null || DataSource.Count < 1)">
+                <ChildContent>
+                    <DataGrid TEntity="ClientDto"
+                              DataSource="@DataSource"
+                              OnPageSizeChanged="DataPageSizeChanged"
+                              OnPageChanged="DataPageChanged"
+                              OnSortChanged="DataSortChanged"
+                              OnSortReset="ResetSorting">
+                        <DataGridColumn Field="@nameof(ClientDto.IsActive)" HeaderName="Active" HeaderCssClass="text-center w-100px" RowCssClass="text-center">
+                            <Template>
+                                <SwitchCircleIndicator IsOn="@context!.IsActive"></SwitchCircleIndicator>
+                            </Template>
+                        </DataGridColumn>
+                        <DataGridColumn Field="@nameof(ClientDto.HasCustomerCarePlus)" HeaderName="Customer Care+" HeaderCssClass="text-center w-200px" RowCssClass="text-center">
+                            <Template>
+                                <SwitchCircleIndicator IsOn="@context!.HasCustomerCarePlus"></SwitchCircleIndicator>
+                            </Template>
+                        </DataGridColumn>
+                        <DataGridColumn TEntity="ClientDto" Field="@nameof(ClientDto.Name)" HeaderName="Name" OnSelected="(e) => NavigateTo(e)"></DataGridColumn>
+                        <DataGridColumn Field="@nameof(ClientDto.CreationTime)" HeaderName="Registered" Format="{0:dd-MM-yyy}"></DataGridColumn>
+                        <DataGridColumn HeaderCssClass="text-end w-100px" RowCssClass="text-end">
+                            <Template>
+                                <ContextMenu Model="@context">
+                                    <MenuItem TEntity="ClientDto" DisplayText="Bekijken" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                    <MenuItem TEntity="ClientDto" DisplayText="Verwijderen" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
+                                </ContextMenu>
+                            </Template>
+                        </DataGridColumn>
+                    </DataGrid>
+                </ChildContent>
+                <EmptyTemplate>
+                    <p class="text-muted">No clients found.</p>
+                </EmptyTemplate>
+            </LoadingArea>
+        </div>
+    </div>
+</ModuleLoadingArea>
+
+@code {
+
+    protected IDictionary<string, IFieldFilter> Filters = new Dictionary<string, IFieldFilter>
+    {
+        { nameof(ClientDto.Name), new TextFieldFilter(nameof(ClientDto.Name))},
+        { nameof(ClientDto.HasCustomerCarePlus), new SwitchFieldFilter(nameof(ClientDto.HasCustomerCarePlus)) },
+        { nameof(ClientDto.IsActive), new SwitchFieldFilter(nameof(ClientDto.IsActive)) },
+        { nameof(ClientDto.CreationTime), new DateFieldFilter(nameof(ClientDto.CreationTime)) }
+    };
+
+    protected override async Task InitDataSourcesAsync()
+        => DataSource = (await Clients.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false, Filters.Values.ToEncodedString()))?.Data;
+
+    protected async Task ResetFilters()
+    {
+        foreach (var filter in Filters.Values)
+        {
+            filter.Reset();
+        }
+
+        await InitDataSourcesAsync();
+    }
+
+    protected void NavigateTo(ClientDto client)
+        => Navigation.NavigateTo($"client/{client.Id}");
+
+    protected async Task Delete(ClientDto client)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete client {client.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await TryRunAsync(async () =>
+        {
+            if ((await Clients.DeleteAsync(client.Id))?.IsSuccess != true)
+            {
+                return;
+            }
+
+            ToastService.ShowSuccess($"Client {client.Name} was succesfully deleted.");
+
+            await InitDataSourcesAsync();
+        });
+    }
+
+}

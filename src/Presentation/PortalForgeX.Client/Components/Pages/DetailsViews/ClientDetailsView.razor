@@ -1,0 +1,166 @@
+﻿@using PortalForgeX.Shared.Features.Clients
+
+@inherits FormComponent<ClientDto>
+
+@inject IClientFacade Clients
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    <EditForm FormName="EditClientForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+        <FluentValidationValidator />
+        <div class="card">
+            <div class="card-header p-0">
+                <div class="col-lg-8">
+                    <h1>@Model.Name</h1>
+                </div>
+                <div class="col-lg-4 text-end">
+                    <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="card mb-3">
+                    <div class="card-body p-0">
+                        <div class="small text-muted">
+                            <span>Created:</span>
+                            <data value="@Model.CreationTime">
+                                @Model.CreationTime.ToShortDateString()
+                            </data>
+                        </div>
+                        @if (Model.LastModificationTime is not null)
+                        {
+                            <div class="small text-muted">
+                                <span>Last Modified:</span>
+                                <data value="@Model.LastModificationTime">
+                                    @Model.LastModificationTime?.ToShortDateString()
+                                </data>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-lg-6">
+                        <TextFormField @bind-Value="Model.Name"
+                                       TViewModel="ClientDto"
+                                       DisplayName="Name"
+                                       HelpText="Name of the client."
+                                       Required="true"
+                                       MaxLength="100"
+                                       Model="Model"
+                                       ValidationFor="() => Model!.Name"
+                                       SaveCallback="SaveAsync">
+                            <ViewTemplate Context="template">
+                                <div>
+                                    <HelpTextTool Content="Name of the client." />
+                                    <span class="text-muted">Name</span>
+                                </div>
+                                <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Name">
+                                    @template.Model.Name
+                                </data>
+                            </ViewTemplate>
+                        </TextFormField>
+                    </div>
+                    <div class="col-lg-6">
+                        <CheckboxFormField @bind-Value="Model.IsActive"
+                                           TViewModel="ClientDto"
+                                           DisplayName="Actief"
+                                           HelpText="Indicator if the client is active."
+                                           Model="Model"
+                                           ValidationFor="() => Model.IsActive"
+                                           SaveCallback="SaveAsync">
+                            <ViewTemplate Context="template">
+                                <div>
+                                    <HelpTextTool Content="Indicator if the client is active." />
+                                    <span class="text-muted">Actief</span>
+                                </div>
+                                <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.IsActive">
+                                    <SwitchCircleIndicator IsOn="@template.Model.IsActive" Title="Actief" OffTitle="Inactief" CssClass="ms-3 mb-2 mt-2" />
+                                </data>
+                            </ViewTemplate>
+                        </CheckboxFormField>
+                    </div>
+                </div>
+                <div class="row mb-3 position-relative">
+                    <div class="col-lg-6">
+                        <TextAreaFormField @bind-Value="Model.Remarks"
+                                           TViewModel="ClientDto"
+                                           DisplayName="Remarks about the client."
+                                           HelpText="Remarks about the client."
+                                           MaxLength="2000"
+                                           Model="Model"
+                                           SaveCallback="SaveAsync"
+                                           ValidationFor="() => Model.Remarks">
+                            <ViewTemplate Context="template">
+                                <div>
+                                    <HelpTextTool Content="Remarks about the client." />
+                                    <span class="text-muted">Remarks</span>
+                                </div>
+                                <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Remarks">
+                                    <NullableField Value="@template.Model.Remarks" />
+                                </data>
+                            </ViewTemplate>
+                        </TextAreaFormField>
+                    </div>
+                    <div class="col-lg-6">
+                        <CheckboxFormField @bind-Value="Model.HasCustomerCarePlus"
+                                           TViewModel="ClientDto"
+                                           DisplayName="Customer Care+"
+                                           HelpText="Indicator if the client has Customer Care+."
+                                           Model="Model"
+                                           ValidationFor="() => Model.HasCustomerCarePlus"
+                                           SaveCallback="SaveAsync">
+                            <ViewTemplate Context="template">
+                                <div>
+                                    <HelpTextTool Content="Indicator if the client has Customer Care+." />
+                                    <span class="text-muted">Customer Care+</span>
+                                </div>
+                                <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.HasCustomerCarePlus">
+                                    <SwitchCircleIndicator IsOn="@template.Model.HasCustomerCarePlus" Title="Customer Care+" CssClass="ms-3 mb-2 mt-2" />
+                                </data>
+                            </ViewTemplate>
+                        </CheckboxFormField>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public ClientDto Client { get; set; } = null!;
+
+    protected override ClientDto? InitModel => Client;
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await Clients.UpdateAsync(Client.Id, Model);
+            if (result != null)
+            {
+                ToastService.ShowSuccess("Client was successfully updated.");
+                await InitDataSourcesAsync();
+            }
+        });
+
+    protected async Task DeleteAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete client {Model.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        await TryRunAsync(async () =>
+        {
+            if ((await Clients.DeleteAsync(Client.Id))?.IsSuccess != true)
+            {
+                return;
+            }
+
+            ToastService.ShowSuccess($"Client {Client.Name} was succesfully deleted.");
+            Navigation.NavigateTo("clients");
+        });
+    }
+
+}

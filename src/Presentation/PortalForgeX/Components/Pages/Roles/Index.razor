@@ -1,0 +1,119 @@
+﻿@page "/roles"
+
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Client.Components.ContextMenu
+@using PortalForgeX.Domain.Entities.Identity
+@using PortalForgeX.Components.Dialogs
+@using PortalForgeX.Domain.Enums
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
+
+@inject RoleManager<ApplicationRole> RoleManager
+@inject NavigationManager Navigation
+@inject IToastService ToastService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Roles</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Roles" IconCssClass="fas fa-users-gear" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-users-gear"></span>
+                    Roles Management
+                </h1>
+                <p class="m-0">Browse and manage the roles.</p>
+            </div>
+            <div class="col-lg-4">
+                <RoleCreateDialog @rendermode="RenderMode.InteractiveAuto" />
+            </div>
+        </div>
+        <div class="card-body mt-0">
+            <LoadingArea IsLoading="isLoading">
+                @if (roles.Any())
+                {
+                    <QuickGrid Items="roles" Class="table table-striped">
+                        <TemplateColumn Title="Name" SortBy="GridSort<ApplicationRole>.ByAscending(p => p.Name)">
+                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.Name">@context.Name</span>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Type" SortBy="GridSort<ApplicationRole>.ByAscending(p => p.RoleType)">
+                            <span>@context.RoleType.ToString()</span>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Description" SortBy="GridSort<ApplicationRole>.ByAscending(p => p.Description)">
+                            <NullableField Value="@context.Description" />
+                        </TemplateColumn>
+                        <TemplateColumn>
+                            <ContextMenu Model="@context">
+                                <MenuItem TEntity="ApplicationRole" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                <MenuItem TEntity="ApplicationRole" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                            </ContextMenu>
+                        </TemplateColumn>
+                    </QuickGrid>
+                }
+                else
+                {
+                    <p class="text-muted">No roles found.</p>
+                }
+            </LoadingArea>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private IQueryable<ApplicationRole> roles = null!;
+    private bool isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        isLoading = true;
+
+        roles = RoleManager.Roles.OrderBy(x => x.Name).ToArray().AsQueryable();
+
+        isLoading = false;
+    }
+
+    protected void NavigateTo(ApplicationRole role)
+        => Navigation.NavigateTo($"role/{role.Id}");
+
+    protected async Task DeleteAsync(ApplicationRole role)
+    {
+        if (role.RoleType == RoleType.System)
+        {
+            ToastService.ShowError("You are not allowed to delete system roles.");
+            return;
+        }
+
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete role {role.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await RoleManager.DeleteAsync(role);
+        if (!result.Succeeded)
+        {
+            foreach (var errorMessage in result.Errors)
+            {
+                ToastService.ShowError(errorMessage.Description);
+            }
+            return;
+        }
+
+        ToastService.ShowSuccess($"Role {role.Name} was succesfully deleted.");
+        await OnInitializedAsync();
+    }
+
+}

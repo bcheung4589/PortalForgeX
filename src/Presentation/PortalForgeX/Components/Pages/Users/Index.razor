@@ -1,0 +1,118 @@
+﻿@page "/users"
+
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Client.Components.ContextMenu
+@using PortalForgeX.Components.Dialogs
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
+
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
+@inject IToastService ToastService
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Users</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Users" IconCssClass="fas fa-users-rectangle" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-users"></span>
+                    Users Management
+                </h1>
+                <p class="m-0">Browse and manage the users.</p>
+            </div>
+            <div class="col-lg-4">
+                <UserCreateDialog @rendermode="RenderMode.InteractiveAuto" />
+            </div>
+        </div>
+        <div class="card-body mt-0">
+            <LoadingArea IsLoading="isLoading">
+                @if (users.Any())
+                {
+                    <QuickGrid Items="users" Class="table table-striped">
+                        <TemplateColumn Title="Name" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.UserName)">
+                            <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.UserName</span>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Email" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.Email)">
+                            <a href="mailto:@context.Email">@context.Email</a>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Last logged in" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.LastLoggedInTime)">
+                            <NullableField Value="@context.LastLoggedInTime?.ToString("dd-MM-yyyy HH:mm")" />
+                        </TemplateColumn>
+                        <TemplateColumn>
+                            <ContextMenu Model="@context">
+                                <MenuItem TEntity="ApplicationUser" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                <MenuItem TEntity="ApplicationUser" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                            </ContextMenu>
+                        </TemplateColumn>
+                    </QuickGrid>
+                }
+                else
+                {
+                    <p class="text-muted">No users found.</p>
+                }
+            </LoadingArea>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private IQueryable<ApplicationUser> users = null!;
+    private bool isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        isLoading = true;
+
+        users = UserManager.Users.ToArray().AsQueryable();
+
+        isLoading = false;
+    }
+
+    protected void NavigateTo(ApplicationUser user)
+        => Navigation.NavigateTo($"user/{user.Id}");
+
+    protected async Task DeleteAsync(ApplicationUser user)
+    {
+        if (user.Email == SystemUserAccounts.ADMIN_EMAIL)
+        {
+            ToastService.ShowError("You are not allowed to delete the root admin.");
+            return;
+        }
+
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete user {user.UserName}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await UserManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            foreach (var errorMessage in result.Errors)
+            {
+                ToastService.ShowError(errorMessage.Description);
+            }
+            return;
+        }
+
+        ToastService.ShowSuccess($"User {user.Email} was succesfully deleted.");
+        await OnInitializedAsync();
+    }
+
+}

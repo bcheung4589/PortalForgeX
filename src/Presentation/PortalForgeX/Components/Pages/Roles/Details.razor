@@ -1,0 +1,162 @@
+﻿@page "/role/{Id:guid}"
+
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Domain.Entities.Identity
+@using PortalForgeX.Domain.Enums
+
+@inherits FormPage<ApplicationRole>
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
+
+@inject RoleManager<ApplicationRole> RoleManager
+
+<PageTitle>Role Details</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Roles" Url="/roles" IconCssClass="fas fa-users-gear" />
+        <Breadcrumb DisplayText="@(Model?.Name)" IconCssClass="fas fa-gears" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<LoadingArea IsLoading="IsLoading">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>@Model.Name</h1>
+            </div>
+            <div class="col-lg-4 text-end">
+                <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <EditForm FormName="EditRoleForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="row mb-3">
+                    <div class="col">
+                        <TextFormField @bind-Value="Model.Name"
+                                       TViewModel="ApplicationRole"
+                                       DisplayName="Name"
+                                       HelpText="Name of the role."
+                                       Required="true"
+                                       Model="Model"
+                                       ValidationFor="() => Model!.Name"
+                                       SaveCallback="SaveAsync">
+                            <ViewTemplate Context="template">
+                                <div>
+                                    <HelpTextTool Content="Name of the role." />
+                                    <span class="text-muted">Name</span>
+                                </div>
+                                <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Name">
+                                    @template.Model.Name
+                                </data>
+                            </ViewTemplate>
+                        </TextFormField>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col">
+                        <TextAreaFormField @bind-Value="Model.Description"
+                                           TViewModel="ApplicationRole"
+                                           DisplayName="Description."
+                                           HelpText="Description about the role."
+                                           Model="Model"
+                                           SaveCallback="SaveAsync"
+                                           ValidationFor="() => Model.Description">
+                            <ViewTemplate Context="template">
+                                <div>
+                                    <HelpTextTool Content="Description about the role." />
+                                    <span class="text-muted">Description</span>
+                                </div>
+                                <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Description">
+                                    <NullableField Value="@template.Model.Description" />
+                                </data>
+                            </ViewTemplate>
+                        </TextAreaFormField>
+                    </div>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</LoadingArea>
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    protected override ApplicationRole InitModel => new();
+
+    /// <summary>
+    /// Load the Model on page initialization.
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        var result = await RoleManager.FindByIdAsync(Id.ToString());
+        if (result is null)
+        {
+            Navigation.NavigateTo("roles");
+            return;
+        }
+
+        Model = result;
+
+        await base.OnInitializedAsync();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    protected async Task SaveAsync()
+    {
+        await TryRunAsync(async () =>
+        {
+            var result = await RoleManager.UpdateAsync(Model);
+            if (result.Succeeded)
+            {
+                ToastService.ShowSuccess("Role was successfully updated.");
+            }
+            else
+            {
+                foreach (var errorMessage in result.Errors)
+                {
+                    ToastService.ShowError(errorMessage.Description);
+                }
+            }
+        });
+    }
+
+    protected async Task DeleteAsync()
+    {
+        if (Model.RoleType == RoleType.System)
+        {
+            ToastService.ShowError("You are not allowed to delete system roles.");
+            return;
+        }
+
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete role {Model.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await RoleManager.DeleteAsync(Model);
+        if (!result.Succeeded)
+        {
+            foreach (var errorMessage in result.Errors)
+            {
+                ToastService.ShowError(errorMessage.Description);
+            }
+            return;
+        }
+
+        ToastService.ShowSuccess($"Role {Model.Name} was succesfully deleted.");
+        Navigation.NavigateTo("roles");
+    }
+
+}

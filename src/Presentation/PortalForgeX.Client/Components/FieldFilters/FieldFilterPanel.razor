@@ -1,0 +1,52 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="card field-filters">
+    <div class="card-header bg-dark text-white">
+        <div class="col-lg-10">
+            <h6 class="mt-2">
+                <span class="fas fa-filter cmd-filters-display" role="button" title="Show the filters."></span>
+                <span class="title">Filters</span>
+            </h6>
+        </div>
+        <div class="col-lg-2 text-end">
+            <span class="fas fa-angles-left h6 mt-2 cmd-filters-collapse" role="button" title="Collapse the filters."></span>
+        </div>
+    </div>
+    <div class="card-body">
+        @ChildContent
+    </div>
+    <div class="card-footer">
+        <div class="text-end">
+            <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Reset" OnClick="ResetCallback" ButtonType="reset" BtnCssClass="btn-secondary"></SubmitSpinnerButton>
+            <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Apply" OnClick="ApplyCallback"></SubmitSpinnerButton>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback ApplyCallback { get; set; }
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        await base.OnAfterRenderAsync(firstRender);
+
+        if (firstRender)
+        {
+            var jsObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
+                "./Components/FieldFilters/FieldFilterPanel.razor.js");
+
+            await jsObjectReference.InvokeVoidAsync("init");
+        }
+    }
+}

@@ -1,0 +1,72 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Domain.Entities.Identity
+@using PortalForgeX.Domain.Enums
+
+@inherits FormPage<ApplicationRole>
+
+@inject RoleManager<ApplicationRole> RoleManager
+
+<button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+    <span class="fas fa-plus"></span>
+    Create
+</button>
+<Dialog @ref="Dialog">
+    <Header>
+        <h1>Create role</h1>
+        <span class="text-muted">Fill in the role details.</span>
+    </Header>
+    <Body>
+        <EditForm FormName="CreateRoleForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.Name" class="form-control form-control-solid" id="nameInput" placeholder="Name" required />
+                        <HelpTextTool Content="Input the role name." />
+                        <label for="nameInput">Name*</label>
+                        <ValidationMessage For="(() => Model!.Name)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputTextArea class="form-control form-control-solid" id="descriptionInput" @bind-Value="Model!.Description" placeholder="Description" style="height: 100px"></InputTextArea>
+                        <label for="descriptionInput">Description</label>
+                        <HelpTextTool Content="Description." />
+                        <ValidationMessage For="(() => Model!.Description)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col text-end">
+                    <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                    <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                </div>
+            </div>
+        </EditForm>
+    </Body>
+</Dialog>
+
+@code {
+
+    protected Dialog Dialog = null!;
+    protected override ApplicationRole InitModel => new() { RoleType = RoleType.User };
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await RoleManager.CreateAsync(Model);
+            if (result.Succeeded)
+            {
+                Navigation.NavigateTo($"/role/{Model?.Id}");
+            }
+            else
+            {
+                foreach (var errorMessage in result.Errors)
+                {
+                    ToastService.ShowError(errorMessage.Description);
+                }
+            }
+        });
+
+}

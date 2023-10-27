@@ -1,0 +1,98 @@
+﻿@using Microsoft.AspNetCore.Components.QuickGrid
+@using PortalForgeX.Shared.Features.BusinessLocations
+@using PortalForgeX.Shared.Features.Clients;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Features.BusinessLocations;
+    using PortalForgeX.Shared.Features.Clients
+
+@inject IClientFacade Clients
+@inject IBusinessLocationFacade BusinessLocations
+@inject IRenderContext RenderContext
+@inject IJSRuntime JSRuntime
+@inject IToastService ToastService
+@inject NavigationManager Navigation
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    @if (Client.Locations is not null && Client.Locations.Any())
+    {
+        @if (errorMessage is not null)
+        {
+            <span class="alert alert-danger d-block">@errorMessage</span>
+        }
+        <QuickGrid Items="businessLocations" Class="table table-striped">
+            <TemplateColumn Title="Location" SortBy="GridSort<BusinessLocationDto>.ByAscending(p => p.Street).ThenAscending(p => p.HouseNr)">
+                <div class="d-flex">
+                    <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="m-2 mt-1" Title="Active" OffTitle="Inactive" />
+                    <address @onclick="@(() => Navigation.NavigateTo($"/businesslocation/{context.Id}"))" role="button" title="View details of @($"{context.Street} {context.HouseNr}")">
+                        @context.Street @context.HouseNr<br />
+                        @context.Zipcode @context.Place<br />
+                        @context.Country
+                    </address>
+                </div>
+            </TemplateColumn>
+            <TemplateColumn Title="Start-/enddate" SortBy="GridSort<BusinessLocationDto>.ByAscending(p=> p.StartDate).ThenAscending(p=>p.EndDate)">
+                <span>@context.StartDate.ToShortDateString()</span>
+                <span>/</span>
+                <NullableField Value="context.EndDate?.ToShortDateString()" />
+            </TemplateColumn>
+            <TemplateColumn Title="Subscription">
+                <SwitchCircleIndicator IsOn="@context.HasSubscription" Title="Yes" OffTitle="No" />
+            </TemplateColumn>
+            <TemplateColumn Title="Checkouts">
+                <span>@(context.Checkouts?.Count() ?? 0)</span>
+            </TemplateColumn>
+            <TemplateColumn>
+                <ContextMenu Model="@context">
+                    <MenuItem TEntity="BusinessLocationDto" DisplayText="View" IconCss="fas fa-eye" OnSelected="@((e) => Navigation.NavigateTo($"/businesslocation/{e.Id}"))"></MenuItem>
+                    <MenuItem TEntity="BusinessLocationDto" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="@((e) => DeleteAsync(e))"></MenuItem>
+                </ContextMenu>
+            </TemplateColumn>
+        </QuickGrid>
+    }
+    else
+    {
+        <p class="text-muted">No locations found.</p>
+    }
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public ClientDto Client { get; set; } = null!;
+
+    private IQueryable<BusinessLocationDto>? businessLocations => Client.Locations?.AsQueryable();
+    private string? errorMessage;
+
+    /// <summary>
+    /// Reload the data after (update/delete) operations.
+    /// </summary>
+    /// <returns></returns>
+    protected async Task ReloadData()
+    {
+        var result = await Clients.GetByIdAsync(Client.Id);
+        if (result is not null && result.Data is not null)
+        {
+            Client = result.Data;
+        }
+    }
+
+    protected async Task DeleteAsync(BusinessLocationDto location)
+    {
+        errorMessage = null;
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete location {location.Street} {location.HouseNr}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await BusinessLocations.DeleteAsync(location.Id);
+        if (result?.IsSuccess != true)
+        {
+            return;
+        }
+
+        ToastService.ShowSuccess($"Location {location.Street} {location.HouseNr} was succesfully deleted.");
+        await ReloadData();
+    }
+
+}

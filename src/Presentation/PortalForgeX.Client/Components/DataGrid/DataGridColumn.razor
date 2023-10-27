@@ -1,0 +1,40 @@
+﻿@typeparam TEntity where TEntity : class
+
+@code {
+
+    [CascadingParameter]
+    private DataGrid<TEntity> Parent { get; set; } = null!;
+
+    [Parameter]
+    public string Field { get; set; } = null!;
+
+    [Parameter]
+    public string? Format { get; set; }
+
+    [Parameter]
+    public string? RowCssClass { get; set; }
+
+    [Parameter]
+    public string? HeaderName { get; set; }
+
+    [Parameter]
+    public string? HeaderCssClass { get; set; }
+
+    [Parameter]
+    public int? Width { get; set; }
+
+    [Parameter]
+    public RenderFragment<TEntity>? Template { get; set; }
+
+    [Parameter]
+    public EventCallback<TEntity> OnSelected { get; set; }
+
+    public bool IsOrderedAsc { get; set; }
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+        Parent.AddColumn(this);
+    }
+
+}

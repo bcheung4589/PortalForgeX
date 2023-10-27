@@ -1,0 +1,17 @@
+﻿<span class="fas @(IsOn ? "fa-square-check" : "fa-square-xmark") @(IsOn ? "text-success" : "text-danger") @CssClass" title="@(IsOn ? Title : OffTitle)" style="font-size: 18px"></span>
+
+@code {
+
+	[Parameter]
+	public bool IsOn { get; set; }
+
+	[Parameter]
+	public string? CssClass { get; set; }
+
+	[Parameter]
+	public string? Title { get; set; }
+
+	[Parameter]
+	public string? OffTitle { get; set; }
+
+}

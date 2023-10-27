@@ -1,0 +1,42 @@
+﻿<CascadingValue Value="this">
+    <ul class="@CssClass">
+        @ChildContent
+
+        @foreach (var breadcrumb in _breadcrumbs)
+        {
+            <li>
+                @if (!string.IsNullOrWhiteSpace(breadcrumb.IconCssClass))
+                {
+                    <span class="@breadcrumb.IconCssClass"></span>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(breadcrumb.Url))
+                {
+                    <a href="@breadcrumb.Url" class="@breadcrumb.CssClass">@breadcrumb.DisplayText</a>
+                }
+                else
+                {
+                    <span class="breadcrumb-current @breadcrumb.CssClass">@breadcrumb.DisplayText</span>
+                }
+            </li>
+        }
+    </ul>
+</CascadingValue>
+
+@code {
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public string? CssClass { get; set; } = "breadcrumbs";
+
+    private List<Breadcrumb> _breadcrumbs = new List<Breadcrumb>();
+
+    public void AddItem(Breadcrumb item)
+    {
+        _breadcrumbs.Add(item);
+        StateHasChanged();
+    }
+
+}

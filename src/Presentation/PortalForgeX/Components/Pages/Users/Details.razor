@@ -1,0 +1,486 @@
+﻿@page "/user/{Id:guid}"
+
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Domain.Entities.Identity
+
+@inherits FormPage<ApplicationUser>
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
+
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<ApplicationRole> RoleManager
+
+<PageTitle>User Details</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Users" Url="/users" IconCssClass="fas fa-users-rectangle" />
+        <Breadcrumb DisplayText="@(Model?.Email)" IconCssClass="fas fa-user" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<LoadingArea IsLoading="IsLoading">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>@Model.UserName</h1>
+            </div>
+            <div class="col-lg-4 text-end">
+                <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="card bg-light mb-3">
+                <div class="card-body">
+                    <div class="row">
+                        <label class="col-lg-4 text-muted">
+                            Created
+                        </label>
+                        <div class="col-lg-8">
+                            <data class="fs-6 text-gray-800">
+                                @Model.CreationTime.ToString("dd-MM-yyyy hh:mm:ss")
+                            </data>
+                        </div>
+                    </div>
+                    @if (Model.LastModificationTime is not null)
+                    {
+                        <div class="row">
+                            <label class="col-lg-4 text-muted">
+                                Last Modified
+                            </label>
+                            <div class="col-lg-8">
+                                <data class="fs-6 text-gray-800">
+                                    @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
+                                </data>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.LastLoggedInTime is not null)
+                    {
+                        <div class="row">
+                            <label class="col-lg-4 text-muted">
+                                Last Logged in
+                            </label>
+                            <div class="col-lg-8">
+                                <data class="fs-6 text-gray-800">
+                                    @Model.LastLoggedInTime?.ToString("dd-MM-yyyy hh:mm:ss")
+                                </data>
+                            </div>
+                        </div>
+                    }
+                    @if (Model.LockoutEnd is not null)
+                    {
+                        <div class="row">
+                            <label class="col-lg-4 text-muted">
+                                Lockout Enddate
+                            </label>
+                            <div class="col-lg-8">
+                                <data class="fs-6 text-gray-800">
+                                    @Model.LockoutEnd
+                                </data>
+                            </div>
+                        </div>
+                    }
+                    <div class="row">
+                        <label class="col-lg-4 text-muted">
+                            Access Failed Counter
+                        </label>
+                        <div class="col-lg-8">
+                            <data class="fs-6 text-gray-800">
+                                @Model.AccessFailedCount <span class="text-muted">x</span>
+                            </data>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-lg-6">
+                    <EditForm FormName="EditUserForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                        <FluentValidationValidator />
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.Email"
+                                               TViewModel="ApplicationUser"
+                                               DisplayName="Email"
+                                               HelpText="Email of the user."
+                                               Required="true"
+                                               Type="email"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Email"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Email of the user." />
+                                            <span class="text-muted">Email</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Email">
+                                            @template.Model.Email
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.PhoneNumber"
+                                               TViewModel="ApplicationUser"
+                                               DisplayName="Phonenumber"
+                                               HelpText="PhoneNumber of the user."
+                                               Model="Model"
+                                               ValidationFor="() => Model!.PhoneNumber"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="PhoneNumber of the user." />
+                                            <span class="text-muted">Phonenumber</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.PhoneNumber">
+                                            <NullableField Value="@template.Model.PhoneNumber" />
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <CheckboxFormField @bind-Value="Model.LockoutEnabled"
+                                                   TViewModel="ApplicationUser"
+                                                   DisplayName="Lockout Enabled"
+                                                   HelpText="Indicator if the user can be locked out."
+                                                   Model="Model"
+                                                   ValidationFor="() => Model.LockoutEnabled"
+                                                   SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Indicator if the user can be locked out." />
+                                            <span class="text-muted">Lockout Enabled</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            <SwitchCircleIndicator IsOn="@template.Model.LockoutEnabled" Title="Enabled" OffTitle="Disabled" CssClass="ms-3 mb-2 mt-2" />
+                                        </data>
+                                    </ViewTemplate>
+                                </CheckboxFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <CheckboxFormField @bind-Value="Model.IsActive"
+                                                   TViewModel="ApplicationUser"
+                                                   DisplayName="Actief"
+                                                   HelpText="Indicator if the user is active."
+                                                   Model="Model"
+                                                   ValidationFor="() => Model.IsActive"
+                                                   SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Indicator if the user is active." />
+                                            <span class="text-muted">Actief</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.IsActive">
+                                            <SwitchCircleIndicator IsOn="@template.Model.IsActive" Title="Actief" OffTitle="Inactief" CssClass="ms-3 mb-2 mt-2" />
+                                        </data>
+                                    </ViewTemplate>
+                                </CheckboxFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextAreaFormField @bind-Value="Model.Remarks"
+                                                   TViewModel="ApplicationUser"
+                                                   DisplayName="Remarks about the user."
+                                                   HelpText="Remarks about the user."
+                                                   MaxLength="2000"
+                                                   Model="Model"
+                                                   SaveCallback="SaveAsync"
+                                                   ValidationFor="() => Model.Remarks">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Remarks about the user." />
+                                            <span class="text-muted">Remarks</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Remarks">
+                                            <NullableField Value="@template.Model.Remarks" />
+                                        </data>
+                                    </ViewTemplate>
+                                </TextAreaFormField>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row mb-3">
+                        <div class="col">
+                            @* TODO: DDL TENANT *@
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <EditForm FormName="EditPasswordForm" EditContext="FormEditContext" OnValidSubmit="UpdatePasswordAsync">
+                                <div class="card warning border-1 p-2 py-3">
+                                    <div class="card-header">
+                                        <h5>Change Password</h5>
+                                    </div>
+                                    <div class="card-body pb-0">
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="form-floating mb-3">
+                                                    <InputText @bind-Value="Password" type="password" class="form-control form-control-solid" id="passwordInput" placeholder="Password" />
+                                                    <HelpTextTool Content="Input the new user password." />
+                                                    <label for="passwordInput">Password</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col">
+                                                <div class="form-floating mb-3">
+                                                    <InputText @bind-Value="PasswordConfirm" type="password" class="form-control form-control-solid" id="passwordConfirmInput" placeholder="Confirm password" />
+                                                    <HelpTextTool Content="Confirm the new user password." />
+                                                    <label for="passwordConfirmInput">Confirm password</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer">
+                                        <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Update Password" BtnCssClass="btn-warning"></SubmitSpinnerButton>
+                                    </div>
+                                </div>
+                            </EditForm>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            @if (UserRoles.Any())
+                            {
+                                var inputId = "cbRole";
+                                var checkboxId = inputId;
+                                var i = 0;
+                                <EditForm FormName="EditUserRolesForm" EditContext="FormEditContext" OnValidSubmit="UpdateRolesAsync">
+                                    <div class="card warning border-1 p-2 py-3">
+                                        <div class="card-header">
+                                            <h5>Roles</h5>
+                                        </div>
+                                        <div class="card-body py-0">
+                                            @foreach (var role in UserRoles)
+                                            {
+                                                i += 1;
+                                                checkboxId = inputId + i;
+
+                                                <span class="form-check form-check-custom form-check-solid">
+                                                    <input @oninput="(e) => OnChanged(e, role.Key.Id)"
+                                                           class="form-check-input" checked="@UserRoles[role.Key]" id="@checkboxId" type="checkbox" />
+                                                    <label for="@checkboxId" class="form-check-label">
+                                                        @role.Key.Name
+                                                        <span class="text-muted small">(@role.Key.RoleType)</span>
+                                                    </label>
+                                                </span>
+                                            }
+                                        </div>
+                                        <div class="card-footer">
+                                            <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Update Roles" BtnCssClass="btn-warning"></SubmitSpinnerButton>
+                                        </div>
+                                    </div>
+                                </EditForm>
+                            }
+                            else
+                            {
+                                <span>No roles found.</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</LoadingArea>
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    protected override ApplicationUser InitModel => new() { IsActive = true };
+    protected IDictionary<ApplicationRole, bool> UserRoles = null!;
+    protected string? Password;
+    protected string? PasswordConfirm;
+
+    /// <summary>
+    /// Load the Model on page initialization.
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        var result = await UserManager.FindByIdAsync(Id.ToString());
+        if (result is null)
+        {
+            Navigation.NavigateTo("clients");
+            return;
+        }
+
+        Model = result;
+        UserRoles = new Dictionary<ApplicationRole, bool>();
+        var roles = RoleManager.Roles.OrderBy(x => x.Name).ToArray();
+        foreach (var role in roles)
+        {
+            if (role is null || role.Name is null)
+            {
+                continue;
+            }
+
+            UserRoles[role] = await UserManager.IsInRoleAsync(Model, role.Name);
+        }
+
+        await base.OnInitializedAsync();
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    protected void OnChanged(ChangeEventArgs args, string key)
+    {
+        var role = UserRoles.FirstOrDefault(x => x.Key.Id == key).Key;
+        if (role is null)
+        {
+            return;
+        }
+
+        UserRoles[role] = !UserRoles[role];
+    }
+
+    protected async Task SaveAsync()
+    {
+        await TryRunAsync(async () =>
+        {
+            Model.LastModificationTime = DateTime.UtcNow;
+            var result = await UserManager.UpdateAsync(Model);
+            if (result.Succeeded)
+            {
+                ToastService.ShowSuccess("User was successfully updated.");
+            }
+            else
+            {
+                foreach (var errorMessage in result.Errors)
+                {
+                    ToastService.ShowError(errorMessage.Description);
+                }
+            }
+        });
+    }
+
+    protected async Task UpdateRolesAsync()
+    {
+        await TryRunAsync(async () =>
+        {
+            var succeeded = true;
+            var errors = new List<IdentityError>();
+
+            var removeFromRoles = UserRoles.Where(x => !x.Value).Select(x => x.Key.Name!);
+            foreach (var removeFromRole in removeFromRoles)
+            {
+                if (await UserManager.IsInRoleAsync(Model, removeFromRole))
+                {
+                    var removeResult = await UserManager.RemoveFromRoleAsync(Model, removeFromRole);
+                    if (!removeResult.Succeeded)
+                    {
+                        errors.AddRange(removeResult.Errors);
+                        succeeded = false;
+                    }
+                }
+            }
+
+            var addToRoles = UserRoles.Where(x => x.Value).Select(x => x.Key.Name!);
+            foreach (var addToRole in addToRoles)
+            {
+                if (!(await UserManager.IsInRoleAsync(Model, addToRole)))
+                {
+                    var addResult = await UserManager.AddToRoleAsync(Model, addToRole);
+                    if (!addResult.Succeeded)
+                    {
+                        errors.AddRange(addResult.Errors);
+                        succeeded = false;
+                    }
+                }
+            }
+
+            if (!succeeded)
+            {
+                foreach (var errorMessage in errors)
+                {
+                    ToastService.ShowError(errorMessage.Description);
+                }
+
+                return;
+            }
+
+            // Trigger the LastModificationTime for roles updates.
+            Model.LastModificationTime = DateTime.UtcNow;
+            _ = await UserManager.UpdateAsync(Model);
+
+            ToastService.ShowSuccess("User roles was successfully updated. Login again for it to take effect.");
+        });
+    }
+
+    protected async Task UpdatePasswordAsync()
+    {
+        await TryRunAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(Password))
+            {
+                ToastService.ShowError("Password is required.");
+                return;
+            }
+
+            if (Password != PasswordConfirm)
+            {
+                ToastService.ShowError("Password did not match confirmation password.");
+                return;
+            }
+
+            var resetToken = await UserManager.GeneratePasswordResetTokenAsync(Model);
+            var changePasswordResult = await UserManager.ResetPasswordAsync(Model, resetToken, Password);
+            if (!changePasswordResult.Succeeded)
+            {
+                foreach (var errorMessage in changePasswordResult.Errors)
+                {
+                    ToastService.ShowError(errorMessage.Description);
+                }
+                return;
+            }
+
+            Password = PasswordConfirm = null;
+            ToastService.ShowSuccess("Password was successfully updated.");
+        });
+    }
+
+    protected async Task DeleteAsync()
+    {
+        if (Model.Email == SystemUserAccounts.ADMIN_EMAIL)
+        {
+            ToastService.ShowError("You are not allowed to delete the root admin.");
+            return;
+        }
+
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete user {Model.Email}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await UserManager.DeleteAsync(Model);
+        if (!result.Succeeded)
+        {
+            foreach (var errorMessage in result.Errors)
+            {
+                ToastService.ShowError(errorMessage.Description);
+            }
+            return;
+        }
+
+        ToastService.ShowSuccess($"User {Model.Email} was succesfully deleted.");
+        Navigation.NavigateTo("users");
+    }
+
+}

@@ -1,0 +1,36 @@
+﻿@page "/payments"
+
+@using System.Collections.Generic
+
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+
+@inject IPaymentFacade Payments
+
+<PageTitle>Payments</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Payments" IconCssClass="fas fa-money-bill" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<div class="row">
+    <div class="card p-0">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-money-bill"></span>
+                    Payments Management
+                </h1>
+                <p class="m-0">Browse and manage the payments.</p>
+            </div>
+            <div class="col-lg-4">
+                <PaymentCreateDialog @rendermode="RenderMode.InteractiveAuto" />
+            </div>
+        </div>
+        <div class="card-body pt-0">
+            <PaymentsBrowser @rendermode="RenderMode.InteractiveAuto" />
+        </div>
+    </div>
+</div>

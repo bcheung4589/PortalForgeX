@@ -1,0 +1,102 @@
+﻿@typeparam TViewModel
+
+@using System.Linq.Expressions
+
+@inherits InputCheckbox
+
+<CascadingValue Value="ViewTemplate">
+    <CascadingValue Value="Model">
+        <FormFieldTemplate @ref="Template"
+                           TViewModel="TViewModel"
+                           DisplayName="@DisplayName"
+                           HelpText="@HelpText"
+                           Required="@Required"
+                           ValidationFor="@ValidationFor"
+                           SaveCallback="@SaveCallback"
+                           EditCallback="() => OnAfterRenderAsync(false)"
+                           ResetCallback="s => OnReset(s)">
+            <FieldTemplate>
+                <div class="form-control form-control-solid form-check form-switch form-check-custom form-check-solid">
+                    <input @ref="InputFieldReference" @bind="Value" @oninput="OnChanged"
+                           class="@FormControlCssClass" id="@(DisplayName + "Input")" placeholder="@DisplayName" type="checkbox" />
+                </div>
+            </FieldTemplate>
+        </FormFieldTemplate>
+    </CascadingValue>
+</CascadingValue>
+
+@code {
+
+    [Parameter]
+    public TViewModel Model { get; set; } = default!;
+
+    [Parameter]
+    public Expression<Func<object>>? ValidationFor { get; set; }
+
+    [Parameter]
+    public bool Required { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public string FormControlCssClass { get; set; } = FORM_CONTROL_CSS_CLASS;
+
+    [Parameter]
+    public RenderFragment<FormFieldTemplate<TViewModel>> ViewTemplate { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback SaveCallback { get; set; }
+
+    public FormFieldTemplate<TViewModel>? Template { get; private set; }
+
+    protected const string FORM_CONTROL_CSS_CLASS = "form-check-input";
+    protected ElementReference InputFieldReference;
+    protected bool? PreviousValue;
+    protected bool HasChanged;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender && Template!.InEditMode && InputFieldReference.Context is not null)
+        {
+            await Task.Yield(); // FIX: https://github.com/dotnet/aspnetcore/issues/30070#issuecomment-823938686
+            await InputFieldReference.FocusAsync();
+
+            if (HasChanged)
+            {
+                Value = PreviousValue!.Value;
+            }
+        }
+    }
+
+    protected async Task OnReset(bool saved)
+    {
+        if (HasChanged && !saved)
+        {
+            Value = PreviousValue!.Value;
+            await ValueChanged.InvokeAsync(Value);
+            EditContext.Validate();
+
+            FormControlCssClass = $"{FORM_CONTROL_CSS_CLASS} {CssClass}";
+        }
+
+        PreviousValue = null;
+        HasChanged = false;
+    }
+
+    protected async Task OnChanged(ChangeEventArgs args)
+    {
+        if (PreviousValue is null || (PreviousValue is not null && PreviousValue.Equals("")))
+        {
+            PreviousValue = Value;
+        }
+
+        HasChanged = true;
+        Value = (bool)args.Value!;
+        await ValueChanged.InvokeAsync(Value);
+        EditContext.Validate();
+
+        FormControlCssClass = $"{FORM_CONTROL_CSS_CLASS} {CssClass}";
+    }
+
+}

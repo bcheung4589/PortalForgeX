@@ -1,0 +1,10 @@
+﻿dialog::backdrop {
+    background-color: #333;
+    opacity: 0.75;
+}
+
+dialog {
+    border: 0;
+    border-radius: 5px;
+    padding: 0;
+}

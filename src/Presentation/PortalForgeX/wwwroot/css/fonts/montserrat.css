@@ -1,0 +1,33 @@
+﻿@font-face {
+    font-family: "Montserrat-Regular";
+    font-style: normal;
+    font-display: block;
+    src: url("Montserrat-Regular.eot");
+    src: url("Montserrat-Regular.eot?#iefix") format("embedded-opentype"), url("Montserrat-Regular.ttf") format("truetype"), url("Montserrat-Regular.svg") format("svg");
+}
+
+@font-face {
+    font-family: "Montserrat-Light";
+    font-style: normal;
+    font-display: block;
+    src: url("Montserrat-Light.eot");
+    src: url("Montserrat-Light.eot?#iefix") format("embedded-opentype"), url("Montserrat-Light.ttf") format("truetype"), url("Montserrat-Light.svg") format("svg");
+}
+
+
+@font-face {
+    font-family: "Montserrat-Medium";
+    font-style: normal;
+    font-display: block;
+    src: url("Montserrat-Medium.eot");
+    src: url("Montserrat-Medium.eot?#iefix") format("embedded-opentype"), url("Montserrat-Medium.ttf") format("truetype"), url("Montserrat-Medium.svg") format("svg");
+}
+
+
+@font-face {
+    font-family: "Montserrat-Bold";
+    font-style: normal;
+    font-display: block;
+    src: url("Montserrat-Bold.eot");
+    src: url("Montserrat-Bold.eot?#iefix") format("embedded-opentype"), url("Montserrat-Bold.ttf") format("truetype"), url("Montserrat-Bold.svg") format("svg");
+}

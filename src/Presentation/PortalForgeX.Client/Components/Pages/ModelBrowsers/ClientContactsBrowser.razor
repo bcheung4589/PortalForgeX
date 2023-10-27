@@ -1,0 +1,82 @@
+﻿@using Microsoft.AspNetCore.Components.QuickGrid
+@using PortalForgeX.Shared.Features.ClientContacts
+@using PortalForgeX.Shared.Features.Clients;
+    using PortalForgeX.Shared.Features.ClientContacts;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Features.Clients
+
+@inject IClientFacade Clients
+@inject IClientContactFacade ClientContacts
+@inject IRenderContext RenderContext
+@inject IToastService ToastService
+@inject IJSRuntime JSRuntime
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient">
+    @if (Client.Contacts is not null && Client.Contacts.Any())
+    {
+        <QuickGrid Items="contacts" Class="table table-striped">
+            <TemplateColumn Title="Name" SortBy="GridSort<ClientContactDto>.ByAscending(p => p.FullName)">
+                <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                <span @onclick="async () => await DetailsDialog.Open(context.Id)" role="button" title="View details of @context.FullName.">@context.FullName</span>
+            </TemplateColumn>
+            <TemplateColumn Title="Phone" SortBy="GridSort<ClientContactDto>.ByAscending(p => p.PhoneNr)">
+                <a href="tel:@context.PhoneNr">@context.PhoneNr</a>
+            </TemplateColumn>
+            <TemplateColumn Title="Email" SortBy="GridSort<ClientContactDto>.ByAscending(p => p.Email)">
+                <a href="mailto:@context.Email">@context.Email</a>
+            </TemplateColumn>
+            <TemplateColumn>
+                <ContextMenu Model="@context">
+                    <MenuItem TEntity="ClientContactDto" DisplayText="View" IconCss="fas fa-eye" OnSelected="async (e) => await DetailsDialog.Open(e.Id)"></MenuItem>
+                    <MenuItem TEntity="ClientContactDto" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                </ContextMenu>
+            </TemplateColumn>
+        </QuickGrid>
+        <ClientContactDetailsDialog @ref="DetailsDialog" OnSave="ReloadData"></ClientContactDetailsDialog>
+    }
+    else
+    {
+        <p class="text-muted">No contacts found.</p>
+    }
+</ModuleLoadingArea>
+
+@code {
+
+    [Parameter]
+    public ClientDto Client { get; set; } = null!;
+
+    private IQueryable<ClientContactDto>? contacts => Client.Contacts?.AsQueryable();
+    private ClientContactDetailsDialog DetailsDialog = null!;
+
+    /// <summary>
+    /// Reload the data after (update/delete) operations.
+    /// </summary>
+    /// <returns></returns>
+    protected async Task ReloadData()
+    {
+        var result = await Clients.GetByIdAsync(Client.Id);
+        if (result is not null && result.Data is not null)
+        {
+            Client = result.Data;
+        }
+    }
+
+    protected async Task DeleteAsync(ClientContactDto contact)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete contact {contact.FullName}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        if ((await ClientContacts.DeleteAsync(contact.Id))?.IsSuccess != true)
+        {
+            return;
+        }
+
+        ToastService.ShowSuccess($"Contact {contact.FullName} was succesfully deleted.");
+
+        await ReloadData();
+    }
+
+}

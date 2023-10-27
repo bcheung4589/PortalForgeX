@@ -1,0 +1,75 @@
+﻿@page "/client/{Id:guid}"
+
+@using PortalForgeX.Shared.Features.Clients;
+    using PortalForgeX.Shared.Facades;
+    using PortalForgeX.Shared.Constants;
+    using PortalForgeX.Shared.Features.Clients
+
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+
+@inject IClientFacade Clients
+@inject NavigationManager Navigation
+
+<PageTitle>Client Details</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Clients" Url="/clients" IconCssClass="fas fa-users" />
+        <Breadcrumb DisplayText="@(Model?.Name)" IconCssClass="fas fa-user-tie" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<LoadingArea IsLoading="IsLoading">
+    <ClientDetailsView @rendermode="RenderMode.InteractiveAuto" Client="Model" />
+
+    <details class="mb-5" open>
+        <summary>
+            <h4 class="d-inline-block">Contacts (@Model.Contacts?.Count())</h4>
+            <ClientContactCreateDialog @rendermode="RenderMode.InteractiveAuto" ClientId="Model.Id" OnSave="OnInitializedAsync"></ClientContactCreateDialog>
+            <span class="clearfix"></span>
+            <div class="text-muted">Manage the contactpersons.</div>
+        </summary>
+        <ClientContactsBrowser @rendermode="RenderMode.InteractiveAuto" Client="Model" />
+    </details>
+
+    <details class="mb-5" open>
+        <summary>
+            <h4 class="d-inline-block">Locations (@Model.Locations?.Count())</h4>
+            <BusinessLocationCreateDialog @rendermode="RenderMode.InteractiveAuto" ClientId="Model.Id" OnSave="OnInitializedAsync"></BusinessLocationCreateDialog>
+            <span class="clearfix"></span>
+            <div class="text-muted">Manage the work locations.</div>
+        </summary>
+        <BusinessLocationsBrowser @rendermode="RenderMode.InteractiveAuto" Client="Model" />
+    </details>
+</LoadingArea>
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    protected bool IsLoading;
+    protected ClientDto Model { get; set; } = null!;
+
+    /// <summary>
+    /// Load the Model on page initialization.
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        var result = await Clients.GetByIdAsync(Id);
+        if (result is null || result.Data is null)
+        {
+            Navigation.NavigateTo("clients");
+            return;
+        }
+
+        Model = result.Data;
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+}

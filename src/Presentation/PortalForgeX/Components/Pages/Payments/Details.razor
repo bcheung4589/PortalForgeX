@@ -1,0 +1,49 @@
+﻿@page "/payment/{Id:guid}"
+
+@using PortalForgeX.Shared.Features.Payments;
+    using PortalForgeX.Shared.Features.Payments
+
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+
+@inject IPaymentFacade Payments
+
+<PageTitle>Payment Details</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Payments" Url="/payments" IconCssClass="fas fa-money-bill" />
+        <Breadcrumb DisplayText="@(Model?.TransactionId)" IconCssClass="fas fa-money-check-dollar" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<LoadingArea IsLoading="IsLoading">
+    <PaymentDetailsView @rendermode="RenderMode.InteractiveAuto" Payment="Model" />
+</LoadingArea>
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    protected bool IsLoading;
+    protected PaymentDto? Model { get; set; }
+
+    /// <summary>
+    /// Load the Model on page initialization.
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        var result = await Payments.GetByIdAsync(Id);
+        if (result is not null && result.Data is not null)
+        {
+            Model = result.Data;
+        }
+
+        IsLoading = false;
+        StateHasChanged();
+    }
+}

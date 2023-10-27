@@ -1,0 +1,204 @@
+﻿@using FluentValidation
+@using PortalForgeX.Shared.Features.Clients
+@using PortalForgeX.Shared.Features.Payments
+
+@inherits FormComponent<PaymentDto>
+
+@inject IClientFacade Clients
+@inject IPaymentFacade Payments
+@inject IRenderContext RenderContext
+
+<ModuleLoadingArea IsLoading="!RenderContext.IsClient" ShowLoadingText="false">
+    <button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+        <span class="fas fa-plus"></span>
+        Create
+    </button>
+    <Dialog @ref="Dialog">
+        <Header>
+            <h1>Add payment</h1>
+            <span class="text-muted">Fill in the payment details.</span>
+        </Header>
+        <Body>
+            <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="row ">
+                    <div class="col">
+                        <div class="mb-3 border-bottom">
+                            <AutoCompleteFilter Model="@clientFilter"
+                                                AppliedFilter="@(clientsDataSource?.AppliedFilters?.FirstOrDefault(x => x.Field == nameof(ClientDto.Name))?.Value)"
+                                                DisplayName="Search for client"
+                                                HelpText="Search for client by name or remarks."
+                                                CssClass="form-control-solid ps-3"
+                                                LoadOptionsCallback="GetClientAutoCompleteData">
+                            </AutoCompleteFilter>
+                            <ValidationMessage For="(() => Model.ClientId)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputSelect @bind-Value="Model.BusinessLocationId" TValue="int?" class="form-control form-control-solid form-select" id="selBusinessLocation">
+                                <option value="">N/A</option>
+                                @if (Model.Client is not null && Model.Client.Locations is not null)
+                                {
+                                    foreach (var location in Model.Client.Locations)
+                                    {
+                                        <option value="@location.Id">@location.Street @location.HouseNr</option>
+                                    }
+                                }
+                            </InputSelect>
+                            <label for="selBusinessLocation">Business Location</label>
+                            <HelpTextTool Content="Business Location for which the payment applies." />
+                            <ValidationMessage For="(() => Model.BusinessLocationId)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputText @bind-Value="Model.TransactionId" class="form-control form-control-solid" id="transactionIdInput" placeholder="Transaction Id" maxlength="100" />
+                            <label for="transactionIdInput">Transaction Id</label>
+                            <span class="chars-counter">100 chars left</span>
+                            <HelpTextTool Content="Transaction Id for this Payment; if left empty, a unique Id is generated." />
+                            <ValidationMessage For="(() => Model.TransactionId)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputNumber @bind-Value="Model.Amount" TValue="decimal" class="form-control form-control-solid" id="amountInput" placeholder="Amount" required step=".01" min="1"></InputNumber>
+                            <label for="amountInput">Amount*</label>
+                            <HelpTextTool Content="Payment amount" />
+                            <ValidationMessage For="(() => Model.Amount)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputSelect @bind-Value="Model.PaymentMethod" TValue="string" class="form-control form-control-solid form-select" id="selPaymentMethod">
+                                @foreach (var payMethod in PaymentMethods.AsDictionary())
+                                {
+                                    <option value="@payMethod.Key">@payMethod.Value</option>
+                                }
+                            </InputSelect>
+                            <label for="selPaymentMethod">Payment Method*</label>
+                            <HelpTextTool Content="How the payment is done." />
+                            <ValidationMessage For="(() => Model.PaymentMethod)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputDate @bind-Value="Model.PaymentPeriod" Type="InputDateType.Month" class="form-control form-control-solid" id="paymentPeriodInput" placeholder="Payment Period" />
+                            <label for="paymentPeriodInput">Payment Period*</label>
+                            <HelpTextTool Content="The period for wich the payment is done." />
+                            <ValidationMessage For="(() => Model.PaymentPeriod)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputDate @bind-Value="Model.FulfilledDate" class="form-control form-control-solid" id="fulfilledDateInput" placeholder="Fulfilled Date" />
+                            <label for="fulfilledDateInput">Payment Date*</label>
+                            <HelpTextTool Content="The date the payment is done." />
+                            <ValidationMessage For="(() => Model.FulfilledDate)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        <div class="form-floating mb-3">
+                            <InputTextArea class="form-control form-control-solid" id="remarksInput" @bind-Value="Model!.Remarks" placeholder="Remarks" maxlength="2000" style="height: 100px"></InputTextArea>
+                            <label for="remarksInput">Remarks</label>
+                            <span class="chars-counter">2000 chars left</span>
+                            <HelpTextTool Content="Remarks." />
+                            <ValidationMessage For="(() => Model!.Remarks)" />
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col text-end">
+                        <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                        <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                    </div>
+                </div>
+            </EditForm>
+        </Body>
+    </Dialog>
+</ModuleLoadingArea>
+
+
+@code {
+    protected Dialog Dialog = null!;
+    protected override PaymentDto InitModel => new() { PaymentPeriod = DateTime.UtcNow, FulfilledDate = DateTime.UtcNow };
+    protected PageModel<ClientDto>? clientsDataSource;
+
+    public async Task Open() => await Dialog.OpenDialog();
+
+    protected static AutoCompleteFieldFilter clientFilter = new AutoCompleteFieldFilter(nameof(PaymentDto.ClientId));
+    protected static SearchFieldsFilter searchClientFilter = new SearchFieldsFilter(new string[] { nameof(ClientDto.Name), nameof(ClientDto.Remarks) });
+    protected async Task GetClientAutoCompleteData()
+    {
+        Model ??= InitModel;
+
+        // execute filter
+        searchClientFilter.Value = clientFilter.DisplayValue;
+        clientsDataSource = (await Clients.GetAsync(
+            pageIndex: 0,
+            pageSize: 0,
+            sortField: nameof(ClientDto.Name),
+            sortAsc: true,
+            filters: new List<SearchFieldsFilter>() { searchClientFilter }.ToEncodedString(),
+            projectionFields: new List<string> { nameof(ClientDto.Id), nameof(ClientDto.Name) }.ToEncodedString()
+        ))?.Data;
+
+        if (clientsDataSource is null || clientsDataSource.Entities is null)
+        {
+            return;
+        }
+
+        // fill in the datalist options
+        clientFilter.Options = clientsDataSource.Entities.ToDictionary(x => x.Id.ToString(), x => x.Name);
+
+        // check for selected client
+        ClientDto? selectedClient = null;
+        if (clientsDataSource.Count == 1)
+        {
+            // exact input
+            selectedClient = clientsDataSource.Entities.First();
+        }
+        else if (clientFilter.Value is not null && Guid.TryParse(clientFilter.Value, out var selectedClientId))
+        {
+            // selected from datalist
+            selectedClient = clientsDataSource.Entities.FirstOrDefault(x => x.Id == selectedClientId);
+        }
+
+        // assign selected client
+        if (selectedClient is not null)
+        {
+            Model.ClientId = selectedClient.Id;
+            var clientResult = await Clients.GetByIdAsync(Model.ClientId);
+            if (clientResult is not null && clientResult.IsSuccess)
+            {
+                Model.Client = clientResult.Data!;
+            }
+        }
+    }
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await Payments.CreateAsync(Model);
+            if (result is not null && result.IsSuccess)
+            {
+                ToastService.ShowSuccess("Payment was successfully created.");
+                Navigation.NavigateTo($"/payment/{result.Data!.Id}");
+            }
+        });
+
+}

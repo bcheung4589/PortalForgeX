@@ -1,0 +1,232 @@
+﻿@using System.Reflection
+
+@typeparam TEntity where TEntity : class
+@attribute [CascadingTypeParameter(nameof(TEntity))]
+
+<CascadingValue Value="this">
+    @if (DataSource is not null)
+    {
+        <div class="row mb-2">
+            <div class="col-lg-4">
+                <select @onchange="async e => await OnPageSizeChanged.InvokeAsync(Convert.ToInt32(e.Value))" name="table-pagesize" class="form-select form-select-solid d-inline w-100px me-2">
+                    @for (int i = 0; i < PageSizeChoices.Length; i++)
+                    {
+                        <option value="@PageSizeChoices[i]" selected="@(DataSource.PageSize == PageSizeChoices[i])">@PageSizeChoices[i]</option>
+                    }
+                </select>
+                <span>@DataSource.Count.ToString("N0") <span class="text-muted px-0">items found.</span></span>
+            </div>
+            <div class="col-lg-8 text-end">
+                <CascadingValue Value="DataSource">
+                    <Pagination @rendermode="RenderMode.InteractiveAuto"
+                                TEntity="TEntity"
+                                OnPageChanged="OnPageChanged"
+                                OnPageSizeChanged="OnPageChanged" />
+                </CascadingValue>
+            </div>
+        </div>
+
+        if (DataSource.SortField is not null)
+        {
+            <div class="table-sorting">
+                <span @onclick="OnSortReset" class="badge bg-light text-dark cmd-sort-remove" role="button" title="Click to remove sorting.">
+                    <span class="text-muted">Sort:</span>
+                    @DataSource.SortField
+                    <span class="text-muted mx-2">-</span>
+                    <span class="text-muted">Direction:</span>
+                    @(DataSource.SortAsc == false ? "Descending" : "Ascending")
+                    <span class="fas fa-xmark ms-1 text-danger"></span>
+                </span>
+            </div>
+        }
+    }
+    <table class="table table-striped @CssClass">
+        <thead class="@HeaderCssClass">
+            @RenderHeaderRow()
+        </thead>
+        <tbody>
+            @ChildContent
+
+            @if (DataSource is not null && DataSource.Entities is not null && DataSource.Entities.Any())
+            {
+                foreach (var item in DataSource.Entities)
+                {
+                    @RenderRow(item)
+                }
+            }
+        </tbody>
+        @if (DataSource is not null && ShowFooter)
+        {
+            <tfoot>
+                <tr>
+                    <td colspan="@Columns.Count()">
+                        <div class="row">
+                            <div class="col-lg-4">
+                                <select @onchange="async e => await OnPageSizeChanged.InvokeAsync(Convert.ToInt32(e.Value))" name="table-pagesize" class="form-select form-select-solid d-inline w-100px me-2">
+                                    @for (int i = 0; i < PageSizeChoices.Length; i++)
+                                    {
+                                        <option value="@PageSizeChoices[i]" selected="@(DataSource.PageSize == PageSizeChoices[i])">@PageSizeChoices[i]</option>
+                                    }
+                                </select>
+                                <span>@DataSource.Count.ToString("N0") <span class="text-muted px-0">items found.</span></span>
+                            </div>
+                            <div class="col-lg-8 text-end">
+                                <CascadingValue Value="DataSource">
+                                    <Pagination @rendermode="RenderMode.InteractiveAuto"
+                                                TEntity="TEntity"
+                                                OnPageChanged="OnPageChanged"
+                                                OnPageSizeChanged="OnPageChanged" />
+                                </CascadingValue>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            </tfoot>
+        }
+    </table>
+</CascadingValue>
+
+@code {
+
+    [Parameter]
+    public RenderFragment? ChildContent { get; set; }
+
+    [Parameter]
+    public PageModel<TEntity> DataSource { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public string? HeaderCssClass { get; set; } = "table table-dark";
+
+    [Parameter]
+    public bool ShowFooter { get; set; } = true;
+
+    [Parameter]
+    public EventCallback<int> OnPageChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnPageSizeChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnSortChanged { get; set; }
+
+    [Parameter]
+    public EventCallback OnSortReset { get; set; }
+
+    [Parameter]
+    public RenderFragment<TEntity>? DetailsTemplate { get; set; }
+
+    protected int[] PageSizeChoices = new int[4] { 10, 25, 50, 100 };
+
+    protected List<DataGridColumn<TEntity>> Columns = new List<DataGridColumn<TEntity>>();
+
+    public void AddColumn(DataGridColumn<TEntity> column)
+    {
+        Columns.Add(column);
+        StateHasChanged();
+    }
+
+    private RenderFragment RenderHeaderRow()
+    {
+        int i = 0;
+        return b =>
+        {
+            b.OpenElement(++i, "tr");
+            foreach (var column in Columns)
+            {
+                b.OpenElement(++i, "th");
+                if (!string.IsNullOrWhiteSpace(column.HeaderCssClass))
+                {
+                    b.AddAttribute(i, "class", column.HeaderCssClass);
+                }
+                if (!string.IsNullOrWhiteSpace(column.Field))
+                {
+                    b.OpenElement(++i, "span");
+                    b.AddAttribute(i, "class", "fas fa-sort me-2 cmd");
+                    b.AddAttribute(i, "role", "button");
+                    b.AddAttribute(i, "onclick", EventCallback.Factory.Create<DataGridColumn<TEntity>>(this, async () => await OnSortChanged.InvokeAsync(column.Field)));
+                    b.CloseElement();
+                }
+                b.AddContent(++i, column.HeaderName);
+                b.CloseElement();
+            }
+            b.CloseElement();
+        };
+    }
+
+    private RenderFragment RenderRow(TEntity sourceItem)
+    {
+        if (sourceItem == null) return b => { };
+        if (Columns.Count < 1) return b => { };
+
+        int i = 0;
+        return b =>
+        {
+            b.OpenElement(++i, "tr");
+            foreach (var column in Columns)
+            {
+                b.OpenElement(++i, "td");
+                if (!string.IsNullOrWhiteSpace(column.RowCssClass))
+                {
+                    b.AddAttribute(i, "class", column.RowCssClass);
+                }
+                if (column.Width is not null)
+                {
+                    b.AddAttribute(i, "Width", column.Width);
+                }
+
+                if (column.Template == null)
+                {
+                    var property = sourceItem.GetType().GetProperty(column.Field);
+                    if (property == null)
+                    {
+                        b.CloseElement();
+                        continue;
+                    }
+
+                    var value = property.GetValue(sourceItem, null);
+                    if (value == null)
+                    {
+                        b.CloseElement();
+                        continue;
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(column.Format))
+                    {
+                        value = string.Format(column.Format, value);
+                    }
+
+                    b.OpenElement(i, "span");
+                    if (column.OnSelected.HasDelegate)
+                    {
+                        b.AddAttribute(i, "role", "button");
+                        b.AddAttribute(i, "onclick", EventCallback.Factory.Create<DataGridColumn<TEntity>>(this, async () => await column.OnSelected.InvokeAsync(sourceItem)));
+                    }
+                    b.AddContent(++i, value);
+                    b.CloseElement();
+
+                    b.CloseElement();
+                }
+                else
+                {
+                    b.AddContent<TEntity>(++i, column.Template, sourceItem);
+                    b.CloseElement();
+                }
+            }
+            b.CloseElement();
+
+            if (DetailsTemplate is not null)
+            {
+                b.OpenElement(++i, "tr");
+                b.OpenElement(++i, "td");
+                b.AddAttribute(i, "colspan", Columns.Count());
+                b.AddContent<TEntity>(++i, DetailsTemplate, sourceItem);
+                b.CloseElement();
+                b.CloseElement();
+            }
+        };
+    }
+
+}

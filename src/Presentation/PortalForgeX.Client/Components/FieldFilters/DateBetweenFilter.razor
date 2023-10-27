@@ -1,0 +1,86 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="field-filter datebetween-filter mb-2">
+    <label for="@inputId">@DisplayName</label>
+
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <HelpTextTool CssClass="p-0 px-2" Content="@HelpText" />
+    }
+
+    <div class="row">
+        <small class="text-muted">Date between:</small>
+        <div class="col-lg-6">
+            <InputDate @bind-Value="Model.Value" Type="Type" class="@($"form-control {CssClass}")" id="@inputId" min="@Min?.ToString("yyyy-MM-dd")" max="@Model.MaxValue" />
+        </div>
+        <div class="col-lg-6">
+            <InputDate @bind-Value="Model.MaxValue" Type="Type" class="@($"form-control {CssClass}")" id="@inputId" min="@Model.Value?.ToString("yyyy-MM-dd")" max="@Max?.ToString("yyyy-MM-dd")" />
+        </div>
+    </div>
+
+    @if (AppliedFilter is not null || AppliedFilter is not null)
+    {
+        <span class="badge bg-light text-dark cmd-filter-remove" role="button" title="Click to remove filters." @onclick="Reset">
+            @DisplayName:
+            @if (AppliedFilter is not null)
+            {
+                @(DateTime.Parse(AppliedFilter.ToString() ?? "").ToString("dd-MM-yyyy"))
+            }
+            @if (AppliedFilter is not null && AppliedFilter is not null)
+            {
+                <span class="text-muted mx-1">-</span>
+            }
+            @if (AppliedMaxFilter is not null)
+            {
+                @(DateTime.Parse(AppliedMaxFilter.ToString() ?? "").ToString("dd-MM-yyyy"))
+            }
+            <span class="fas fa-xmark ms-1 text-danger"></span>
+        </span>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public DateBetweenFieldFilter Model { get; set; } = default!;
+
+    [Parameter]
+    public string DisplayName { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public object? AppliedFilter { get; set; }
+
+    [Parameter]
+    public object? AppliedMaxFilter { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public DateTime? Min { get; set; }
+
+    [Parameter]
+    public DateTime? Max { get; set; }
+
+    [Parameter]
+    public InputDateType Type { get; set; } = InputDateType.Date;
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    private string inputId => DisplayName?.Replace(" ", "") + "DateBetweenFilterInput";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+        => await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+    protected async Task Reset()
+    {
+        Model.Reset();
+        AppliedFilter = null;
+
+        await ResetCallback.InvokeAsync();
+    }
+}

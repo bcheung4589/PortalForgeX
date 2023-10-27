@@ -1,0 +1,69 @@
+﻿@inject IJSRuntime JSRuntime
+
+<div class="field-filter switch-filter mb-2">
+    <label for="@inputId">@DisplayName</label>
+
+    @if (!string.IsNullOrWhiteSpace(HelpText))
+    {
+        <HelpTextTool CssClass="p-0 px-2" Content="@HelpText" />
+    }
+
+    <div class="form-control form-check form-switch form-check-custom form-check-solid bg-white border-0 ps-4">
+        <input @bind="Model.Value" @oninput="OnChanged" class="form-check-input @CssClass" id="@inputId" type="checkbox"/>
+    </div>
+
+    @if (AppliedFilter is not null)
+    {
+        <span class="badge bg-light text-dark cmd-filter-remove" role="button" title="Click to remove filter." @onclick="Reset">
+            @DisplayName:
+            @{
+                if (bool.TryParse(AppliedFilter.ToString(), out bool isAppliedFilter))
+                {
+                    <span>@(isAppliedFilter ? "Yes" : "No")</span>
+                }
+            }
+            <span class="fas fa-xmark ms-1 text-danger"></span>
+        </span>
+    }
+</div>
+
+@code {
+
+    [Parameter]
+    public SwitchFieldFilter Model { get; set; } = default!;
+
+    [Parameter]
+    public string DisplayName { get; set; } = null!;
+
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    [Parameter]
+    public object? AppliedFilter { get; set; }
+
+    [Parameter]
+    public string? HelpText { get; set; }
+
+    [Parameter]
+    public EventCallback ResetCallback { get; set; }
+
+    protected string inputId => DisplayName?.Replace(" ", "") + "SwitchFilterInput";
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+        => await JSRuntime.InvokeVoidAsync("formPageLoad");
+
+    protected void OnChanged(ChangeEventArgs args)
+    {
+        Model.Value = (bool)args.Value!;
+        AppliedFilter = Model.Value;
+        Model.HasChanged = true;
+    }
+
+    protected async Task Reset()
+    {
+        Model.Reset();
+        AppliedFilter = null;
+
+        await ResetCallback.InvokeAsync();
+    }
+}
