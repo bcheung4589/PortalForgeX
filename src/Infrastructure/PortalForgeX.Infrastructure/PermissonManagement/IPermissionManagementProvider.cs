@@ -5,6 +5,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PortalForgeX.Infrastructure.PermissonManagement;
 
+// TODO
+
 /// <summary>
 /// Interface for all AccessPoints (Entities) that needs permission to access features.
 /// </summary>
