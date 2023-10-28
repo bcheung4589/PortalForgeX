@@ -359,6 +359,8 @@
             if (result.Succeeded)
             {
                 ToastService.ShowSuccess("User was successfully updated.");
+
+                // TODO: Delete UserProfile if Model.TenantId is changed to null.
             }
             else
             {
