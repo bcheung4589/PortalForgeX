@@ -32,22 +32,26 @@
         background-color: rgba(255, 255, 255, 0.5);
     }
 
-        .compact-toggler:checked ~ .sidebar .nav-item.divider-title {
+        .compact-toggler:checked ~ .sidebar:not(:hover) .nav-item.divider-title {
             height: 0;
             padding: 0;
             font-size: 0;
         }
 
-        .compact-toggler:checked ~ .sidebar .nav-item span:not(.fas) {
+        .compact-toggler:checked ~ .sidebar:not(:hover) .nav-item span:not(.fas) {
             font-size: 0;
         }
 
-        .compact-toggler:checked ~ .sidebar .navbar-brand {
+        .compact-toggler:checked ~ .sidebar:not(:hover) .navbar-brand {
             display: none;
         }
 
-        .compact-toggler:checked ~ .sidebar .nav-menu-collapse .fa-angles-left:before {
-            content: "\f101";
+        .compact-toggler:checked ~ .sidebar:not(:hover) .nav-menu-collapse .fa-thumbtack:before {
+        }
+
+        .compact-toggler:checked ~ .sidebar .nav-menu-collapse .fa-thumbtack:before {
+            font-size: medium;
+            color: #777;
         }
 
 .top-row {
