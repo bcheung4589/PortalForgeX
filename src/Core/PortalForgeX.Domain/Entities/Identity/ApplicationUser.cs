@@ -7,6 +7,18 @@ namespace PortalForgeX.Domain.Entities.Identity;
 
 public class ApplicationUser : IdentityUser, IHasCreationTime, IHasModificationTime
 {
+    /// <summary>
+    /// Firstname of the user.
+    /// </summary>
+    [MaxLength(100)]
+    public string? FirstName { get; set; }
+
+    /// <summary>
+    /// Lastname of the user.
+    /// </summary>
+    [MaxLength(100)]
+    public string? LastName { get; set; }
+
     /// <inheritdoc />
     public DateTime CreationTime { get; set; }
 

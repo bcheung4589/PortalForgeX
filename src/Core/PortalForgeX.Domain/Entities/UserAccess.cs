@@ -1,4 +1,5 @@
 ﻿using PortalForgeX.Domain.Entities.Internal;
+using PortalForgeX.Domain.Entities.Tenants;
 using System.ComponentModel.DataAnnotations;
 
 namespace PortalForgeX.Domain.Entities;
@@ -13,7 +14,7 @@ public class UserAccess : IEntity
     /// <summary>
     /// UserProfile instance.
     /// </summary>
-    public UserProfile UserProfile { get; set; } = null!;
+    public TenantUserProfile UserProfile { get; set; } = null!;
 
     /// <summary>
     /// The name of the feature/permission for this access control.

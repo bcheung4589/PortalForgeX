@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using PortalForgeX.Persistence.EFCore;
 
-
 #nullable disable
 
 namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
@@ -301,6 +300,20 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                     b.ToTable("Payments", (string)null);
                 });
 
+            modelBuilder.Entity("PortalForgeX.Domain.Entities.Tenants.TenantUserProfile", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("UserProfiles");
+                });
+
             modelBuilder.Entity("PortalForgeX.Domain.Entities.UserAccess", b =>
                 {
                     b.Property<Guid>("UserProfileId")
@@ -316,7 +329,13 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                     b.Property<DateTime?>("LastModificationTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("UserProfileUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("UserProfileId", "Name");
+
+                    b.HasIndex("UserProfileUserId");
 
                     b.ToTable("UserAccess", (string)null);
                 });
@@ -354,47 +373,14 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                     b.Property<int>("UserGroupId")
                         .HasColumnType("int");
 
-                    b.Property<Guid>("UserProfileUserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uniqueidentifier");
+                    b.HasKey("UserGroupId", "UserId");
 
-                    b.HasKey("UserGroupId", "UserProfileUserId");
-
-                    b.HasIndex("UserProfileUserId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("UserInGroups", (string)null);
-                });
-
-            modelBuilder.Entity("PortalForgeX.Domain.Entities.UserProfile", b =>
-                {
-                    b.Property<Guid>("UserId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<DateTime>("CreationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("FirstName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<DateTime?>("LastAccessTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<DateTime?>("LastModificationTime")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("LastName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("UserProfiles", (string)null);
                 });
 
             modelBuilder.Entity("PortalForgeX.Domain.Entities.BusinessLocation", b =>
@@ -460,9 +446,9 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
 
             modelBuilder.Entity("PortalForgeX.Domain.Entities.UserAccess", b =>
                 {
-                    b.HasOne("PortalForgeX.Domain.Entities.UserProfile", "UserProfile")
+                    b.HasOne("PortalForgeX.Domain.Entities.Tenants.TenantUserProfile", "UserProfile")
                         .WithMany()
-                        .HasForeignKey("UserProfileId")
+                        .HasForeignKey("UserProfileUserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -471,17 +457,21 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
 
             modelBuilder.Entity("PortalForgeX.Domain.Entities.UserInGroup", b =>
                 {
-                    b.HasOne("PortalForgeX.Domain.Entities.UserGroup", null)
+                    b.HasOne("PortalForgeX.Domain.Entities.UserGroup", "UserGroup")
                         .WithMany()
                         .HasForeignKey("UserGroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PortalForgeX.Domain.Entities.UserProfile", null)
+                    b.HasOne("PortalForgeX.Domain.Entities.Tenants.TenantUserProfile", "User")
                         .WithMany()
-                        .HasForeignKey("UserProfileUserId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("User");
+
+                    b.Navigation("UserGroup");
                 });
 
             modelBuilder.Entity("PortalForgeX.Domain.Entities.BusinessLocation", b =>

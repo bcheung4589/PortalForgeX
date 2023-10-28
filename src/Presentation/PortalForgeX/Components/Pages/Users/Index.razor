@@ -111,6 +111,8 @@
             return;
         }
 
+        // TODO: Delete UserProfile
+
         ToastService.ShowSuccess($"User {user.Email} was succesfully deleted.");
         await OnInitializedAsync();
     }

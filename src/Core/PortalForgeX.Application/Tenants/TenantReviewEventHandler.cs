@@ -21,7 +21,6 @@ public class TenantReviewEventHandler(
     ILogger<TenantReviewEventHandler> logger,
     ITenantService tenantService,
     IDomainContextFactory domainContextFactory,
-    ITenantConnectionProvider tenantConnectionProvider,
     ISmtpService smtpService
     ) :
     INotificationHandler<TenantApprovedEvent>,
@@ -42,10 +41,9 @@ public class TenantReviewEventHandler(
 
         try
         {
-            var tenantConnectionString = tenantConnectionProvider.Provide(notification.Tenant);
-            var domainContext = domainContextFactory.CreateDomainContext(tenantConnectionString);
+            var domainContext = domainContextFactory.CreateDomainContext(notification.Tenant);
 
-            _logger.LogDebug("Tenant Migration Started on {Name} :: {tenantConnectionString}", tenantConnectionString, notification.Tenant.Name);
+            _logger.LogDebug("Tenant Migration Started on {Name}", notification.Tenant.Name);
 
             await domainContext.MigrateAsync(cancellationToken);
 

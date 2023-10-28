@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
 using PortalForgeX.Application.Tenants;
-using PortalForgeX.Domain.Services;
 using System.Security.Claims;
 
 namespace PortalForgeX.Infrastructure.Middleware;
