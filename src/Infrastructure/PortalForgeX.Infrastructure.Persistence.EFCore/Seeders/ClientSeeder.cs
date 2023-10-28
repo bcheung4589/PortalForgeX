@@ -2,7 +2,6 @@
 using PortalForgeX.Application.Data;
 using PortalForgeX.Domain.Entities;
 using PortalForgeX.Domain.Services;
-using PortalForgeX.Persistence.EFCore;
 using PortalForgeX.Persistence.EFCore.Seeders.Internals;
 
 namespace PortalForgeX.Persistence.EFCore.Seeders;
@@ -45,8 +44,8 @@ public sealed class ClientSeeder : IClientSeeder
             var contactsCount = random.Next(1, 4);
             if (contactsCount > 0)
             {
-                contacts = new List<ClientContact>();
-                businessLocations = new List<BusinessLocation>();
+                contacts = [];
+                businessLocations = [];
                 for (int j = 0; j < contactsCount; j++)
                 {
                     var checkouts = new List<Checkout>();
@@ -109,11 +108,11 @@ public sealed class ClientSeeder : IClientSeeder
 
     private string GenerateUniqueName()
     {
-        var clientName = FictionalNameGenerator.GenerateRandomName(random);
-        if (generatedClientNames.Contains(clientName))
+        string clientName;
+        do
         {
-            return GenerateUniqueName();
-        }
+            clientName = FictionalNameGenerator.GenerateRandomName(random);
+        } while (generatedClientNames.Contains(clientName));
 
         generatedClientNames.Add(clientName);
         return clientName;

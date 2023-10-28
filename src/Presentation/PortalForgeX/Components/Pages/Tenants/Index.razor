@@ -1,10 +1,85 @@
 ﻿@page "/tenants"
 
+@using AutoMapper
+@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Shared.Features.Tenants
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
+
+@inject ITenantService TenantService
+@inject NavigationManager Navigation
+@inject IToastService ToastService
+@inject IJSRuntime JSRuntime
+@inject IMapper Mapper
+
 <PageTitle>Tenants</PageTitle>
 
-<h1>Tenants</h1>
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Tenants" IconCssClass="fas fa-handshake-angle" />
+    </BreadcrumbNavigation>
+</SectionContent>
 
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-handshake-angle"></span>
+                    Tenants Management
+                </h1>
+                <p class="m-0">Browse and manage the tenants.</p>
+            </div>
+            <div class="col-lg-4">
+                @* CREATE DIALOG *@
+            </div>
+        </div>
+        <div class="card-body mt-0">
+            @* BODY *@
+        </div>
+    </div>
+</div>
 
 @code {
+
+    private IQueryable<TenantViewModel> tenantsSource = null!;
+    private bool isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        isLoading = true;
+
+        var tenants = await TenantService.GetAsync();
+        var mappedTenants = Mapper.Map<IEnumerable<TenantViewModel>>(tenants);
+        tenantsSource = mappedTenants.AsQueryable();
+
+        isLoading = false;
+    }
+
+    protected void NavigateTo(TenantViewModel tenant)
+        => Navigation.NavigateTo($"tenant/{tenant.Id}");
+
+    protected async Task DeleteAsync(TenantViewModel tenant)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete tenant {tenant.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await TenantService.DeleteAsync(tenant.Id);
+        if (!result)
+        {
+            ToastService.ShowSuccess($"There was a problem deleting {tenant.Name}. Contact support for more information.");
+            return;
+        }
+
+        ToastService.ShowSuccess($"Tenant {tenant.Name} was succesfully deleted.");
+        await OnInitializedAsync();
+    }
 
 }

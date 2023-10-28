@@ -5,12 +5,11 @@ using PortalForgeX.Shared.Features.Tenants;
 namespace PortalForgeX.Application.Tenants;
 
 /// <summary>
-/// The TenantService provides all functionality regarding Tenants from CRUD-actions to the Review-actions.
+/// The TenantService provides all functionality regarding Tenants and related objects; 
+/// from CRUD-actions to the Review-actions.
 /// </summary>
 public interface ITenantService
 {
-    #region [ CRUD ]
-
     /// <summary>
     /// Get all the Tenants.
     /// </summary>
@@ -54,10 +53,6 @@ public interface ITenantService
     /// <returns></returns>
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 
-    #endregion [ CRUD ]
-
-    #region [ Review ]
-
     /// <summary>
     /// Review: Approve the new Tenant.
     /// </summary>
@@ -71,10 +66,6 @@ public interface ITenantService
     /// <param name="id"></param>
     /// <returns></returns>
     Task<bool> RejectTenantAsync(Guid id, CancellationToken cancellationToken = default);
-
-    #endregion [ Review ]
-
-    #region [ User Profiles ]
 
     /// <summary>
     /// Get all the users registered for the given tenant.
@@ -91,7 +82,7 @@ public interface ITenantService
     /// <param name="tenant"></param>
     /// <param name="newProfile"></param>
     /// <returns></returns>
-    Task<bool> CreateTenantUserAsync(Tenant tenant, TenantUserProfile newProfile, CancellationToken cancellationToken = default);
+    Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserProfile newProfile, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Update the tenant user profile.
@@ -100,7 +91,7 @@ public interface ITenantService
     /// <param name="updateProfile"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> UpdateTenantUserAsync(Tenant tenant, TenantUserProfile updateProfile, CancellationToken cancellationToken = default);
+    Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserProfile updateProfile, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Delete the tenant user profile.
@@ -109,7 +100,7 @@ public interface ITenantService
     /// <param name="userId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> DeleteTenantUserAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default);
+    Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Add a tenants user profile to the specified groups.
@@ -119,7 +110,7 @@ public interface ITenantService
     /// <param name="groupIds"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>Amount of groups added to.</returns>
-    Task<int> AddUserToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
+    Task<int> AddProfileToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Remove a tenants user profile from the specified groups.
@@ -129,7 +120,5 @@ public interface ITenantService
     /// <param name="groupIds"></param>
     /// <param name="cancellationToken"></param>
     /// <returns>Amount of groups removed from.</returns>
-    Task<int> RemoveUserFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
-
-    #endregion [ User Profiles ]
+    Task<int> RemoveProfileFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
 }

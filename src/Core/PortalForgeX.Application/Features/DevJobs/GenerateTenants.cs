@@ -1,22 +1,22 @@
 ﻿using MediatR;
 using PortalForgeX.Application.Features.Internal;
 using PortalForgeX.Domain.Services;
-using PortalForgeX.Shared.Features.Clients;
+using PortalForgeX.Shared.Features.Tenants;
 
 namespace PortalForgeX.Application.Features.DevJobs;
 
-public record GenerateClientsRequest(int? Amount) : ICommand<GenerateClientsResponse>
+public record GenerateTenantsRequest(int? Amount) : ICommand<GenerateTenantsResponse>
 {
-    public GenerateClientsResponse NewResponse()
+    public GenerateTenantsResponse NewResponse()
         => new();
 }
 
-internal sealed class GenerateClientsHandler(IClientSeeder seeder) : IRequestHandler<GenerateClientsRequest, GenerateClientsResponse>
+internal sealed class GenerateTenants(ITenantSeeder seeder) : IRequestHandler<GenerateTenantsRequest, GenerateTenantsResponse>
 {
     private readonly ISeedService _seeder = seeder;
-    private const int DEFAULT_AMOUNT = 2000;
+    private const int DEFAULT_AMOUNT = 100;
 
-    public async Task<GenerateClientsResponse> Handle(GenerateClientsRequest request, CancellationToken cancellationToken)
+    public async Task<GenerateTenantsResponse> Handle(GenerateTenantsRequest request, CancellationToken cancellationToken)
     {
         var response = request.NewResponse();
 

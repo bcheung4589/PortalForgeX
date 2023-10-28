@@ -17,3 +17,8 @@ public interface IPaymentSeeder : ISeedService { }
 /// Seed the database with Clients data.
 /// </summary>
 public interface IClientSeeder : ISeedService { }
+
+/// <summary>
+/// Seed the database with Clients data.
+/// </summary>
+public interface ITenantSeeder : ISeedService { }

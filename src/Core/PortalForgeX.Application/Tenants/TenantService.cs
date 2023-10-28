@@ -26,7 +26,7 @@ public class TenantService(
 {
     private readonly ILogger<TenantService> _logger = logger;
 
-    #region [ CRUD ]
+    #region [ Tenants ]
 
     /// <inheritdoc/>
     public async Task<IEnumerable<Tenant>> GetAsync(CancellationToken cancellationToken = default)
@@ -105,7 +105,7 @@ public class TenantService(
         return changes > 0;
     }
 
-    #endregion [ CRUD ]
+    #endregion [ Tenants ]
 
     #region [ Review ]
 
@@ -179,7 +179,7 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> CreateTenantUserAsync(Tenant tenant, TenantUserProfile newProfile, CancellationToken cancellationToken = default)
+    public async Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserProfile newProfile, CancellationToken cancellationToken = default)
     {
         var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
         if (foundEntity is null)
@@ -213,7 +213,7 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateTenantUserAsync(Tenant tenant, TenantUserProfile updateProfile, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserProfile updateProfile, CancellationToken cancellationToken = default)
     {
         var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
         if (foundEntity is null)
@@ -235,7 +235,7 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteTenantUserAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default)
     {
         var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
         if (foundEntity is null)
@@ -252,8 +252,14 @@ public class TenantService(
         return result > 0;
     }
 
+    #endregion [ User Profiles ]
+
+    #region [ UserGroups ]
+
+    // CREATE, UPDATE, DELETE UserGroup
+
     /// <inheritdoc/>
-    public async Task<int> AddUserToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
+    public async Task<int> AddProfileToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
     {
         var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
         if (foundEntity is null)
@@ -286,7 +292,7 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<int> RemoveUserFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
+    public async Task<int> RemoveProfileFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
     {
         var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
         if (foundEntity is null)
@@ -308,5 +314,6 @@ public class TenantService(
         return result;
     }
 
-    #endregion [ User Profiles ]
+    #endregion [ UserGroups ]
+
 }
