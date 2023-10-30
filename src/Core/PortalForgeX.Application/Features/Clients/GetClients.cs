@@ -32,7 +32,7 @@ internal sealed class GetClientsHandler : IRequestHandler<GetClientsRequest, Get
         var result = await _unitOfWork.ClientRepository.GetPageAsync(request.Settings, cancellationToken);
 
         // process
-        response.SetSuccess(_mapper.Map<PageModel<ClientDto>>(result));
+        response.SetSuccess(_mapper.Map<PagedList<ClientDto>>(result));
 
         // return
         return response;

@@ -2,7 +2,7 @@
 
 namespace PortalForgeX.Shared.Features.Clients;
 
-public record GetClientsResponse : Result<PageModel<ClientDto>>;
+public record GetClientsResponse : Result<PagedList<ClientDto>>;
 
 public record GetClientByIdResponse : Result<ClientDto>;
 

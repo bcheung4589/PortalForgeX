@@ -137,7 +137,7 @@
 @code {
 
     [CascadingParameter]
-    public PageModel<TEntity> DataSource { get; set; } = null!;
+    public PagedList<TEntity> DataSource { get; set; } = null!;
 
     [Parameter]
     public EventCallback<int> OnPageChanged { get; set; }

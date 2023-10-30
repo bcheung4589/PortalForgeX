@@ -2,7 +2,7 @@
 
 namespace PortalForgeX.Shared.DTOs;
 
-public record PageModel<TEntity> where TEntity : class
+public record PagedList<TEntity> where TEntity : class
 {
     public int PageIndex { get; set; }
     public int PageSize { get; set; }

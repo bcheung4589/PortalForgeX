@@ -10,7 +10,7 @@ public abstract class DataComponent<TModel> : HttpComponentBase
     /// <summary>
     /// Datasource that will be used.
     /// </summary>
-    protected PageModel<TModel>? DataSource { get; set; }
+    protected PagedList<TModel>? DataSource { get; set; }
 
     /// <summary>
     /// Current page when retrieving data.

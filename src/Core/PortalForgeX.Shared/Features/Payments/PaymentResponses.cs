@@ -2,7 +2,7 @@
 
 namespace PortalForgeX.Shared.Features.Payments;
 
-public record GetPaymentsResponse : Result<PageModel<PaymentDto>>;
+public record GetPaymentsResponse : Result<PagedList<PaymentDto>>;
 
 public record GetPaymentByIdResponse : Result<PaymentDto>;
 
