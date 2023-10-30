@@ -2,7 +2,7 @@
 
 namespace PortalForgeX.Shared.Features.BusinessLocations;
 
-public record GetBusinessLocationsResponse : Result<PageModel<BusinessLocationDto>>;
+public record GetBusinessLocationsResponse : Result<PagedList<BusinessLocationDto>>;
 
 public record GetBusinessLocationByIdResponse : Result<BusinessLocationDto>;
 

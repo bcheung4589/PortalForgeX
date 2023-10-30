@@ -2,7 +2,7 @@
 using PortalForgeX.Application.Data;
 using PortalForgeX.Domain.Entities;
 using PortalForgeX.Domain.Services;
-using PortalForgeX.Shared.DTOs;
+using PortalForgeX.Shared.Constants;
 
 namespace PortalForgeX.Persistence.EFCore.Seeders;
 

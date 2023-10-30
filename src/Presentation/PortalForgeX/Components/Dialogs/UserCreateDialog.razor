@@ -21,9 +21,10 @@
             <div class="row">
                 <div class="col">
                     <div class="form-floating mb-3">
-                        <InputText @bind-Value="Model!.Email" class="form-control form-control-solid" id="emailInput" placeholder="Email" required />
+                        <InputText @bind-Value="Model!.Email" class="form-control form-control-solid" id="emailInput" maxlength="450" placeholder="Email" required />
                         <HelpTextTool Content="Input the user email." />
                         <label for="emailInput">Email*</label>
+                        <span class="chars-counter">100 chars left</span>
                         <ValidationMessage For="(() => Model!.Email)" />
                     </div>
                 </div>
@@ -43,6 +44,28 @@
                         <InputText @bind-Value="PasswordConfirm" type="password" class="form-control form-control-solid" id="passwordConfirmInput" placeholder="Confirm password" required />
                         <HelpTextTool Content="Confirm the user password." />
                         <label for="passwordConfirmInput">Confirm password*</label>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.FirstName" class="form-control form-control-solid" id="firstnameInput" maxlength="100" placeholder="Firstname" />
+                        <HelpTextTool Content="Input the user firstname." />
+                        <label for="firstnameInput">Firstname*</label>
+                        <span class="chars-counter">100 chars left</span>
+                        <ValidationMessage For="(() => Model!.FirstName)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.LastName" class="form-control form-control-solid" id="lastnameInput" maxlength="100" placeholder="LastName" />
+                        <HelpTextTool Content="Input the user lastname." />
+                        <label for="lastnameInput">Lastname*</label>
+                        <span class="chars-counter">100 chars left</span>
+                        <ValidationMessage For="(() => Model!.LastName)" />
                     </div>
                 </div>
             </div>

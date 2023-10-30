@@ -1,4 +1,5 @@
 ﻿using PortalForgeX.Domain.Entities.Internal;
+using PortalForgeX.Domain.Entities.Tenants;
 using System.ComponentModel.DataAnnotations;
 
 namespace PortalForgeX.Domain.Entities;
@@ -23,5 +24,5 @@ public class UserGroup : AuditedEntity<int>
     /// <summary>
     /// The profiles in this group.
     /// </summary>
-    public IList<UserProfile>? Profiles { get; set; }
+    public IList<TenantUserProfile>? Profiles { get; set; }
 }

@@ -40,6 +40,7 @@
             <LoadingArea IsLoading="isLoading">
                 @if (users.Any())
                 {
+                    <p>@users.Count() items found.</p>
                     <QuickGrid Items="users" Class="table table-striped">
                         <TemplateColumn Title="Name" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.UserName)">
                             <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
@@ -110,6 +111,8 @@
             }
             return;
         }
+
+        // TODO: Delete UserProfile
 
         ToastService.ShowSuccess($"User {user.Email} was succesfully deleted.");
         await OnInitializedAsync();

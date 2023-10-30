@@ -4,11 +4,11 @@ using PortalForgeX.Shared.DTOs;
 
 namespace PortalForgeX.Application.Mapping;
 
-public class EntityPageConverter<TEntitySource, TEntityDestination> : ITypeConverter<EntityPage<TEntitySource>, PageModel<TEntityDestination>>
+public class EntityPageConverter<TEntitySource, TEntityDestination> : ITypeConverter<EntityPage<TEntitySource>, PagedList<TEntityDestination>>
     where TEntitySource : class
     where TEntityDestination : class
 {
-    public PageModel<TEntityDestination> Convert(EntityPage<TEntitySource> source, PageModel<TEntityDestination> destination, ResolutionContext context)
+    public PagedList<TEntityDestination> Convert(EntityPage<TEntitySource> source, PagedList<TEntityDestination> destination, ResolutionContext context)
         => new()
         {
             PageIndex = source.Settings.PageIndex ?? 0,

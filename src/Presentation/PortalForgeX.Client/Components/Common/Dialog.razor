@@ -1,25 +1,23 @@
-﻿<CascadingValue Value="this">
-    <dialog @ref="Modal" class="modal-dialog @CssClass">
-        <div class="modal-content text-start">
-            <div class="modal-header">
-                <div class="col">
-                    @Header
-                </div>
-                <div class="col-1 text-end align-self-start">
-                    <span @onclick="CloseDialog" class="fas fa-xmark fs-3" role="button" title="Close dialog." formmethod="dialog" autofocus></span>
-                </div>
+﻿<dialog @ref="Modal" class="modal-dialog @CssClass">
+    <div class="modal-content text-start">
+        <div class="modal-header">
+            <div class="col">
+                @Header
             </div>
-            <div class="modal-body">
-                @if (IsOpen)
-                {
-                    @Body
-                }
+            <div class="col-1 text-end align-self-start">
+                <span @onclick="CloseDialog" class="fas fa-xmark fs-3" role="button" title="Close dialog." formmethod="dialog" autofocus></span>
             </div>
         </div>
+        <div class="modal-body">
+            @if (IsOpen)
+            {
+                @Body
+            }
+        </div>
+    </div>
 
-        <BlazoredToasts ShowProgressBar="true" ShowCloseButton="false" />
-    </dialog>
-</CascadingValue>
+    <BlazoredToasts ShowProgressBar="true" ShowCloseButton="false" />
+</dialog>
 
 @code {
 

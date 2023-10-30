@@ -1,4 +1,5 @@
 ﻿using PortalForgeX.Domain.Entities.Internal;
+using PortalForgeX.Domain.Entities.Tenants;
 
 namespace PortalForgeX.Domain.Entities;
 
@@ -8,14 +9,24 @@ namespace PortalForgeX.Domain.Entities;
 public class UserInGroup : IEntity
 {
     /// <summary>
-    /// Tenant reference.
+    /// Profile reference.
     /// </summary>
-    public Guid UserId { get; set; }
+    public string UserId { get; set; } = null!;
+
+    /// <summary>
+    /// Profile instance.
+    /// </summary>
+    public TenantUserProfile User { get; set; } = null!;
 
     /// <summary>
     /// UserGroup reference.
     /// </summary>
     public int UserGroupId { get; set; }
+
+    /// <summary>
+    /// UserGroup instance.
+    /// </summary>
+    public UserGroup UserGroup { get; set; } = null!;
 
     /// <summary>
     /// UserInGroup has a composite primary key.

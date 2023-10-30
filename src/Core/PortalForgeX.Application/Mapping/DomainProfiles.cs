@@ -54,7 +54,7 @@ public class DomainProfiles : Profile
             .ForMember(x => x.BusinessLocation, opt => opt.Ignore());
 
         // Paging Models
-        CreateMap(typeof(EntityPage<>), typeof(PageModel<>))
+        CreateMap(typeof(EntityPage<>), typeof(PagedList<>))
             .ConvertUsing(typeof(EntityPageConverter<,>));
     }
 }

@@ -11,15 +11,10 @@ public record GeneratePaymentsRequest(int? Amount) : ICommand<GeneratePaymentsRe
         => new();
 }
 
-internal sealed class GeneratePaymentsHandler : IRequestHandler<GeneratePaymentsRequest, GeneratePaymentsResponse>
+internal sealed class GeneratePaymentsHandler(IPaymentSeeder seeder) : IRequestHandler<GeneratePaymentsRequest, GeneratePaymentsResponse>
 {
-    private readonly ISeedService _seeder;
+    private readonly ISeedService _seeder = seeder;
     private const int DEFAULT_AMOUNT = 10000;
-
-    public GeneratePaymentsHandler(IPaymentSeeder seeder)
-    {
-        _seeder = seeder;
-    }
 
     public async Task<GeneratePaymentsResponse> Handle(GeneratePaymentsRequest request, CancellationToken cancellationToken)
     {

@@ -1,7 +1,9 @@
 ﻿@using PortalForgeX.Components.Identity
 
+@inject IJSRuntime JsRuntime
+
 <div class="nav-menu-collapse">
-    <span class="fas fa-angles-left" aria-hidden="true" role="button" onclick="document.querySelector('.compact-toggler').click()" title="Toggle Menu"></span>
+    <span class="fas fa-thumbtack" aria-hidden="true" role="button" onclick="document.querySelector('.compact-toggler').click()" title="Toggle Menu"></span>
 </div>
 
 <div class="top-row ps-3 navbar navbar-dark">
@@ -58,6 +60,12 @@
                 <NavLink class="nav-link" href="/roles">
                     <span class="fas fa-users-gear me-2" aria-hidden="true" title="Roles"></span>
                     <span>Roles</span>
+                </NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="/tenants">
+                    <span class="fas fa-handshake-angle me-2" aria-hidden="true" title="Tenants"></span>
+                    <span>Tenants</span>
                 </NavLink>
             </div>
         </AuthorizeView>

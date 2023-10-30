@@ -21,3 +21,11 @@ public class GeneratePaymentsEndpoint : ApiEndpoint_v1, IFeatureEndpoint
             => (await sender.Send(new GeneratePaymentsRequest(amount), cancellationToken)).ToResponse()
         ).WithTags("DevJobs");
 }
+
+public class GenerateTenantsEndpoint : ApiEndpoint_v1, IFeatureEndpoint
+{
+    public void AddRoutes(IEndpointRouteBuilder app)
+        => app.MapGet(BuildEndpointPath("devjobs/generate-tenants/{amount:int?}"), async (int? amount, ISender sender, CancellationToken cancellationToken)
+            => (await sender.Send(new GenerateTenantsRequest(amount), cancellationToken)).ToResponse()
+        ).WithTags("DevJobs");
+}

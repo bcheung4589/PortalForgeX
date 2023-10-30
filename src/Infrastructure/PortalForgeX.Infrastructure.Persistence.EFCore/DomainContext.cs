@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PortalForgeX.Application.Data;
 using PortalForgeX.Domain.Entities;
+using PortalForgeX.Domain.Entities.Tenants;
 using PortalForgeX.Persistence.EFCore.Configurations;
 using PortalForgeX.Persistence.EFCore.Internal;
 using System.Reflection;
@@ -19,7 +20,7 @@ public class DomainContext(DbContextOptions<DomainContext> options) : BaseModelC
     public DbSet<BusinessLocation> BusinessLocations { get; set; } = null!;
     public DbSet<Checkout> Checkouts { get; set; } = null!;
     public DbSet<Payment> Payments { get; set; } = null!;
-    public DbSet<UserProfile> UserProfiles { get; set; } = null!;
+    public DbSet<TenantUserProfile> UserProfiles { get; set; } = null!;
     public DbSet<UserGroup> UserGroups { get; set; } = null!;
     public DbSet<UserInGroup> UserInGroups { get; set; } = null!;
     public DbSet<UserAccess> UserAccess { get; set; } = null!;
@@ -60,7 +61,7 @@ public class DomainContext(DbContextOptions<DomainContext> options) : BaseModelC
         new PaymentConfiguration().Configure(modelBuilder.Entity<Payment>());
         new CheckoutConfiguration().Configure(modelBuilder.Entity<Checkout>());
         new BusinessLocationConfiguration().Configure(modelBuilder.Entity<BusinessLocation>());
-        new UserProfileConfiguration().Configure(modelBuilder.Entity<UserProfile>());
+        new UserProfileConfiguration().Configure(modelBuilder.Entity<TenantUserProfile>());
         new UserGroupConfiguration().Configure(modelBuilder.Entity<UserGroup>());
         new UserAccessConfiguration().Configure(modelBuilder.Entity<UserAccess>());
         new GroupAccessConfiguration().Configure(modelBuilder.Entity<GroupAccess>());

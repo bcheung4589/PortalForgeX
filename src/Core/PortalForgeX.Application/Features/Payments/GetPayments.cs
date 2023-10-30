@@ -32,7 +32,7 @@ internal sealed class GetPaymentsHandler : IRequestHandler<GetPaymentsRequest, G
         var result = await _unitOfWork.PaymentRepository.GetPageAsync(request.Settings, cancellationToken);
 
         // process
-        response.SetSuccess(_mapper.Map<PageModel<PaymentDto>>(result));
+        response.SetSuccess(_mapper.Map<PagedList<PaymentDto>>(result));
 
         // return
         return response;

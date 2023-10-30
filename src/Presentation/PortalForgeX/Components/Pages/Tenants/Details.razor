@@ -1,5 +1,12 @@
-﻿<h3>Details</h3>
+﻿@page "/tenant/{Id:guid}"
+
+<PageTitle>Tenant Details</PageTitle>
+
+<h1>Tenant Details</h1>
 
 @code {
+
+    [Parameter]
+    public Guid Id { get; set; }
 
 }

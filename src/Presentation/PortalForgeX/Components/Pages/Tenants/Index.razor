@@ -1,5 +1,117 @@
-﻿<h3>Index</h3>
+﻿@page "/tenants"
+
+@using AutoMapper
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Client.Components.ContextMenu
+@using PortalForgeX.Shared.Features.Tenants
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
+
+@inject ITenantService TenantService
+@inject NavigationManager Navigation
+@inject IToastService ToastService
+@inject IJSRuntime JSRuntime
+@inject IMapper Mapper
+
+<PageTitle>Tenants</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Tenants" IconCssClass="fas fa-handshake-angle" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<div class="row">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-handshake-angle"></span>
+                    Tenants Management
+                </h1>
+                <p class="m-0">Browse and manage the tenants.</p>
+            </div>
+            <div class="col-lg-4">
+                @* CREATE DIALOG *@
+            </div>
+        </div>
+        <div class="card-body mt-0">
+            <LoadingArea IsLoading="isLoading">
+                @if (tenantsSource.Any())
+                {
+                    <p>@tenantsSource.Count() items found.</p>
+                    <QuickGrid Items="tenantsSource" Class="table table-striped">
+                        <TemplateColumn Title="Name" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.Name)">
+                            <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.Name">@context.Name</span>
+                            <span class="text-muted small">@context.ExternalId</span>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Status" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.Status)">
+                            <TenantStatusBadge Status="@context.Status" />
+                        </TemplateColumn>
+                        <PropertyColumn Title="Internal Name" Property="x => x.InternalName" Sortable="true" />
+                        <PropertyColumn Title="Host" Property="x => x.Host" Sortable="true" />
+                        <TemplateColumn Title="Manager" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.ManagerName)">
+                            <a href="user/@context.ManagerId">@context.ManagerName</a>
+                        </TemplateColumn>
+                        <TemplateColumn>
+                            <ContextMenu Model="@context">
+                                <MenuItem TEntity="TenantViewModel" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                <MenuItem TEntity="TenantViewModel" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                            </ContextMenu>
+                        </TemplateColumn>
+                    </QuickGrid>
+                }
+                else
+                {
+                    <p class="text-muted">No users found.</p>
+                }
+            </LoadingArea>
+        </div>
+    </div>
+</div>
 
 @code {
+
+    private IQueryable<TenantViewModel> tenantsSource = null!;
+    private bool isLoading;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        isLoading = true;
+
+        var tenants = await TenantService.GetAsync();
+        var mappedTenants = Mapper.Map<IEnumerable<TenantViewModel>>(tenants);
+        tenantsSource = mappedTenants.AsQueryable();
+
+        isLoading = false;
+    }
+
+    protected void NavigateTo(TenantViewModel tenant)
+        => Navigation.NavigateTo($"tenant/{tenant.Id}");
+
+    protected async Task DeleteAsync(TenantViewModel tenant)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete tenant {tenant.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await TenantService.DeleteAsync(tenant.Id);
+        if (!result)
+        {
+            ToastService.ShowSuccess($"There was a problem deleting {tenant.Name}. Contact support for more information.");
+            return;
+        }
+
+        ToastService.ShowSuccess($"Tenant {tenant.Name} was succesfully deleted.");
+        await OnInitializedAsync();
+    }
 
 }

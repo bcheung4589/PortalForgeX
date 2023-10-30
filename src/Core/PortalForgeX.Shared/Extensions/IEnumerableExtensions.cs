@@ -25,7 +25,7 @@ public static class IEnumerableExtensions
         var parsedList = source
             .Select(searchItem =>
             {
-                T resultValue = default; // placeholder for out parameter
+                T resultValue = default!; // placeholder for out parameter
                 var parameters = new object[] { searchItem, resultValue };
                 if ((bool?)parseMethod.Invoke(null, parameters) == true)
                 {

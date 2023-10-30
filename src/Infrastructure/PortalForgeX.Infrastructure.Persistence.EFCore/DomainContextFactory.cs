@@ -1,10 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PortalForgeX.Application.Data;
+using PortalForgeX.Domain.Entities.Tenants;
+using PortalForgeX.Domain.Services;
 
 namespace PortalForgeX.Persistence.EFCore;
 
 /// <inheritdoc/>
-public class DomainContextFactory : IDomainContextFactory
+public class DomainContextFactory(ITenantConnectionProvider tenantConnectionProvider) : IDomainContextFactory
 {
     /// <inheritdoc/>
     public IDomainContext CreateDomainContext(string connectionString)
@@ -14,4 +16,8 @@ public class DomainContextFactory : IDomainContextFactory
 
         return new DomainContext(optionsBuilder.Options);
     }
+
+    /// <inheritdoc/>
+    public IDomainContext CreateDomainContext(Tenant tenant)
+        => CreateDomainContext(tenantConnectionProvider.Provide(tenant));
 }

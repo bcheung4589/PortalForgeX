@@ -48,12 +48,8 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                 name: "UserProfiles",
                 columns: table => new
                 {
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    FirstName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    LastName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
-                    CreationTime = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    LastAccessTime = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true)
                 },
                 constraints: table =>
                 {
@@ -144,6 +140,7 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                 {
                     UserProfileId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    UserProfileUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     AuthorizedUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     LastModificationTime = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
@@ -151,8 +148,8 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                 {
                     table.PrimaryKey("PK_UserAccess", x => new { x.UserProfileId, x.Name });
                     table.ForeignKey(
-                        name: "FK_UserAccess_UserProfiles_UserProfileId",
-                        column: x => x.UserProfileId,
+                        name: "FK_UserAccess_UserProfiles_UserProfileUserId",
+                        column: x => x.UserProfileUserId,
                         principalTable: "UserProfiles",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
@@ -162,13 +159,12 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                 name: "UserInGroups",
                 columns: table => new
                 {
-                    UserGroupId = table.Column<int>(type: "int", nullable: false),
-                    UserProfileUserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    UserGroupId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UserInGroups", x => new { x.UserGroupId, x.UserProfileUserId });
+                    table.PrimaryKey("PK_UserInGroups", x => new { x.UserGroupId, x.UserId });
                     table.ForeignKey(
                         name: "FK_UserInGroups_UserGroups_UserGroupId",
                         column: x => x.UserGroupId,
@@ -176,8 +172,8 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_UserInGroups_UserProfiles_UserProfileUserId",
-                        column: x => x.UserProfileUserId,
+                        name: "FK_UserInGroups_UserProfiles_UserId",
+                        column: x => x.UserId,
                         principalTable: "UserProfiles",
                         principalColumn: "UserId",
                         onDelete: ReferentialAction.Cascade);
@@ -290,9 +286,14 @@ namespace PortalForgeX.Persistence.EFCore.Migrations.Domain
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserInGroups_UserProfileUserId",
-                table: "UserInGroups",
+                name: "IX_UserAccess_UserProfileUserId",
+                table: "UserAccess",
                 column: "UserProfileUserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserInGroups_UserId",
+                table: "UserInGroups",
+                column: "UserId");
         }
 
         /// <inheritdoc />

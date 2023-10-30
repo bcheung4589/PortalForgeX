@@ -92,7 +92,7 @@
     public RenderFragment? ChildContent { get; set; }
 
     [Parameter]
-    public PageModel<TEntity> DataSource { get; set; } = null!;
+    public PagedList<TEntity> DataSource { get; set; } = null!;
 
     [Parameter]
     public string? CssClass { get; set; }

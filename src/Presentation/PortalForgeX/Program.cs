@@ -169,6 +169,7 @@ builder.Services.AddScoped<ISmtpService, SmtpService>();
 // Seeders
 builder.Services.AddScoped<IPaymentSeeder, PaymentSeeder>();
 builder.Services.AddScoped<IClientSeeder, ClientSeeder>();
+builder.Services.AddScoped<ITenantSeeder, TenantSeeder>();
 
 #endif
 

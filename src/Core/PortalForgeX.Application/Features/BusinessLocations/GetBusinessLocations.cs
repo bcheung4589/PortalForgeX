@@ -32,7 +32,7 @@ internal sealed class GetBusinessLocationsHandler : IRequestHandler<GetBusinessL
         var result = await _unitOfWork.BusinessLocationRepository.GetPageAsync(request.Settings, cancellationToken);
 
         // process
-        response.SetSuccess(_mapper.Map<PageModel<BusinessLocationDto>>(result));
+        response.SetSuccess(_mapper.Map<PagedList<BusinessLocationDto>>(result));
 
         // return
         return response;

@@ -1,4 +1,6 @@
-﻿namespace PortalForgeX.Application.Data;
+﻿using PortalForgeX.Domain.Entities.Tenants;
+
+namespace PortalForgeX.Application.Data;
 
 /// <summary>
 /// Simple Factory to create DomainContext instances that can be used for
@@ -12,4 +14,11 @@ public interface IDomainContextFactory
     /// <param name="connectionString"></param>
     /// <returns></returns>
     IDomainContext CreateDomainContext(string connectionString);
+
+    /// <summary>
+    /// Create and provide a DomainContext based on the given <paramref name="tenant"/>.
+    /// </summary>
+    /// <param name="tenant"></param>
+    /// <returns></returns>
+    IDomainContext CreateDomainContext(Tenant tenant);
 }

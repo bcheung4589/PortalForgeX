@@ -56,6 +56,8 @@
 
     private async Task OnValidSubmitAsync()
     {
+        // TODO: FirstName, LastName
+
         if (Input.PhoneNumber != _phoneNumber)
         {
             var setPhoneResult = await UserManager.SetPhoneNumberAsync(_user, Input.PhoneNumber);
