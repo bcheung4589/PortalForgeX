@@ -42,6 +42,7 @@
             <LoadingArea IsLoading="isLoading">
                 @if (roles.Any())
                 {
+                    <p>@roles.Count() items found.</p>
                     <QuickGrid Items="roles" Class="table table-striped">
                         <TemplateColumn Title="Name" SortBy="GridSort<ApplicationRole>.ByAscending(p => p.Name)">
                             <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.Name">@context.Name</span>

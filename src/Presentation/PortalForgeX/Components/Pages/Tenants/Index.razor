@@ -1,7 +1,9 @@
 ﻿@page "/tenants"
 
 @using AutoMapper
+@using Microsoft.AspNetCore.Components.QuickGrid
 @using PortalForgeX.Application.Tenants
+@using PortalForgeX.Client.Components.ContextMenu
 @using PortalForgeX.Shared.Features.Tenants
 
 @rendermode RenderMode.InteractiveServer
@@ -37,7 +39,37 @@
             </div>
         </div>
         <div class="card-body mt-0">
-            @* BODY *@
+            <LoadingArea IsLoading="isLoading">
+                @if (tenantsSource.Any())
+                {
+                    <p>@tenantsSource.Count() items found.</p>
+                    <QuickGrid Items="tenantsSource" Class="table table-striped">
+                        <TemplateColumn Title="Name" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.Name)">
+                            <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.Name">@context.Name</span>
+                            <span class="text-muted small">@context.ExternalId</span>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Status" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.Status)">
+                            <TenantStatusBadge Status="@context.Status" />
+                        </TemplateColumn>
+                        <PropertyColumn Title="Internal Name" Property="x => x.InternalName" Sortable="true" />
+                        <PropertyColumn Title="Host" Property="x => x.Host" Sortable="true" />
+                        <TemplateColumn Title="Manager" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.ManagerName)">
+                            <a href="user/@context.ManagerId">@context.ManagerName</a>
+                        </TemplateColumn>
+                        <TemplateColumn>
+                            <ContextMenu Model="@context">
+                                <MenuItem TEntity="TenantViewModel" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                <MenuItem TEntity="TenantViewModel" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                            </ContextMenu>
+                        </TemplateColumn>
+                    </QuickGrid>
+                }
+                else
+                {
+                    <p class="text-muted">No users found.</p>
+                }
+            </LoadingArea>
         </div>
     </div>
 </div>

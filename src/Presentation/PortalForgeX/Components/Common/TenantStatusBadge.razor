@@ -1,0 +1,44 @@
+﻿@using PortalForgeX.Domain.Enums
+
+@if (_status is not null)
+{
+    var statusLevel = "";
+    switch (_status)
+    {
+        case TenantStatus.Created:
+            statusLevel = "bg-warning";
+            break;
+        case TenantStatus.Approved:
+            statusLevel = "bg-primary";
+            break;
+        case TenantStatus.Rejected:
+            statusLevel = "bg-secondary";
+            break;
+        case TenantStatus.DbMigrated:
+            statusLevel = "bg-info";
+            break;
+        case TenantStatus.Ready:
+            statusLevel = "bg-success";
+            break;
+    }
+    <span class="badge @statusLevel">@Status</span>
+}
+
+@code {
+
+    [Parameter]
+    public string Status { get; set; } = null!;
+
+    private TenantStatus? _status;
+
+    protected override Task OnParametersSetAsync()
+    {
+        if (Enum.TryParse<TenantStatus>(Status, out var status))
+        {
+            _status = status;
+        }
+
+        return base.OnParametersSetAsync();
+    }
+
+}

@@ -4,7 +4,6 @@ using PortalForgeX.Domain.Entities.Internal;
 using PortalForgeX.Shared.Extensions;
 using PortalForgeX.Shared.FieldFilters;
 using PortalForgeX.Shared.FieldFilters.Internals;
-using PortalForgeX.Shared.Extensions;
 using System.Linq.Expressions;
 using System.Reflection;
 
