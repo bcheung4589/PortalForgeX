@@ -1,5 +1,7 @@
 ﻿@using PortalForgeX.Components.Identity
 
+@inject IJSRuntime JsRuntime
+
 <div class="nav-menu-collapse">
     <span class="fas fa-thumbtack" aria-hidden="true" role="button" onclick="document.querySelector('.compact-toggler').click()" title="Toggle Menu"></span>
 </div>
@@ -109,3 +111,11 @@
         </AuthorizeView>
     </nav>
 </div>
+
+@code {
+
+    private bool toggleMenuCollapsed = true;
+
+    public void ToggleMenu() => toggleMenuCollapsed = !toggleMenuCollapsed;
+
+}
