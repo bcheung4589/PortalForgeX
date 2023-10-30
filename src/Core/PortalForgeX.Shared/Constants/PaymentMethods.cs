@@ -1,4 +1,4 @@
-﻿namespace PortalForgeX.Shared.DTOs;
+﻿namespace PortalForgeX.Shared.Constants;
 
 public static class PaymentMethods
 {
