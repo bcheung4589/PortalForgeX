@@ -1,9 +1,11 @@
-﻿@using PortalForgeX.Application.Tenants
+﻿@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Application.Tenants
 @using PortalForgeX.Domain.Entities.Tenants
 
 @inherits FormPage<Tenant>
 
 @inject ITenantService TenantService
+@inject UserManager<ApplicationUser> UserManager
 
 <button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
     <span class="fas fa-plus"></span>
@@ -16,6 +18,21 @@
     </Header>
     <Body>
         <EditForm FormName="CreateTenantForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <select @bind="Model.ManagerId" class="form-control form-control-solid form-select custom-select" id="managerSelect">
+                            <option value="">-</option>
+                            @foreach (var option in Users)
+                            {
+                                <option value="@option.Id">@option.UserName</option>
+                            }
+                        </select>
+                        <HelpTextTool Content="Select the Manager." />
+                        <label for="managerSelect">Manager</label>
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col">
                     <div class="form-floating mb-3">
@@ -71,6 +88,14 @@
 
     protected Dialog Dialog = null!;
     protected override Tenant InitModel => new() { IsActive = true, TenantSettings = new TenantSettings() };
+    protected IQueryable<ApplicationUser> Users = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Users = UserManager.Users;
+    }
 
     protected async Task SaveAsync()
         => await TryRunAsync(async () =>
