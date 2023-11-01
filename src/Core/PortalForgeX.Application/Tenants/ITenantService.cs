@@ -101,24 +101,4 @@ public interface ITenantService
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Add a tenants user profile to the specified groups.
-    /// </summary>
-    /// <param name="tenant"></param>
-    /// <param name="userId"></param>
-    /// <param name="groupIds"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>Amount of groups added to.</returns>
-    Task<int> AddProfileToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Remove a tenants user profile from the specified groups.
-    /// </summary>
-    /// <param name="tenant"></param>
-    /// <param name="userId"></param>
-    /// <param name="groupIds"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>Amount of groups removed from.</returns>
-    Task<int> RemoveProfileFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
 }

@@ -5,8 +5,9 @@
 @using PortalForgeX.Application.Tenants
 @using PortalForgeX.Client.Components.ContextMenu
 @using PortalForgeX.Shared.Features.Tenants
+@using PortalForgeX.Components.Dialogs
 
-@rendermode RenderMode.InteractiveServer
+@attribute [RenderModeInteractiveServer(false)]
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
 
@@ -35,7 +36,7 @@
                 <p class="m-0">Browse and manage the tenants.</p>
             </div>
             <div class="col-lg-4">
-                @* CREATE DIALOG *@
+                <TenantCreateDialog @rendermode="RenderMode.InteractiveServer" />
             </div>
         </div>
         <div class="card-body mt-0">
@@ -67,7 +68,7 @@
                 }
                 else
                 {
-                    <p class="text-muted">No users found.</p>
+                    <p class="text-muted">No tenants found.</p>
                 }
             </LoadingArea>
         </div>

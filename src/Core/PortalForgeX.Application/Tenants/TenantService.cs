@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PortalForgeX.Application.Data;
 using PortalForgeX.Domain.Entities.Identity;
-using PortalForgeX.Domain.Entities.Internal;
 using PortalForgeX.Domain.Entities.Tenants;
 using PortalForgeX.Domain.Enums;
 using PortalForgeX.Domain.Events;
 using PortalForgeX.Shared.Constants;
+using PortalForgeX.Shared.Extensions;
 using PortalForgeX.Shared.Features.Tenants;
 
 namespace PortalForgeX.Application.Tenants;
@@ -42,6 +42,23 @@ public class TenantService(
         tenant.Id = Guid.NewGuid();
         tenant.CreationTime = DateTime.UtcNow;
         tenant.Status = TenantStatus.Created;
+        tenant.TenantSettings.Id = Guid.NewGuid();
+        tenant.TenantSettings.CreationTime = DateTime.UtcNow;
+
+        if (string.IsNullOrWhiteSpace(tenant.InternalName))
+        {
+            var internalName = tenant.Name.SanitizeAlphaNum();
+            if (internalName.Contains(' '))
+            {
+                do
+                {
+                    internalName = internalName.Replace(" ", "_");
+                }
+                while (internalName.Contains(' '));
+            }
+
+            tenant.InternalName = internalName;
+        }
 
         var entity = (await portalContext.Tenants.AddAsync(tenant, cancellationToken)).Entity;
         var changes = await portalContext.SaveChangesAsync(cancellationToken);
@@ -65,7 +82,6 @@ public class TenantService(
         foundEntity.Host = tenant.Host;
         foundEntity.IsActive = tenant.IsActive;
         foundEntity.Remarks = tenant.Remarks;
-        foundEntity.TenantSettingsId = tenant.TenantSettingsId;
         foundEntity.LastModificationTime = DateTime.UtcNow;
 
         var changes = await portalContext.SaveChangesAsync(cancellationToken);
@@ -83,6 +99,7 @@ public class TenantService(
         }
 
         foundEntity.Status = newStatus;
+        foundEntity.LastModificationTime = DateTime.UtcNow;
 
         var changes = await portalContext.SaveChangesAsync(cancellationToken);
 
@@ -253,67 +270,5 @@ public class TenantService(
     }
 
     #endregion [ User Profiles ]
-
-    #region [ UserGroups ]
-
-    // CREATE, UPDATE, DELETE UserGroup
-
-    /// <inheritdoc/>
-    public async Task<int> AddProfileToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
-    {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
-        {
-            return 0;
-        }
-
-        var foundUser = await userManager.FindByIdAsync(userId);
-        if (foundUser is null)
-        {
-            return 0;
-        }
-
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
-        foreach (var groupId in groupIds)
-        {
-            if ((await domainContext.UserGroups.FindAsync([groupId], cancellationToken: cancellationToken)) == null)
-            {
-                continue;
-            }
-
-            await domainContext.UserInGroups.AddAsync(new Domain.Entities.UserInGroup
-            {
-                UserGroupId = groupId,
-                UserId = userId
-            }, cancellationToken);
-        }
-
-        return await domainContext.SaveChangesAsync(cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public async Task<int> RemoveProfileFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
-    {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
-        {
-            return 0;
-        }
-
-        var foundUser = await userManager.FindByIdAsync(userId);
-        if (foundUser is null)
-        {
-            return 0;
-        }
-
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
-        var result = await domainContext.UserInGroups
-            .Where(x => x.UserId.Equals(userId) && groupIds.Contains(x.UserGroupId))
-            .ExecuteDeleteAsync(cancellationToken: cancellationToken);
-
-        return result;
-    }
-
-    #endregion [ UserGroups ]
 
 }

@@ -1,0 +1,85 @@
+﻿@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Domain.Entities.Tenants
+
+@inherits FormPage<Tenant>
+
+@inject ITenantService TenantService
+
+<button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+    <span class="fas fa-plus"></span>
+    Create
+</button>
+<Dialog @ref="Dialog">
+    <Header>
+        <h1>Create Tenant</h1>
+        <span class="text-muted">Fill in the tenant details.</span>
+    </Header>
+    <Body>
+        <EditForm FormName="CreateTenantForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.Name" class="form-control form-control-solid" id="nameInput" placeholder="Name" required />
+                        <HelpTextTool Content="Input the role name." />
+                        <label for="nameInput">Name*</label>
+                        <ValidationMessage For="(() => Model!.Name)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.Host" class="form-control form-control-solid" id="hostInput" placeholder="Host" required />
+                        <HelpTextTool Content="Input the host name." />
+                        <label for="hostInput">Host*</label>
+                        <ValidationMessage For="(() => Model!.Host)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-check form-switch form-check-custom form-check-solid mb-3">
+                        <InputCheckbox class="form-check-input me-1" id="isActiveInput" @bind-Value="Model!.IsActive" placeholder="Active" />
+                        <label class="form-check-label text-muted" for="isActiveInput">Active</label>
+                        <HelpTextTool Content="Indicates if the tenant is an active tenant." />
+                        <ValidationMessage For="(() => Model!.IsActive)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputTextArea class="form-control form-control-solid" id="remarksInput" @bind-Value="Model!.Remarks" placeholder="Remarks" maxlength="2000" style="height: 100px"></InputTextArea>
+                        <label for="remarksInput">Remarks</label>
+                        <span class="chars-counter">2000 chars left</span>
+                        <HelpTextTool Content="Remarks." />
+                        <ValidationMessage For="(() => Model!.Remarks)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col text-end">
+                    <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                    <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                </div>
+            </div>
+        </EditForm>
+    </Body>
+</Dialog>
+
+@code {
+
+    protected Dialog Dialog = null!;
+    protected override Tenant InitModel => new() { IsActive = true, TenantSettings = new TenantSettings() };
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await TenantService.CreateAsync(Model);
+            if (result != null)
+            {
+                Navigation.NavigateTo($"/tenant/{result?.Id}");
+            }
+        });
+
+}
