@@ -180,22 +180,16 @@ public class TenantService(
     /// <inheritdoc/>
     public async Task<IEnumerable<TenantUserViewModel>?> GetTenantUsers(Tenant tenant, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
-        {
-            return null;
-        }
-
         var tenantUsers = await userManager.Users.Where(x => x.TenantId == tenant.Id).ToListAsync(cancellationToken: cancellationToken);
-        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers); // map ApplicationUser
-
+        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
         var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
         var userProfiles = await domainContext.UserProfiles
             .Include(x => x.Groups)
             .Where(x => tenantUsersIds.Contains(x.UserId))
             .ToListAsync(cancellationToken: cancellationToken);
-        mapper.Map(userProfiles, tenantUsersViews); // map TenantUserProfile
+
+        mapper.Map(userProfiles, tenantUsersViews);
 
         return tenantUsersViews;
     }
@@ -237,12 +231,6 @@ public class TenantService(
     /// <inheritdoc/>
     public async Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserProfile updateProfile, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
-        {
-            return false;
-        }
-
         var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var tenantProfile = await domainContext.UserProfiles.FindAsync([updateProfile.UserId], cancellationToken: cancellationToken);
         if (tenantProfile is null)
@@ -259,12 +247,6 @@ public class TenantService(
     /// <inheritdoc/>
     public async Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
-        {
-            return false;
-        }
-
         var domainContext = domainContextFactory.CreateDomainContext(tenant);
 
         var result = await domainContext.UserProfiles
