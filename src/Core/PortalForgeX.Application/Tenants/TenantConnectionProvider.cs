@@ -4,15 +4,9 @@ using PortalForgeX.Domain.Services;
 namespace PortalForgeX.Application.Tenants;
 
 /// <inheritdoc/>
-public class TenantConnectionProvider : ITenantConnectionProvider
+public class TenantConnectionProvider(string connectionStringFormat) : ITenantConnectionProvider
 {
-    private string _connectionStringFormat = string.Empty;
-
-    /// <inheritdoc/>
-    public void RegisterFromConfig(string connectionStringFormat)
-    {
-        _connectionStringFormat += connectionStringFormat;
-    }
+    private readonly string _connectionStringFormat = connectionStringFormat;
 
     /// <inheritdoc/>
     public string Provide(Tenant? tenant)

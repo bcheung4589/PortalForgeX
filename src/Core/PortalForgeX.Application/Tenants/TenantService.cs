@@ -20,7 +20,7 @@ public class TenantService(
     IPortalContext portalContext,
     IDomainContextFactory domainContextFactory,
     UserManager<ApplicationUser> userManager,
-    ISender sender,
+    IMediator sender,
     IMapper mapper
     ) : ITenantService
 {
@@ -146,7 +146,7 @@ public class TenantService(
         if (succeeded)
         {
             /// <see cref="TenantReviewEventHandler"/>
-            await sender.Send(new TenantApprovedEvent(foundEntity), cancellationToken);
+            await sender.Publish(new TenantApprovedEvent(foundEntity), cancellationToken);
         }
 
         return succeeded;
@@ -167,7 +167,7 @@ public class TenantService(
         if (succeeded)
         {
             /// <see cref="TenantReviewEventHandler"/>
-            await sender.Send(new TenantRejectedEvent(foundEntity), cancellationToken);
+            await sender.Publish(new TenantRejectedEvent(foundEntity), cancellationToken);
         }
 
         return succeeded;

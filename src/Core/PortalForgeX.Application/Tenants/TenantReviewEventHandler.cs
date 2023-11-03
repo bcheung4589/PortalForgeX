@@ -42,11 +42,11 @@ public class TenantReviewEventHandler(
         {
             var domainContext = domainContextFactory.CreateDomainContext(notification.Tenant);
 
-            _logger.LogDebug("Tenant Migration Started on {Name}", notification.Tenant.Name);
+            _logger.LogInformation("Tenant Migration Started on {Name}", notification.Tenant.Name);
 
             await domainContext.MigrateAsync(cancellationToken);
 
-            _logger.LogDebug("Tenant Migration Completed on {Name}", notification.Tenant.Name);
+            _logger.LogInformation("Tenant Migration Completed on {Name}", notification.Tenant.Name);
 
             _ = await tenantService.UpdateStatusAsync(notification.Tenant.Id, TenantStatus.DbMigrated, cancellationToken);
         }

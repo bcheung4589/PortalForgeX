@@ -65,12 +65,11 @@ builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose:
  * - The DomainContext is used by Tenants for data persistance.
  * - Each Tenant gets its own database.
  */
+builder.Services.AddSingleton<ITenantConnectionProvider>(new TenantConnectionProvider(builder.Configuration.GetConnectionString("DomainConnection")!));
 builder.Services.AddDbContext<IDomainContext, DomainContext>((services, options) =>
 {
     var connectionProvider = services.GetRequiredService<ITenantConnectionProvider>();
     var accessor = services.GetRequiredService<TenantAccessor>();
-
-    connectionProvider.RegisterFromConfig(builder.Configuration.GetConnectionString("DomainConnection")!);
     var tenantConnection = connectionProvider.Provide(accessor.CurrentTenant);
 
     options.UseSqlServer(tenantConnection, sqlServerOptionsAction: sqlOptions =>
@@ -188,7 +187,6 @@ builder.Services.AddMediatR(cfg =>
 // Add Tenants Services
 builder.Services.AddScoped<TenantAccessor>();
 builder.Services.AddScoped<ITenantService, TenantService>();
-builder.Services.AddScoped<ITenantConnectionProvider, TenantConnectionProvider>();
 
 // Features Endpoints
 builder.Services.AddFeaturesEndpoints();
