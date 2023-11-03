@@ -33,20 +33,17 @@
     }
 
         .compact-toggler:checked ~ .sidebar:not(:hover) .nav-item.divider-title {
-            height: 0;
-            padding: 0;
+            padding-left: 0 !important;
+            text-align: center;
             font-size: 0;
         }
+
+            .compact-toggler:checked ~ .sidebar:not(:hover) .nav-item.divider-title:first-letter {
+                font-size: 15px;
+            }
 
         .compact-toggler:checked ~ .sidebar:not(:hover) .nav-item span:not(.fas) {
             font-size: 0;
-        }
-
-        .compact-toggler:checked ~ .sidebar:not(:hover) .navbar-brand {
-            display: none;
-        }
-
-        .compact-toggler:checked ~ .sidebar:not(:hover) .nav-menu-collapse .fa-thumbtack:before {
         }
 
         .compact-toggler:checked ~ .sidebar .nav-menu-collapse .fa-thumbtack:before {
@@ -99,12 +96,22 @@
     display: none;
 }
 
+    .nav-scrollable .nav-item.divider-title {
+        border-top: 1px solid #333;
+        font-size: 15px;
+    }
+
 .navbar-toggler:checked ~ .nav-scrollable,
 .compact-toggler:checked ~ .nav-scrollable {
     display: block;
 }
 
 @media (min-width: 641px) {
+
+    .compact-toggler:checked ~ .sidebar:not(:hover) .navbar-brand {
+        display: none;
+    }
+
     .navbar-toggler, .compact-toggler {
         display: none;
     }

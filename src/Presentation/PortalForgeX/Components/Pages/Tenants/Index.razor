@@ -56,7 +56,9 @@
                         <PropertyColumn Title="Internal Name" Property="x => x.InternalName" Sortable="true" />
                         <PropertyColumn Title="Host" Property="x => x.Host" Sortable="true" />
                         <TemplateColumn Title="Manager" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.ManagerName)">
-                            <a href="user/@context.ManagerId">@context.ManagerName</a>
+                            <NullableField Value="context.ManagerName">
+                                <a href="user/@context.ManagerId">@context.ManagerName</a>
+                            </NullableField>
                         </TemplateColumn>
                         <TemplateColumn>
                             <ContextMenu Model="@context">

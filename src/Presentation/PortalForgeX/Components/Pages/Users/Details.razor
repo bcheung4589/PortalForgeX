@@ -115,7 +115,7 @@
                                             <HelpTextTool Content="Email of the user." />
                                             <span class="text-muted">Email</span>
                                         </div>
-                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Email">
+                                        <data @ondblclick="template.Edit" class="ps-4">
                                             @template.Model.Email
                                         </data>
                                     </ViewTemplate>
@@ -136,7 +136,7 @@
                                             <HelpTextTool Content="PhoneNumber of the user." />
                                             <span class="text-muted">Phonenumber</span>
                                         </div>
-                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.PhoneNumber">
+                                        <data @ondblclick="template.Edit" class="ps-4">
                                             <NullableField Value="@template.Model.PhoneNumber" />
                                         </data>
                                     </ViewTemplate>
@@ -178,7 +178,7 @@
                                             <HelpTextTool Content="Indicator if the user is active." />
                                             <span class="text-muted">Actief</span>
                                         </div>
-                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.IsActive">
+                                        <data @ondblclick="template.Edit" class="ps-4">
                                             <SwitchCircleIndicator IsOn="@template.Model.IsActive" Title="Actief" OffTitle="Inactief" CssClass="ms-3 mb-2 mt-2" />
                                         </data>
                                     </ViewTemplate>
@@ -200,7 +200,7 @@
                                             <HelpTextTool Content="Remarks about the user." />
                                             <span class="text-muted">Remarks</span>
                                         </div>
-                                        <data @ondblclick="template.Edit" class="ps-4" value="@template.Model.Remarks">
+                                        <data @ondblclick="template.Edit" class="ps-4">
                                             <NullableField Value="@template.Model.Remarks" />
                                         </data>
                                     </ViewTemplate>

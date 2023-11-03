@@ -21,7 +21,7 @@
                 <select class="@FormControlCssClass" id="@(DisplayName + "Input")" multiple="@typeof(TValue).IsArray" @bind="Value" @oninput="OnChanged">
                     @if (DataSource is not null)
                     {
-                        if (Nullable.GetUnderlyingType(typeof(TValue)) is not null)
+                        if (ShowEmptyOption)
                         {
                             <option value="">-</option>
                         }
@@ -64,6 +64,9 @@
 
     [Parameter]
     public IEnumerable<TSourceModel> DataSource { get; set; } = null!;
+
+    [Parameter]
+    public bool ShowEmptyOption { get; set; }
 
     [Parameter]
     public Func<TSourceModel, object> DisplayText { get; set; } = null!;

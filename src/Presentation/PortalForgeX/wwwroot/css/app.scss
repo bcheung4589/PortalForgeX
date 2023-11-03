@@ -203,6 +203,10 @@ form .card-footer {
         font-size: 14px;
     }
 
+    > .form-control[type=color] {
+        height: calc(3.5rem + 2px);
+    }
+
     > label {
         padding-left: 3em;
     }
@@ -329,7 +333,7 @@ form .card-footer {
     .card-header {
         display: flex;
         justify-content: space-between;
-        align-items: center!important;
+        align-items: center !important;
         flex-wrap: wrap;
         padding: 0 1rem;
 
@@ -412,8 +416,19 @@ form .card-footer {
 
 @media only screen and (min-width: 900px) {
 
-    .form-field .form-field-edit-cmd {
-        visibility: hidden;
+    .form-field-edit-cmd, .popinfo {
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+    }
+
+    .form-field {
+        background-color: rgba(var(--bs-light-rgb),1) !important;
+        border-radius: 3px;
+        padding: 5px;
+
+        .form-field-edit-cmd {
+            visibility: hidden;
+        }
     }
 
     .form-field:hover .form-field-edit-cmd {

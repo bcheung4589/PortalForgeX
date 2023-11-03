@@ -5,7 +5,6 @@ using PortalForgeX.Application.Data;
 using PortalForgeX.Application.Notifiers;
 using PortalForgeX.Domain.Enums;
 using PortalForgeX.Domain.Events;
-using PortalForgeX.Domain.Services;
 
 namespace PortalForgeX.Application.Tenants;
 
@@ -50,7 +49,6 @@ public class TenantReviewEventHandler(
             _logger.LogDebug("Tenant Migration Completed on {Name}", notification.Tenant.Name);
 
             _ = await tenantService.UpdateStatusAsync(notification.Tenant.Id, TenantStatus.DbMigrated, cancellationToken);
-
         }
         catch (Exception ex)
         {

@@ -30,11 +30,16 @@ public class TenantService(
 
     /// <inheritdoc/>
     public async Task<IEnumerable<Tenant>> GetAsync(CancellationToken cancellationToken = default)
-        => await portalContext.Tenants.Include(x => x.Manager).ToListAsync(cancellationToken: cancellationToken);
+        => await portalContext.Tenants
+            .Include(x => x.Manager)
+            .ToListAsync(cancellationToken: cancellationToken);
 
     /// <inheritdoc/>
     public async Task<Tenant?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await portalContext.Tenants.Include(x => x.Manager).FirstOrDefaultAsync(x => x.Id == id, cancellationToken: cancellationToken);
+        => await portalContext.Tenants
+            .Include(x => x.Manager)
+            .Include(x => x.TenantSettings)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken: cancellationToken);
 
     /// <inheritdoc/>
     public async Task<Tenant?> CreateAsync(Tenant tenant, CancellationToken cancellationToken = default)
@@ -57,7 +62,7 @@ public class TenantService(
                 while (internalName.Contains(' '));
             }
 
-            tenant.InternalName = internalName;
+            tenant.InternalName = internalName.ToLower();
         }
 
         var entity = (await portalContext.Tenants.AddAsync(tenant, cancellationToken)).Entity;
