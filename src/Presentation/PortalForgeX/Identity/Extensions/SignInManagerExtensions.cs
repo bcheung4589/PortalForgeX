@@ -15,9 +15,19 @@ public static class SignInManagerExtensions
             return;
         }
 
-        // Add the TenantId to the User Claims
+        // Assign the TenantId to the User Claims
         if (user.TenantId is not null && user.TenantId != Guid.Empty)
         {
+            var userClaims = await source.UserManager.GetClaimsAsync(user);
+            if (userClaims.Any())
+            {
+                var tenantClaims = userClaims.Where(x => x.Type == TenantClaimTypes.TenantId);
+                if (tenantClaims.Any())
+                {
+                    await source.UserManager.RemoveClaimsAsync(user, tenantClaims);
+                }
+            }
+
             await source.UserManager.AddClaimAsync(user, new Claim(TenantClaimTypes.TenantId, user.TenantId.ToString()!));
         }
 

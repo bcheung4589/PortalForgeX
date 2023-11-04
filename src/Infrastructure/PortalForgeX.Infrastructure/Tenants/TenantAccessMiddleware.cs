@@ -3,8 +3,17 @@ using PortalForgeX.Application.Tenants;
 
 namespace PortalForgeX.Infrastructure.Tenants;
 
-public class TenantAccessMiddleware(ITenantService tenantService, TenantAccessor tenantAccessor) : IMiddleware
+public class TenantAccessMiddleware : IMiddleware
 {
+    private readonly ITenantService _tenantService;
+    private readonly TenantAccessor _tenantAccessor;
+
+    public TenantAccessMiddleware(ITenantService tenantService, TenantAccessor tenantAccessor)
+    {
+        _tenantService = tenantService;
+        _tenantAccessor = tenantAccessor;
+    }
+
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         try
@@ -13,7 +22,7 @@ public class TenantAccessMiddleware(ITenantService tenantService, TenantAccessor
             var tenantClaim = context.User.Claims.FirstOrDefault(x => x.Type == TenantClaimTypes.TenantId);
             if (tenantClaim != null && Guid.TryParse(tenantClaim.Value, out var tenantId))
             {
-                tenantAccessor.CurrentTenant = await tenantService.GetByIdAsync(tenantId);
+                _tenantAccessor.CurrentTenant = await _tenantService.GetByIdAsync(tenantId);
             }
 
             await next(context);

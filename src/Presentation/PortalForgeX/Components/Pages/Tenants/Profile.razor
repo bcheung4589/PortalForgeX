@@ -21,15 +21,15 @@
 
 <PageTitle>Profile Details</PageTitle>
 
-<LoadingArea IsLoading="IsLoading">
-    <SectionContent SectionName="top-row">
-        <BreadcrumbNavigation>
-            <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
-            <Breadcrumb DisplayText="@(_tenant.Name)" Url="@($"/tenant/{_tenant.Id}")" IconCssClass="fas fa-user-tie" />
-            <Breadcrumb DisplayText="@(Model.UserName)" IconCssClass="fas fa-id-card" />
-        </BreadcrumbNavigation>
-    </SectionContent>
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
+        <Breadcrumb DisplayText="@(_tenant?.Name)" Url="@($"/tenant/{_tenant?.Id}")" IconCssClass="fas fa-user-tie" />
+        <Breadcrumb DisplayText="@(Model?.UserName)" IconCssClass="fas fa-id-card" />
+    </BreadcrumbNavigation>
+</SectionContent>
 
+<LoadingArea IsLoading="IsLoading">
     <div class="card">
         <div class="card-header">
             <div class="col-lg-8">
@@ -378,17 +378,17 @@
     private Tenant _tenant = null!;
     private ApplicationUser _user = null!;
 
-    protected override async Task OnInitializedAsync()
-    {
-        IsLoading = true;
-        if (RenderContext.IsPrerendering)
-        {
-            return; // only load once
-        }
+    // protected override async Task OnInitializedAsync()
+    // {
+    //     IsLoading = true;
+    //     if (RenderContext.IsPrerendering)
+    //     {
+    //         return; // only load once
+    //     }
 
-        IsLoading = false;
-        await base.OnInitializedAsync();
-    }
+    //     IsLoading = false;
+    //     await base.OnInitializedAsync();
+    // }
 
     protected override async Task InitDataSourcesAsync()
     {

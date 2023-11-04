@@ -151,6 +151,22 @@ builder.Services.AddScoped<PortalContextInitializer>();
 // Unit of Work for DomainContext and Domain Repositories
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
+// Configure AutoMapper
+builder.Services.AddSingleton(new MapperConfiguration(cfg =>
+{
+    cfg.AddMaps(Assembly.GetAssembly(typeof(DomainProfiles)));
+}).CreateMapper());
+
+// MediatR
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(ICommand).Assembly);
+});
+
+// Add Tenants Services
+builder.Services.AddScoped<TenantAccessor>();
+builder.Services.AddScoped<ITenantService, TenantService>();
+
 // Add (portal) middlewares from infrastructure.
 builder.Services.AddInfrastructureMiddleware();
 
@@ -171,22 +187,6 @@ builder.Services.AddScoped<IClientSeeder, ClientSeeder>();
 builder.Services.AddScoped<ITenantSeeder, TenantSeeder>();
 
 #endif
-
-// Configure AutoMapper
-builder.Services.AddSingleton(new MapperConfiguration(cfg =>
-{
-    cfg.AddMaps(Assembly.GetAssembly(typeof(DomainProfiles)));
-}).CreateMapper());
-
-// MediatR
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(ICommand).Assembly);
-});
-
-// Add Tenants Services
-builder.Services.AddScoped<TenantAccessor>();
-builder.Services.AddScoped<ITenantService, TenantService>();
 
 // Features Endpoints
 builder.Services.AddFeaturesEndpoints();

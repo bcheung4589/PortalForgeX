@@ -2,5 +2,5 @@
 
 public static class TenantClaimTypes
 {
-    public const string TenantId = "http://pfx/ws/2009/09/identity/claims/tenantid";
+    public const string TenantId = "http://pfx/ws/2023/11/identity/claims/tenantid";
 }

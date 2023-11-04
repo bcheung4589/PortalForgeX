@@ -22,14 +22,14 @@
 
 <PageTitle>Tenant Details</PageTitle>
 
-<LoadingArea IsLoading="IsLoading">
-    <SectionContent SectionName="top-row">
-        <BreadcrumbNavigation>
-            <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
-            <Breadcrumb DisplayText="@(Model.Name)" IconCssClass="fas fa-user-tie" />
-        </BreadcrumbNavigation>
-    </SectionContent>
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
+        <Breadcrumb DisplayText="@(_tenant?.Name)" IconCssClass="fas fa-user-tie" />
+    </BreadcrumbNavigation>
+</SectionContent>
 
+<LoadingArea IsLoading="IsLoading">
     <div class="card">
         <div class="card-header">
             <div class="col-lg-8">
@@ -401,7 +401,7 @@
                 <details class="my-4" open>
                     <summary>
                         <h4 class="d-inline-block">Tenant Users</h4>
-                        <TenantUserCreateDialog Tenant="_tenant" OnSave="OnInitializedAsync" />
+                        <TenantUserCreateDialog Tenant="_tenant" OnSave="InitDataSourcesAsync" />
                         <span class="clearfix"></span>
                         <div class="text-muted">Manage the tenant users.</div>
                     </summary>
@@ -450,20 +450,20 @@
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
+        
+        _tenant = await TenantService.GetByIdAsync(Id);
         if (RenderContext.IsPrerendering)
         {
             return; // only load once
         }
 
-        IsLoading = false;
-        await base.OnInitializedAsync();
+        await LoadDataAsync();
     }
 
-    protected override async Task InitDataSourcesAsync()
+    protected async Task LoadDataAsync()
     {
         IsLoading = true;
 
-        _tenant = await TenantService.GetByIdAsync(Id);
         if (_tenant is null)
         {
             Navigation.NavigateTo("tenants");
@@ -477,9 +477,9 @@
         TenantUsers = (await TenantService.GetTenantProfiles(_tenant))?.AsQueryable();
 
         await base.OnInitializedAsync();
+        await InvokeAsync(StateHasChanged);
 
         IsLoading = false;
-        StateHasChanged();
     }
 
     protected void NavigateTo(TenantUserViewModel user)
@@ -496,7 +496,7 @@
             {
                 ToastService.ShowSuccess($"Tenant {_tenant.Name} was successfully updated.");
 
-                await OnInitializedAsync();
+                await LoadDataAsync();
             }
         });
 
@@ -530,7 +530,7 @@
         var result = await TenantService.ApproveTenantAsync(Model.Id);
         if (result)
         {
-            await OnInitializedAsync();
+            await LoadDataAsync();
             ToastService.ShowSuccess($"Tenant {Model.Name} has been Approved.");
         }
     }
@@ -569,7 +569,7 @@
             return;
         }
 
-        await OnInitializedAsync();
+        await LoadDataAsync();
         ToastService.ShowSuccess($"Profile for {user.UserName} was succesfully deleted.");
     }
 }
