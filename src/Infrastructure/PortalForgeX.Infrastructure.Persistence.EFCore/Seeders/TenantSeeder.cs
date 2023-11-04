@@ -30,9 +30,9 @@ public sealed class TenantSeeder(IPortalContext portalContext, UserManager<Appli
                 Name = uniqueName,
                 CreationTime = creationDate,
                 ExternalId = NextStrings(AlphaChars, 10, 10),
-                InternalName = uniqueName.SanitizeAlphaNum(),
+                InternalName = uniqueName.SanitizeAlphaNum().ToLower(),
                 Status = Domain.Enums.TenantStatus.Created,
-                Host = $"{uniqueName.SanitizeAlphaNum()}.portal.domain.com",
+                Host = $"{uniqueName.SanitizeAlphaNum().ToLower()}.portal.domain.com",
                 IsActive = true,
                 ManagerId = userIds.OrderBy(x => random.Next()).FirstOrDefault(),
                 TenantSettings = new TenantSettings

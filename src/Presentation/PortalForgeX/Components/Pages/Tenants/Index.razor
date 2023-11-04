@@ -7,15 +7,16 @@
 @using PortalForgeX.Shared.Features.Tenants
 @using PortalForgeX.Components.Dialogs
 
-@attribute [RenderModeInteractiveServer(false)]
+@rendermode RenderMode.InteractiveServer
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
 
+@inject IRenderContext RenderContext
 @inject ITenantService TenantService
-@inject NavigationManager Navigation
 @inject IToastService ToastService
 @inject IJSRuntime JSRuntime
 @inject IMapper Mapper
+@inject NavigationManager Navigation
 
 <PageTitle>Tenants</PageTitle>
 
@@ -80,12 +81,22 @@
 @code {
 
     private IQueryable<TenantViewModel> tenantsSource = null!;
-    private bool isLoading;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+                
+        if (RenderContext.IsPrerendering)
+        {
+            return; // only load once
+        }
 
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
         isLoading = true;
 
         var tenants = await TenantService.GetAsync();
@@ -114,7 +125,8 @@
         }
 
         ToastService.ShowSuccess($"Tenant {tenant.Name} was succesfully deleted.");
-        await OnInitializedAsync();
+
+        await LoadDataAsync();
     }
 
 }

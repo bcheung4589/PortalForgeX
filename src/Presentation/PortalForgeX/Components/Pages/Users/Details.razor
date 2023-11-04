@@ -2,6 +2,7 @@
 
 @using Microsoft.AspNetCore.Identity
 @using PortalForgeX.Domain.Entities.Identity
+@using PortalForgeX.Identity.Extensions
 
 @inherits FormPage<ApplicationUser>
 
@@ -300,10 +301,6 @@
     protected string? Password;
     protected string? PasswordConfirm;
 
-    /// <summary>
-    /// Load the Model on page initialization.
-    /// </summary>
-    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
@@ -369,50 +366,16 @@
     {
         await TryRunAsync(async () =>
         {
-            var succeeded = true;
-            var errors = new List<IdentityError>();
-
-            var removeFromRoles = UserRoles.Where(x => !x.Value).Select(x => x.Key.Name!);
-            foreach (var removeFromRole in removeFromRoles)
+            var updateResult = await UserManager.UpdateRolesAsync(Model, UserRoles);
+            if (!updateResult.Succeeded)
             {
-                if (await UserManager.IsInRoleAsync(Model, removeFromRole))
-                {
-                    var removeResult = await UserManager.RemoveFromRoleAsync(Model, removeFromRole);
-                    if (!removeResult.Succeeded)
-                    {
-                        errors.AddRange(removeResult.Errors);
-                        succeeded = false;
-                    }
-                }
-            }
-
-            var addToRoles = UserRoles.Where(x => x.Value).Select(x => x.Key.Name!);
-            foreach (var addToRole in addToRoles)
-            {
-                if (!(await UserManager.IsInRoleAsync(Model, addToRole)))
-                {
-                    var addResult = await UserManager.AddToRoleAsync(Model, addToRole);
-                    if (!addResult.Succeeded)
-                    {
-                        errors.AddRange(addResult.Errors);
-                        succeeded = false;
-                    }
-                }
-            }
-
-            if (!succeeded)
-            {
-                foreach (var errorMessage in errors)
+                foreach (var errorMessage in updateResult.Errors)
                 {
                     ToastService.ShowError(errorMessage.Description);
                 }
 
                 return;
             }
-
-            // Trigger the LastModificationTime for roles updates.
-            Model.LastModificationTime = DateTime.UtcNow;
-            _ = await UserManager.UpdateAsync(Model);
 
             ToastService.ShowSuccess("User roles was successfully updated. Login again for it to take effect.");
         });
@@ -434,8 +397,7 @@
                 return;
             }
 
-            var resetToken = await UserManager.GeneratePasswordResetTokenAsync(Model);
-            var changePasswordResult = await UserManager.ResetPasswordAsync(Model, resetToken, Password);
+            var changePasswordResult = await UserManager.UpdatePasswordAsync(Model, Password);
             if (!changePasswordResult.Succeeded)
             {
                 foreach (var errorMessage in changePasswordResult.Errors)
@@ -463,7 +425,7 @@
         {
             return;
         }
-        
+
         var result = await UserManager.DeleteAsync(Model);
         if (!result.Succeeded)
         {

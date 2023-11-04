@@ -8,7 +8,7 @@
 
     <main>
         <div class="top-row px-4">
-            <SectionOutlet SectionName="top-row" />
+            <SectionOutlet @rendermode="RenderMode.InteractiveServer" SectionName="top-row" />
         </div>
 
         <article class="content px-4">
@@ -16,7 +16,7 @@
         </article>
     </main>
 
-    @* <BlazoredToasts @rendermode="RenderMode.InteractiveAuto" ShowProgressBar="true" ShowCloseButton="false" /> *@
+    <BlazoredToasts @rendermode="RenderMode.InteractiveAuto" ShowProgressBar="true" ShowCloseButton="false" />
 </div>
 
 <div id="blazor-error-ui">

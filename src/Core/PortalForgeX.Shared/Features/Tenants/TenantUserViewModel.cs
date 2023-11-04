@@ -31,4 +31,6 @@ public record TenantUserViewModel
      * TenantUserProfile
      */
     public string? Title { get; set; }
+
+    public string FullName => $"{FirstName} {LastName}";
 }

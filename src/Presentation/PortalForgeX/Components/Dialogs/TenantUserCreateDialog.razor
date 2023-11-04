@@ -188,45 +188,24 @@
                 return;
             }
 
-            Model.UserName = Model.Email;
-
-            var appUser = Mapper.Map<ApplicationUser>(Model);
-            appUser.CreationTime = DateTime.UtcNow;
-            var resultUser = await UserManager.CreateAsync(appUser, Password);
-            if (resultUser.Succeeded)
+            var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key).Select(x => x.Name!);
+            var successResult = await TenantService.CreateTenantProfileAsync(Tenant, Model, Password, selectedRoles);
+            if (!successResult)
             {
-                var user = await UserManager.FindByNameAsync(Model.UserName!);
-                if (user is null)
+                if (TenantService.HasError)
                 {
-                    return;
+                    foreach (var errorMessage in TenantService.Errors)
+                    {
+                        ToastService.ShowError(errorMessage);
+                    }
                 }
 
-                var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key);
-                if (selectedRoles is not null && selectedRoles.Any())
-                {
-                    _ = await UserManager.AddToRolesAsync(user, selectedRoles.Select(x => x.Name!));
-                }
-
-                var tenantProfile = Mapper.Map<TenantUserProfile>(Model);
-                tenantProfile.UserId = user.Id;
-
-                var result = await TenantService.CreateTenantProfileAsync(Tenant, tenantProfile);
-                if (result)
-                {
-                    Model = InitModel;
-                    await Dialog.CloseDialog();
-                    await OnSave.InvokeAsync();
-
-                    ToastService.ShowSuccess("Tenant User was successfully created.");
-                }
+                return;
             }
-            else
-            {
-                foreach (var errorMessage in resultUser.Errors)
-                {
-                    ToastService.ShowError(errorMessage.Description);
-                }
-            }
+
+            await OnSave.InvokeAsync();
+
+            Navigation.NavigateTo($"/tenant/profile/{Model.Id}");
         });
 
     protected void OnChanged(ChangeEventArgs args, string key)

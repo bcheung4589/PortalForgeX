@@ -24,7 +24,7 @@ public abstract class PageBase : ComponentBase
     /// Load the local DataSources. This method will be called OnInitializedAsync.
     /// </summary>
     /// <returns></returns>
-    protected abstract Task InitDataSourcesAsync();
+    protected virtual Task InitDataSourcesAsync() => Task.CompletedTask;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {

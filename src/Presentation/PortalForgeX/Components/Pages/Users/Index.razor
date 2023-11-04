@@ -80,7 +80,8 @@
 
         isLoading = true;
 
-        users = UserManager.Users.ToArray().AsQueryable();
+        users = UserManager.Users
+            .ToArray().AsQueryable(); // detach from the EF IQueryable
 
         isLoading = false;
     }

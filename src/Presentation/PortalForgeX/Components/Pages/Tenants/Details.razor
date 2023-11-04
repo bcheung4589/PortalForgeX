@@ -17,19 +17,19 @@
 
 @inject IRenderContext RenderContext
 @inject ITenantService TenantService
-@inject UserManager<ApplicationUser> UserManager
 @inject IMapper Mapper
+@inject UserManager<ApplicationUser> UserManager
 
 <PageTitle>Tenant Details</PageTitle>
 
-<SectionContent SectionName="top-row">
-    <BreadcrumbNavigation>
-        <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
-        <Breadcrumb DisplayText="@(Model?.Name)" IconCssClass="fas fa-user-tie" />
-    </BreadcrumbNavigation>
-</SectionContent>
-
 <LoadingArea IsLoading="IsLoading">
+    <SectionContent SectionName="top-row">
+        <BreadcrumbNavigation>
+            <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
+            <Breadcrumb DisplayText="@(Model.Name)" IconCssClass="fas fa-user-tie" />
+        </BreadcrumbNavigation>
+    </SectionContent>
+
     <div class="card">
         <div class="card-header">
             <div class="col-lg-8">
@@ -409,11 +409,13 @@
                     {
                         <p>@TenantUsers.Count() items found.</p>
                         <QuickGrid Items="TenantUsers" Class="table table-striped">
-                            <TemplateColumn Title="Name" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.UserName)">
+                            <TemplateColumn Title="Name" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.FirstName)">
                                 <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
-                                <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.UserName</span>
+                                <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.FullName">@context.FullName</span>
                             </TemplateColumn>
-                            <PropertyColumn Title="Title" Property="@(x => x.Title)" Sortable="true" />
+                            <TemplateColumn Title="Title" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.Title)">
+                                <NullableField Value="@context.Title" />
+                            </TemplateColumn>
                             <TemplateColumn Title="Email" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.Email)">
                                 <a href="mailto:@context.Email">@context.Email</a>
                             </TemplateColumn>
@@ -448,6 +450,18 @@
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
+        if (RenderContext.IsPrerendering)
+        {
+            return; // only load once
+        }
+
+        IsLoading = false;
+        await base.OnInitializedAsync();
+    }
+
+    protected override async Task InitDataSourcesAsync()
+    {
+        IsLoading = true;
 
         _tenant = await TenantService.GetByIdAsync(Id);
         if (_tenant is null)
@@ -460,7 +474,7 @@
         Mapper.Map(_tenant.TenantSettings, Model);
 
         TenantManagers = await UserManager.GetUsersInRoleAsync(SystemRolesNames.MANAGER);
-        TenantUsers = (await TenantService.GetTenantUsers(_tenant))?.AsQueryable();
+        TenantUsers = (await TenantService.GetTenantProfiles(_tenant))?.AsQueryable();
 
         await base.OnInitializedAsync();
 
@@ -516,6 +530,7 @@
         var result = await TenantService.ApproveTenantAsync(Model.Id);
         if (result)
         {
+            await OnInitializedAsync();
             ToastService.ShowSuccess($"Tenant {Model.Name} has been Approved.");
         }
     }
@@ -537,21 +552,24 @@
 
     protected async Task DeleteProfileAsync(TenantUserViewModel user)
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete tenant user {user.UserName}? Deleting is permanent.");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete profile for {user.UserName}? Deleting is permanent.");
         if (!confirmed)
         {
             return;
         }
 
-        var result = await TenantService.DeleteTenantProfileAsync(_tenant, user.Id);
-        if (!result)
+        var successResult = await TenantService.DeleteTenantProfileAsync(_tenant, user.Id);
+        if (!successResult && TenantService.HasError)
         {
-            ToastService.ShowError($"Failed deleting Tenant User {user.UserName}.");
+            foreach (var errorMessage in TenantService.Errors)
+            {
+                ToastService.ShowError(errorMessage);
+            }
+
             return;
         }
 
-        ToastService.ShowSuccess($"Tenant User {user.UserName} was succesfully deleted.");
-
         await OnInitializedAsync();
+        ToastService.ShowSuccess($"Profile for {user.UserName} was succesfully deleted.");
     }
 }

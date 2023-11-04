@@ -43,7 +43,4 @@ public abstract class FormPage<TModel> : PageBase
             await JSRuntime.InvokeVoidAsync("formPageLoad");
         }
     }
-
-    protected override Task InitDataSourcesAsync()
-        => Task.CompletedTask;
 }
