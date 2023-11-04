@@ -186,10 +186,7 @@
                 Model = result.Data!;
                 FormEditContext = new(Model);
 
-                if (OnSave.HasDelegate)
-                {
-                    await OnSave.InvokeAsync();
-                }
+                await OnSave.InvokeAsync();
 
                 ToastService.ShowSuccess("Contact was successfully updated.");
             }

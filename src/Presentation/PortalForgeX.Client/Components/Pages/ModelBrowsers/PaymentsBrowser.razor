@@ -164,7 +164,14 @@
     };
 
     protected override async Task InitDataSourcesAsync()
-        => DataSource = (await Payments.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false, Filters.Values.ToEncodedString()))?.Data;
+    {
+        if (!RenderContext.IsClient)
+        {
+            return;
+        }
+
+        DataSource = (await Payments.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false, Filters.Values.ToEncodedString()))?.Data;
+    }
 
     protected void NavigateTo(PaymentDto payment)
         => Navigation.NavigateTo($"payment/{payment.Id}");

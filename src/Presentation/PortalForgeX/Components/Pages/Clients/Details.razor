@@ -20,26 +20,26 @@
 </SectionContent>
 
 <LoadingArea IsLoading="IsLoading">
-    <ClientDetailsView @rendermode="RenderMode.InteractiveAuto" Client="Model" />
+    <ClientDetailsView @rendermode="RenderMode.InteractiveWebAssembly" Client="Model" />
 
     <details class="mb-5" open>
         <summary>
             <h4 class="d-inline-block">Contacts (@Model.Contacts?.Count())</h4>
-            <ClientContactCreateDialog @rendermode="RenderMode.InteractiveAuto" ClientId="Model.Id" OnSave="OnInitializedAsync"></ClientContactCreateDialog>
+            <ClientContactCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" ClientId="Model.Id"></ClientContactCreateDialog>
             <span class="clearfix"></span>
             <div class="text-muted">Manage the contactpersons.</div>
         </summary>
-        <ClientContactsBrowser @rendermode="RenderMode.InteractiveAuto" Client="Model" />
+        <ClientContactsBrowser @rendermode="RenderMode.InteractiveWebAssembly" Client="Model" />
     </details>
 
     <details class="mb-5" open>
         <summary>
             <h4 class="d-inline-block">Locations (@Model.Locations?.Count())</h4>
-            <BusinessLocationCreateDialog @rendermode="RenderMode.InteractiveAuto" ClientId="Model.Id" OnSave="OnInitializedAsync"></BusinessLocationCreateDialog>
+            <BusinessLocationCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" ClientId="Model.Id"></BusinessLocationCreateDialog>
             <span class="clearfix"></span>
             <div class="text-muted">Manage the work locations.</div>
         </summary>
-        <BusinessLocationsBrowser @rendermode="RenderMode.InteractiveAuto" Client="Model" />
+        <BusinessLocationsBrowser @rendermode="RenderMode.InteractiveWebAssembly" Client="Model" />
     </details>
 </LoadingArea>
 
@@ -51,10 +51,6 @@
     protected bool IsLoading;
     protected ClientDto Model { get; set; } = null!;
 
-    /// <summary>
-    /// Load the Model on page initialization.
-    /// </summary>
-    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;

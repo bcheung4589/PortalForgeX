@@ -86,9 +86,6 @@
 @code {
 
     [Parameter]
-    public EventCallback OnSave { get; set; }
-
-    [Parameter]
     public Guid ClientId { get; set; }
 
     protected Dialog Dialog = null!;
@@ -102,9 +99,9 @@
             {
                 Model = InitModel;
                 await Dialog.CloseDialog();
-                await OnSave.InvokeAsync();
 
                 ToastService.ShowSuccess("Contact was successfully created.");
+                Navigation.NavigateTo($"/client/{result.Data?.ClientId}");
             }
         });
 
