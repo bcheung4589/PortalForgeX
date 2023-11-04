@@ -1,8 +1,14 @@
-﻿@using Microsoft.AspNetCore.Identity
-@using PortalForgeX.Domain.Entities.Identity
+﻿@using AutoMapper
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Client.Components.Internal
+@using PortalForgeX.Domain.Entities.Tenants
+@using PortalForgeX.Shared.Features.Tenants
 
-@inherits FormPage<ApplicationUser>
+@inherits FormComponent<TenantUserFormModel>
 
+@inject IMapper Mapper
+@inject ITenantService TenantService
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<ApplicationRole> RoleManager
 
@@ -12,12 +18,23 @@
 </button>
 <Dialog @ref="Dialog">
     <Header>
-        <h1>Create User</h1>
+        <h1>Add Tenant User</h1>
         <span class="text-muted">Fill in the user details.</span>
     </Header>
     <Body>
-        <EditForm FormName="CreateUserForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+        <EditForm FormName="CreateTenantUserForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
             <FluentValidationValidator />
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.Title" class="form-control form-control-solid" id="titleInput" maxlength="100" placeholder="Title" />
+                        <HelpTextTool Content="Input the user title." />
+                        <label for="titleInput">Title</label>
+                        <span class="chars-counter">100 chars left</span>
+                        <ValidationMessage For="(() => Model!.Title)" />
+                    </div>
+                </div>
+            </div>
             <div class="row">
                 <div class="col">
                     <div class="form-floating mb-3">
@@ -134,8 +151,14 @@
 
 @code {
 
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    [Parameter]
+    public Tenant Tenant { get; set; } = null!;
+
     protected Dialog Dialog = null!;
-    protected override ApplicationUser InitModel => new() { IsActive = true };
+    protected override TenantUserFormModel InitModel => new() { TenantId = Tenant.Id, IsActive = true };
     protected string Password = null!;
     protected string PasswordConfirm = null!;
     protected IDictionary<ApplicationRole, bool> UserRoles = null!;
@@ -144,50 +167,67 @@
     {
         await base.OnInitializedAsync();
 
-        UserRoles = RoleManager.Roles.OrderBy(x => x.Name).ToDictionary(x => x, x => false);
+        UserRoles = RoleManager.Roles
+            .Where(x => x.Name!.StartsWith("Tenant"))
+            .OrderBy(x => x.Name)
+            .ToDictionary(x => x, x => false);
     }
 
     protected async Task SaveAsync()
         => await TryRunAsync(async () =>
+        {
+            if (string.IsNullOrWhiteSpace(Password))
             {
-                if (string.IsNullOrWhiteSpace(Password))
+                ToastService.ShowError("Password is required.");
+                return;
+            }
+
+            if (Password != PasswordConfirm)
+            {
+                ToastService.ShowError("Password did not match confirmation password.");
+                return;
+            }
+
+            Model.UserName = Model.Email;
+
+            var appUser = Mapper.Map<ApplicationUser>(Model);
+            appUser.CreationTime = DateTime.UtcNow;
+            var resultUser = await UserManager.CreateAsync(appUser, Password);
+            if (resultUser.Succeeded)
+            {
+                var user = await UserManager.FindByNameAsync(Model.UserName!);
+                if (user is null)
                 {
-                    ToastService.ShowError("Password is required.");
                     return;
                 }
 
-                if (Password != PasswordConfirm)
+                var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key);
+                if (selectedRoles is not null && selectedRoles.Any())
                 {
-                    ToastService.ShowError("Password did not match confirmation password.");
-                    return;
+                    _ = await UserManager.AddToRolesAsync(user, selectedRoles.Select(x => x.Name!));
                 }
 
-                Model.UserName = Model.Email;
-                var result = await UserManager.CreateAsync(Model, Password);
-                if (result.Succeeded)
-                {
-                    var user = await UserManager.FindByNameAsync(Model.UserName!);
-                    if (user is null)
-                    {
-                        return;
-                    }
+                var tenantProfile = Mapper.Map<TenantUserProfile>(Model);
+                tenantProfile.UserId = user.Id;
 
-                    var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key);
-                    if (selectedRoles is not null && selectedRoles.Any())
-                    {
-                        _ = await UserManager.AddToRolesAsync(user, selectedRoles.Select(x => x.Name!));
-                    }
-
-                    Navigation.NavigateTo($"/user/{user?.Id}");
-                }
-                else
+                var result = await TenantService.CreateTenantProfileAsync(Tenant, tenantProfile);
+                if (result)
                 {
-                    foreach (var errorMessage in result.Errors)
-                    {
-                        ToastService.ShowError(errorMessage.Description);
-                    }
+                    Model = InitModel;
+                    await Dialog.CloseDialog();
+                    await OnSave.InvokeAsync();
+
+                    ToastService.ShowSuccess("Tenant User was successfully created.");
                 }
-            });
+            }
+            else
+            {
+                foreach (var errorMessage in resultUser.Errors)
+                {
+                    ToastService.ShowError(errorMessage.Description);
+                }
+            }
+        });
 
     protected void OnChanged(ChangeEventArgs args, string key)
     {

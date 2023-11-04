@@ -13,7 +13,7 @@
         </Header>
         <Body>
             <LoadingArea IsLoading="@IsLoading">
-                <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <EditForm FormName="EditCheckoutForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
                     <FluentValidationValidator />
                     <div class="card bg-secondary text-white mb-3">
                         <div class="card-body">

@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using PortalForgeX.Client.Authentication;
 using PortalForgeX.Domain.Entities.Identity;
+using PortalForgeX.Infrastructure.Tenants;
 using System.Diagnostics;
 using System.Security.Claims;
 
@@ -85,10 +86,9 @@ namespace PortalForgeX.Identity
             {
                 var userId = principal.FindFirst(_options.ClaimsIdentity.UserIdClaimType)?.Value;
                 var email = principal.FindFirst(_options.ClaimsIdentity.EmailClaimType)?.Value;
-                var tenantId = principal.FindFirst(ClaimTypes.GroupSid)?.Value;
-
                 if (userId != null && email != null)
                 {
+                    var tenantId = principal.FindFirst(TenantClaimTypes.TenantId)?.Value;
                     _state.PersistAsJson(nameof(UserContext), new UserContext
                     {
                         UserId = userId,

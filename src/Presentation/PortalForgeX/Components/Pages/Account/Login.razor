@@ -7,6 +7,7 @@
 @using Microsoft.AspNetCore.WebUtilities
 @using PortalForgeX.Extensions
 @using PortalForgeX.Identity
+@using PortalForgeX.Identity.Extensions
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject ILogger<Login> Logger
@@ -107,7 +108,7 @@
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
         if (result.Succeeded)
         {
-            await SignInManager.RegisterSucceededLogin(Input.Email);
+            await SignInManager.RegisterSucceededLoginAsync(Input.Email);
 
             Logger.LogInformation("User logged in.");
             RedirectManager.RedirectTo(ReturnUrl);

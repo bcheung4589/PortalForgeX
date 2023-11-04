@@ -1,10 +1,6 @@
 ﻿namespace PortalForgeX.Shared.Features.Tenants;
 
-/// <summary>
-/// Aggregated ViewModel for <see cref="PortalForgeX.Domain.Entities.Identity.ApplicationUser"/> 
-/// and <see cref="PortalForgeX.Domain.Entities.Tenants.TenantUserProfile"/>.
-/// </summary>
-public record TenantUserViewModel
+public record TenantUserFormModel
 {
     /*
      * ApplicationUser
@@ -25,7 +21,7 @@ public record TenantUserViewModel
     public int AccessFailedCount { get; set; }
     public bool LockoutEnabled { get; set; }
 
-    public Guid? TenantId { get; set; }
+    public Guid TenantId { get; set; }
 
     /*
      * TenantUserProfile

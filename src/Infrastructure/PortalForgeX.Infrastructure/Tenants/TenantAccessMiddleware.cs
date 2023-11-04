@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using PortalForgeX.Application.Tenants;
-using System.Security.Claims;
 
-namespace PortalForgeX.Infrastructure.Middleware;
+namespace PortalForgeX.Infrastructure.Tenants;
 
 public class TenantAccessMiddleware(ITenantService tenantService, TenantAccessor tenantAccessor) : IMiddleware
 {
@@ -11,7 +10,7 @@ public class TenantAccessMiddleware(ITenantService tenantService, TenantAccessor
         try
         {
             // Retrieve the TenantId Claim
-            var tenantClaim = context.User.Claims.FirstOrDefault(x => x.Type == ClaimTypes.GroupSid);
+            var tenantClaim = context.User.Claims.FirstOrDefault(x => x.Type == TenantClaimTypes.TenantId);
             if (tenantClaim != null && Guid.TryParse(tenantClaim.Value, out var tenantId))
             {
                 tenantAccessor.CurrentTenant = await tenantService.GetByIdAsync(tenantId);

@@ -212,11 +212,6 @@
                 <div class="col-lg-6">
                     <div class="row mb-3">
                         <div class="col">
-                            @* TODO: DDL TENANT *@
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col">
                             <EditForm FormName="EditPasswordForm" EditContext="FormEditContext" OnValidSubmit="UpdatePasswordAsync">
                                 <div class="card warning border-1 p-2 py-3">
                                     <div class="card-header">
@@ -359,8 +354,6 @@
             if (result.Succeeded)
             {
                 ToastService.ShowSuccess("User was successfully updated.");
-
-                // TODO: Delete UserProfile if Model.TenantId is changed to null.
             }
             else
             {

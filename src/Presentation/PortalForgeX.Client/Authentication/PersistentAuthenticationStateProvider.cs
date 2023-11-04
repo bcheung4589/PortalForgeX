@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using PortalForgeX.Infrastructure.Tenants;
 using System.Security.Claims;
 
 namespace PortalForgeX.Client.Authentication;
@@ -19,8 +20,8 @@ public class PersistentAuthenticationStateProvider(PersistentComponentState pers
         Claim[] claims = [
             new Claim(ClaimTypes.NameIdentifier, userContext.UserId),
             new Claim(ClaimTypes.Name, userContext.Email),
-            new Claim(ClaimTypes.GroupSid, userContext.TenantId ?? ""),
-            new Claim(ClaimTypes.Email, userContext.Email)];
+            new Claim(ClaimTypes.Email, userContext.Email),
+            new Claim(TenantClaimTypes.TenantId, userContext.TenantId ?? "")];
 
         return Task.FromResult(
             new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(claims,

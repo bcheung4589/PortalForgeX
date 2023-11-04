@@ -5,7 +5,7 @@
 @using PortalForgeX.Shared.Constants
 
 @attribute [StreamRendering(true)]
-@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 @inject IClientFacade Clients
 @inject NavigationManager Navigation

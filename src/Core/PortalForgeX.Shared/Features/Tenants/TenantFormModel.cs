@@ -1,10 +1,6 @@
 ﻿namespace PortalForgeX.Shared.Features.Tenants;
 
-/// <summary>
-/// Aggregated ViewModel for <see cref="PortalForgeX.Domain.Entities.Tenants.Tenant"/> 
-/// and <see cref="PortalForgeX.Domain.Entities.Tenants.TenantSettings"/>.
-/// </summary>
-public record TenantViewModel
+public record TenantFormModel
 {
     /*
      * Tenant
@@ -18,6 +14,8 @@ public record TenantViewModel
     public string Host { get; set; } = null!;
     public bool IsActive { get; set; }
     public string? Remarks { get; set; }
+    public DateTime CreationTime { get; set; }
+    public DateTime? LastModificationTime { get; set; }
 
     /*
      * TenantSettings

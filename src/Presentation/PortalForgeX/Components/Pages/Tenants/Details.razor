@@ -1,10 +1,15 @@
 ﻿@page "/tenant/{Id:guid}"
 
+@using AutoMapper
+@using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.AspNetCore.Identity
 @using PortalForgeX.Application.Tenants
+@using PortalForgeX.Client.Components.ContextMenu
+@using PortalForgeX.Components.Dialogs
 @using PortalForgeX.Domain.Entities.Tenants
+@using PortalForgeX.Shared.Features.Tenants
 
-@inherits FormPage<Tenant>
+@inherits FormPage<TenantFormModel>
 
 @rendermode RenderMode.InteractiveServer
 @attribute [StreamRendering(true)]
@@ -13,6 +18,7 @@
 @inject IRenderContext RenderContext
 @inject ITenantService TenantService
 @inject UserManager<ApplicationUser> UserManager
+@inject IMapper Mapper
 
 <PageTitle>Tenant Details</PageTitle>
 
@@ -30,7 +36,7 @@
                 <h1>@Model.Name</h1>
             </div>
             <div class="col-lg-4 text-end">
-                @if (Model.Status == Domain.Enums.TenantStatus.Created)
+                @if (Model.Status.ToTenantStatus() == Domain.Enums.TenantStatus.Created)
                 {
                     <div class="d-inline-block mx-3">
                         <small class="d-block text-start text-muted">Review</small>
@@ -88,10 +94,10 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <SelectFormField @bind-Value="Model.ManagerId"
-                                                 TViewModel="Tenant"
+                                                 TViewModel="TenantFormModel"
                                                  TValue="string?"
                                                  TSourceModel="ApplicationUser"
-                                                 DataSource="Users"
+                                                 DataSource="TenantManagers"
                                                  DisplayText="x => x.UserName"
                                                  DisplayValue="x => x.Id"
                                                  DisplayName="Manager"
@@ -107,7 +113,7 @@
                                         </div>
                                         <data @ondblclick="template.Edit" class="ps-4">
                                             <NullableField Value="@template.Model.ManagerId">
-                                                <a href="user/@template.Model.ManagerId">@template.Model.Manager.UserName</a>
+                                                <a href="user/@template.Model.ManagerId">@template.Model!.ManagerName</a>
                                             </NullableField>
                                         </data>
                                     </ViewTemplate>
@@ -117,7 +123,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <TextFormField @bind-Value="Model.Name"
-                                               TViewModel="Tenant"
+                                               TViewModel="TenantFormModel"
                                                DisplayName="Name"
                                                HelpText="Name of the tenant."
                                                Required="true"
@@ -140,7 +146,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <TextFormField @bind-Value="Model.ExternalId"
-                                               TViewModel="Tenant"
+                                               TViewModel="TenantFormModel"
                                                DisplayName="External Id"
                                                HelpText="External ID that can be used for public communication."
                                                Required="true"
@@ -163,7 +169,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <TextFormField @bind-Value="Model.InternalName"
-                                               TViewModel="Tenant"
+                                               TViewModel="TenantFormModel"
                                                DisplayName="Internal Name"
                                                HelpText="Internal name is used for naming system resources bound to this tenant."
                                                Required="true"
@@ -186,7 +192,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <TextFormField @bind-Value="Model.Host"
-                                               TViewModel="Tenant"
+                                               TViewModel="TenantFormModel"
                                                DisplayName="Host"
                                                HelpText="Host(domain) name of the tenant."
                                                Required="true"
@@ -209,7 +215,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <CheckboxFormField @bind-Value="Model.IsActive"
-                                                   TViewModel="Tenant"
+                                                   TViewModel="TenantFormModel"
                                                    DisplayName="Actief"
                                                    HelpText="Indicator if the tenant is active."
                                                    Model="Model"
@@ -230,7 +236,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <TextAreaFormField @bind-Value="Model.Remarks"
-                                                   TViewModel="Tenant"
+                                                   TViewModel="TenantFormModel"
                                                    DisplayName="Remarks about the tenant."
                                                    HelpText="Remarks about the tenant."
                                                    MaxLength="2000"
@@ -258,8 +264,8 @@
                             <div class="card-body pb-0">
                                 <div class="row mb-3">
                                     <div class="col">
-                                        <TextFormField @bind-Value="Model.TenantSettings.Brand"
-                                                       TViewModel="Tenant"
+                                        <TextFormField @bind-Value="Model.Brand"
+                                                       TViewModel="TenantFormModel"
                                                        DisplayName="Brand"
                                                        HelpText="Brand of the tenant."
                                                        MaxLength="150"
@@ -271,7 +277,7 @@
                                                     <span class="text-muted">Brand</span>
                                                 </div>
                                                 <data @ondblclick="template.Edit" class="ps-4">
-                                                    <NullableField Value="@template.Model.TenantSettings.Brand" />
+                                                    <NullableField Value="@template.Model.Brand" />
                                                 </data>
                                             </ViewTemplate>
                                         </TextFormField>
@@ -279,8 +285,8 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col">
-                                        <TextFormField @bind-Value="Model.TenantSettings.LogoUrl"
-                                                       TViewModel="Tenant"
+                                        <TextFormField @bind-Value="Model.LogoUrl"
+                                                       TViewModel="TenantFormModel"
                                                        DisplayName="Logo Url"
                                                        HelpText="Logo Url of the tenant."
                                                        MaxLength="250"
@@ -292,7 +298,7 @@
                                                     <span class="text-muted">Logo Url</span>
                                                 </div>
                                                 <data @ondblclick="template.Edit" class="ps-4">
-                                                    <NullableField Value="@template.Model.TenantSettings.LogoUrl" />
+                                                    <NullableField Value="@template.Model.LogoUrl" />
                                                 </data>
                                             </ViewTemplate>
                                         </TextFormField>
@@ -300,8 +306,8 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col">
-                                        <TextFormField @bind-Value="Model.TenantSettings.PrimaryColor"
-                                                       TViewModel="Tenant"
+                                        <TextFormField @bind-Value="Model.PrimaryColor"
+                                                       TViewModel="TenantFormModel"
                                                        DisplayName="Primary Color"
                                                        HelpText="Primary Color of the tenant."
                                                        MaxLength="50"
@@ -314,8 +320,8 @@
                                                     <span class="text-muted">Primary Color</span>
                                                 </div>
                                                 <data @ondblclick="template.Edit" class="ps-4">
-                                                    <span class="badge" style="background-color: @template.Model.TenantSettings.PrimaryColor">&nbsp;</span>
-                                                    <NullableField Value="@template.Model.TenantSettings.PrimaryColor" />
+                                                    <span class="badge" style="background-color: @template.Model.PrimaryColor">&nbsp;</span>
+                                                    <NullableField Value="@template.Model.PrimaryColor" />
                                                 </data>
                                             </ViewTemplate>
                                         </TextFormField>
@@ -323,8 +329,8 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col">
-                                        <TextFormField @bind-Value="Model.TenantSettings.SecondaryColor"
-                                                       TViewModel="Tenant"
+                                        <TextFormField @bind-Value="Model.SecondaryColor"
+                                                       TViewModel="TenantFormModel"
                                                        DisplayName="Secondary Color"
                                                        HelpText="Secondary Color of the tenant."
                                                        MaxLength="50"
@@ -336,8 +342,8 @@
                                                     <span class="text-muted">Secondary Color</span>
                                                 </div>
                                                 <data @ondblclick="template.Edit" class="ps-4">
-                                                    <span class="badge" style="background-color: @template.Model.TenantSettings.SecondaryColor">&nbsp;</span>
-                                                    <NullableField Value="@template.Model.TenantSettings.SecondaryColor" />
+                                                    <span class="badge" style="background-color: @template.Model.SecondaryColor">&nbsp;</span>
+                                                    <NullableField Value="@template.Model.SecondaryColor" />
                                                 </data>
                                             </ViewTemplate>
                                         </TextFormField>
@@ -345,12 +351,12 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col">
-                                        <CheckboxFormField @bind-Value="Model.TenantSettings.IsPublicRegisterEnabled"
-                                                           TViewModel="Tenant"
+                                        <CheckboxFormField @bind-Value="Model.IsPublicRegisterEnabled"
+                                                           TViewModel="TenantFormModel"
                                                            DisplayName="Public Register Enabled"
                                                            HelpText="Indicator if public registration is enabled."
                                                            Model="Model"
-                                                           ValidationFor="() => Model.TenantSettings.IsPublicRegisterEnabled"
+                                                           ValidationFor="() => Model.IsPublicRegisterEnabled"
                                                            SaveCallback="SaveAsync">
                                             <ViewTemplate Context="template">
                                                 <div>
@@ -358,7 +364,7 @@
                                                     <span class="text-muted">Public Register Enabled</span>
                                                 </div>
                                                 <data @ondblclick="template.Edit" class="ps-4">
-                                                    <SwitchCircleIndicator IsOn="@template.Model.TenantSettings.IsPublicRegisterEnabled" Title="Enabled" OffTitle="Disabled" CssClass="ms-3 mb-2 mt-2" />
+                                                    <SwitchCircleIndicator IsOn="@template.Model.IsPublicRegisterEnabled" Title="Enabled" OffTitle="Disabled" CssClass="ms-3 mb-2 mt-2" />
                                                 </data>
                                             </ViewTemplate>
                                         </CheckboxFormField>
@@ -366,8 +372,8 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col">
-                                        <TextAreaFormField @bind-Value="Model.TenantSettings.AdditionalData"
-                                                           TViewModel="Tenant"
+                                        <TextAreaFormField @bind-Value="Model.AdditionalData"
+                                                           TViewModel="TenantFormModel"
                                                            DisplayName="Additional Data."
                                                            HelpText="Additional data for the tenant."
                                                            Model="Model"
@@ -378,7 +384,7 @@
                                                     <span class="text-muted">Additional Data</span>
                                                 </div>
                                                 <data @ondblclick="template.Edit" class="ps-4">
-                                                    <NullableField Value="@template.Model.TenantSettings.AdditionalData" />
+                                                    <NullableField Value="@template.Model.AdditionalData" />
                                                 </data>
                                             </ViewTemplate>
                                         </TextAreaFormField>
@@ -390,15 +396,40 @@
                 </div>
             </EditForm>
 
-            <details open>
-                <summary>
-                    <h4 class="d-inline-block">Tenant Users</h4>
-                    <span class="clearfix"></span>
-                    <div class="text-muted">Manage the tenant users.</div>
-                </summary>
-
-
-            </details>
+            @if (Model.Status.ToTenantStatus() >= Domain.Enums.TenantStatus.DbMigrated)
+            {
+                <details class="my-4" open>
+                    <summary>
+                        <h4 class="d-inline-block">Tenant Users</h4>
+                        <TenantUserCreateDialog Tenant="_tenant" OnSave="OnInitializedAsync" />
+                        <span class="clearfix"></span>
+                        <div class="text-muted">Manage the tenant users.</div>
+                    </summary>
+                    @if (TenantUsers is not null && TenantUsers.Any())
+                    {
+                        <p>@TenantUsers.Count() items found.</p>
+                        <QuickGrid Items="TenantUsers" Class="table table-striped">
+                            <TemplateColumn Title="Name" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.UserName)">
+                                <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                                <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.UserName</span>
+                            </TemplateColumn>
+                            <PropertyColumn Title="Title" Property="@(x => x.Title)" Sortable="true" />
+                            <TemplateColumn Title="Email" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.Email)">
+                                <a href="mailto:@context.Email">@context.Email</a>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Last logged in" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.LastLoggedInTime)">
+                                <NullableField Value="@context.LastLoggedInTime?.ToString("dd-MM-yyyy HH:mm")" />
+                            </TemplateColumn>
+                            <TemplateColumn>
+                                <ContextMenu Model="@context">
+                                    <MenuItem TEntity="TenantUserViewModel" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                    <MenuItem TEntity="TenantUserViewModel" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteProfileAsync(e)"></MenuItem>
+                                </ContextMenu>
+                            </TemplateColumn>
+                        </QuickGrid>
+                    }
+                </details>
+            }
         </div>
     </div>
 </LoadingArea>
@@ -408,22 +439,28 @@
     [Parameter]
     public Guid Id { get; set; }
 
-    protected override Tenant InitModel => new();
-    protected IQueryable<ApplicationUser> Users = null!;
+    protected override TenantFormModel InitModel => new();
+    protected IList<ApplicationUser> TenantManagers = null!;
+    protected IQueryable<TenantUserViewModel>? TenantUsers;
+
+    private Tenant? _tenant;
 
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
 
-        var result = await TenantService.GetByIdAsync(Id);
-        if (result is null)
+        _tenant = await TenantService.GetByIdAsync(Id);
+        if (_tenant is null)
         {
             Navigation.NavigateTo("tenants");
             return;
         }
 
-        Model = result;
-        Users = UserManager.Users;
+        Model = Mapper.Map<TenantFormModel>(_tenant);
+        Mapper.Map(_tenant.TenantSettings, Model);
+
+        TenantManagers = await UserManager.GetUsersInRoleAsync(SystemRolesNames.MANAGER);
+        TenantUsers = (await TenantService.GetTenantUsers(_tenant))?.AsQueryable();
 
         await base.OnInitializedAsync();
 
@@ -431,13 +468,21 @@
         StateHasChanged();
     }
 
+    protected void NavigateTo(TenantUserViewModel user)
+        => Navigation.NavigateTo($"tenant/profile/{user.Id}");
+
     protected async Task SaveAsync()
         => await TryRunAsync(async () =>
         {
-            var result = await TenantService.UpdateAsync(Model);
+            Mapper.Map(Model, _tenant);
+            Mapper.Map(Model, _tenant.TenantSettings);
+
+            var result = await TenantService.UpdateAsync(_tenant);
             if (result is not null)
             {
-                ToastService.ShowSuccess($"Tenant {Model.Name} was successfully updated.");
+                ToastService.ShowSuccess($"Tenant {_tenant.Name} was successfully updated.");
+
+                await OnInitializedAsync();
             }
         });
 
@@ -490,4 +535,23 @@
         }
     }
 
+    protected async Task DeleteProfileAsync(TenantUserViewModel user)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete tenant user {user.UserName}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await TenantService.DeleteTenantProfileAsync(_tenant, user.Id);
+        if (!result)
+        {
+            ToastService.ShowError($"Failed deleting Tenant User {user.UserName}.");
+            return;
+        }
+
+        ToastService.ShowSuccess($"Tenant User {user.UserName} was succesfully deleted.");
+
+        await OnInitializedAsync();
+    }
 }

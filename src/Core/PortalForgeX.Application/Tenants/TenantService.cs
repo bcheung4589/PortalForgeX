@@ -89,6 +89,13 @@ public class TenantService(
         foundEntity.Remarks = tenant.Remarks;
         foundEntity.LastModificationTime = DateTime.UtcNow;
 
+        foundEntity.TenantSettings.LogoUrl = tenant.TenantSettings.LogoUrl;
+        foundEntity.TenantSettings.Brand = tenant.TenantSettings.Brand;
+        foundEntity.TenantSettings.PrimaryColor = tenant.TenantSettings.PrimaryColor;
+        foundEntity.TenantSettings.SecondaryColor = tenant.TenantSettings.SecondaryColor;
+        foundEntity.TenantSettings.IsPublicRegisterEnabled = tenant.TenantSettings.IsPublicRegisterEnabled;
+        foundEntity.TenantSettings.AdditionalData = tenant.TenantSettings.AdditionalData;
+
         var changes = await portalContext.SaveChangesAsync(cancellationToken);
 
         return changes > 0 ? await GetByIdAsync(foundEntity.Id, cancellationToken) : null;
@@ -181,6 +188,11 @@ public class TenantService(
     public async Task<IEnumerable<TenantUserViewModel>?> GetTenantUsers(Tenant tenant, CancellationToken cancellationToken = default)
     {
         var tenantUsers = await userManager.Users.Where(x => x.TenantId == tenant.Id).ToListAsync(cancellationToken: cancellationToken);
+        if (tenantUsers.Count == 0)
+        {
+            return null;
+        }
+
         var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
         var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
@@ -189,7 +201,16 @@ public class TenantService(
             .Where(x => tenantUsersIds.Contains(x.UserId))
             .ToListAsync(cancellationToken: cancellationToken);
 
-        mapper.Map(userProfiles, tenantUsersViews);
+        foreach (var userProfile in userProfiles)
+        {
+            var tenantUser = tenantUsersViews.FirstOrDefault(x => x.Id == userProfile.UserId);
+            if (tenantUser is null)
+            {
+                continue;
+            }
+
+            mapper.Map(userProfile, tenantUser);
+        }
 
         return tenantUsersViews;
     }

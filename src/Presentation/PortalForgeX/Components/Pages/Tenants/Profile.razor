@@ -1,0 +1,10 @@
+﻿@page "/tenant/profile/{UserId:guid}"
+
+<h1>@UserId</h1>
+
+@code {
+
+    [Parameter]
+    public Guid UserId { get; set; }
+
+}

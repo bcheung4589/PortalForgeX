@@ -1,5 +1,4 @@
-﻿@using FluentValidation
-@using PortalForgeX.Shared.Features.Clients
+﻿@using PortalForgeX.Shared.Features.Clients
 @using PortalForgeX.Shared.Features.Payments
 
 @inherits FormComponent<PaymentDto>
@@ -19,7 +18,7 @@
             <span class="text-muted">Fill in the payment details.</span>
         </Header>
         <Body>
-            <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+            <EditForm FormName="CreatePaymentForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
                 <FluentValidationValidator />
                 <div class="row ">
                     <div class="col">

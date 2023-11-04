@@ -1,5 +1,6 @@
 ﻿using PortalForgeX.Endpoints.Internal;
 using PortalForgeX.Infrastructure.Middleware;
+using PortalForgeX.Infrastructure.Tenants;
 using System.Reflection;
 
 namespace PortalForgeX.Extensions;
