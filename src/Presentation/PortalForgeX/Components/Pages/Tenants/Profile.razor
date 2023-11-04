@@ -40,71 +40,71 @@
             </div>
         </div>
         <div class="card-body">
-            <div class="card bg-light mb-3">
-                <div class="card-body">
-                    <div class="row">
-                        <label class="col-lg-4 text-muted">
-                            Created
-                        </label>
-                        <div class="col-lg-8">
-                            <data class="fs-6 text-gray-800">
-                                @Model.CreationTime.ToString("dd-MM-yyyy hh:mm:ss")
-                            </data>
-                        </div>
-                    </div>
-                    @if (Model.LastModificationTime is not null)
-                    {
-                        <div class="row">
-                            <label class="col-lg-4 text-muted">
-                                Last Modified
-                            </label>
-                            <div class="col-lg-8">
-                                <data class="fs-6 text-gray-800">
-                                    @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
-                                </data>
-                            </div>
-                        </div>
-                    }
-                    @if (Model.LastLoggedInTime is not null)
-                    {
-                        <div class="row">
-                            <label class="col-lg-4 text-muted">
-                                Last Logged in
-                            </label>
-                            <div class="col-lg-8">
-                                <data class="fs-6 text-gray-800">
-                                    @Model.LastLoggedInTime?.ToString("dd-MM-yyyy hh:mm:ss")
-                                </data>
-                            </div>
-                        </div>
-                    }
-                    @if (Model.LockoutEnd is not null)
-                    {
-                        <div class="row">
-                            <label class="col-lg-4 text-muted">
-                                Lockout Enddate
-                            </label>
-                            <div class="col-lg-8">
-                                <data class="fs-6 text-gray-800">
-                                    @Model.LockoutEnd
-                                </data>
-                            </div>
-                        </div>
-                    }
-                    <div class="row">
-                        <label class="col-lg-4 text-muted">
-                            Access Failed Counter
-                        </label>
-                        <div class="col-lg-8">
-                            <data class="fs-6 text-gray-800">
-                                @Model.AccessFailedCount <span class="text-muted">x</span>
-                            </data>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <div class="row">
                 <div class="col-lg-6">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <label class="col-lg-6 text-muted">
+                                    Created
+                                </label>
+                                <div class="col-lg-6">
+                                    <data class="fs-6 text-gray-800">
+                                        @Model.CreationTime.ToString("dd-MM-yyyy hh:mm:ss")
+                                    </data>
+                                </div>
+                            </div>
+                            @if (Model.LastModificationTime is not null)
+                            {
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Last Modified
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
+                                        </data>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.LastLoggedInTime is not null)
+                            {
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Last Logged in
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            @Model.LastLoggedInTime?.ToString("dd-MM-yyyy hh:mm:ss")
+                                        </data>
+                                    </div>
+                                </div>
+                            }
+                            @if (Model.LockoutEnd is not null)
+                            {
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Lockout Enddate
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            @Model.LockoutEnd
+                                        </data>
+                                    </div>
+                                </div>
+                            }
+                            <div class="row">
+                                <label class="col-lg-6 text-muted">
+                                    Access Failed Counter
+                                </label>
+                                <div class="col-lg-6">
+                                    <data class="fs-6 text-gray-800">
+                                        @Model.AccessFailedCount <span class="text-muted">x</span>
+                                    </data>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <EditForm FormName="EditUserProfileForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
                         <FluentValidationValidator />
                         <div class="row mb-3">

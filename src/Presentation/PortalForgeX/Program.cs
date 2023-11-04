@@ -91,6 +91,12 @@ builder.Services.AddDbContext<IPortalContext, PortalContext>(options =>
         sqlOptions.MigrationsAssembly(typeof(PortalContext).Assembly.FullName);
     }));
 
+/**
+ * Portal Context Factory
+ * Usage: Razor Component
+ */
+builder.Services.AddDbContextFactory<PortalContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("PortalConnection")), lifetime: ServiceLifetime.Scoped);
+
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 /**

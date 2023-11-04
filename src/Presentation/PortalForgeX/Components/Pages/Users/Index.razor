@@ -2,17 +2,24 @@
 
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using PortalForgeX.Application.Data
+@using PortalForgeX.Application.Tenants
 @using PortalForgeX.Client.Components.ContextMenu
 @using PortalForgeX.Components.Dialogs
+@using PortalForgeX.Domain.Entities.Tenants
+@using PortalForgeX.Persistence.EFCore
 
 @rendermode RenderMode.InteractiveServer
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
 
-@inject UserManager<ApplicationUser> UserManager
-@inject NavigationManager Navigation
+@inject IDbContextFactory<PortalContext> PortalContextFactory
+@inject IDomainContextFactory DomainContextFactory
 @inject IToastService ToastService
 @inject IJSRuntime JSRuntime
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Navigation
 
 <PageTitle>Users</PageTitle>
 
@@ -44,10 +51,15 @@
                     <QuickGrid Items="users" Class="table table-striped">
                         <TemplateColumn Title="Name" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.UserName)">
                             <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
-                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.UserName</span>
+                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.FirstName @context.LastName</span>
                         </TemplateColumn>
                         <TemplateColumn Title="Email" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.Email)">
                             <a href="mailto:@context.Email">@context.Email</a>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Tenant" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.TenantId)">
+                            <NullableField Value="@context.TenantId">
+                                <a href="@($"/tenant/{context.TenantId}")">@context.Tenant?.Name</a>
+                            </NullableField>
                         </TemplateColumn>
                         <TemplateColumn Title="Last logged in" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.LastLoggedInTime)">
                             <NullableField Value="@context.LastLoggedInTime?.ToString("dd-MM-yyyy HH:mm")" />
@@ -72,16 +84,41 @@
 @code {
 
     private IQueryable<ApplicationUser> users = null!;
+    private IDictionary<Guid, Tenant> tenants = null!;
     private bool isLoading;
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
+        if (isLoading)
+        {
+            return;
+        }
 
         isLoading = true;
 
+        tenants = new Dictionary<Guid, Tenant>();
         users = UserManager.Users
             .ToArray().AsQueryable(); // detach from the EF IQueryable
+
+        using var portalContext = await PortalContextFactory.CreateDbContextAsync();
+        foreach (var tenantUser in users.Where(x => x.TenantId != null).ToArray())
+        {
+            var tenantId = tenantUser.TenantId!.Value;
+            if (tenants.ContainsKey(tenantId))
+            {
+                tenantUser.Tenant = tenants[tenantId];
+                continue;
+            }
+
+            var dbTenant = await portalContext.Tenants.FindAsync(tenantId);
+            if (dbTenant is null)
+            {
+                continue;
+            }
+
+            tenantUser.Tenant = dbTenant;
+            tenants[dbTenant.Id] = dbTenant;
+        }
 
         isLoading = false;
     }
@@ -113,7 +150,19 @@
             return;
         }
 
-        // TODO: Delete UserProfile
+        if (user.Tenant is not null)
+        {
+            var domainContext = DomainContextFactory.CreateDomainContext(user.Tenant);
+            var profileDeleteResult = await domainContext.UserProfiles
+                .Where(x => x.UserId.Equals(user.Id))
+                .ExecuteDeleteAsync();
+
+            if (profileDeleteResult < 1)
+            {
+                ToastService.ShowError("Failed deleting profile.");
+                return;
+            }
+        }
 
         ToastService.ShowSuccess($"User {user.Email} was succesfully deleted.");
         await OnInitializedAsync();

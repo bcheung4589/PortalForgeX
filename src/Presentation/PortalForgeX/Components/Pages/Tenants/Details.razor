@@ -50,47 +50,47 @@
             </div>
         </div>
         <div class="card-body">
-            <div class="card bg-light mb-3">
-                <div class="card-body">
-                    <div class="row">
-                        <label class="col-lg-4 text-muted">
-                            Created
-                        </label>
-                        <div class="col-lg-8">
-                            <data class="fs-6 text-gray-800">
-                                @Model.CreationTime.ToString("dd-MM-yyyy hh:mm:ss")
-                            </data>
-                        </div>
-                    </div>
-                    @if (Model.LastModificationTime is not null)
-                    {
-                        <div class="row">
-                            <label class="col-lg-4 text-muted">
-                                Last Modified
-                            </label>
-                            <div class="col-lg-8">
-                                <data class="fs-6 text-gray-800">
-                                    @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
-                                </data>
-                            </div>
-                        </div>
-                    }
-                    <div class="row">
-                        <label class="col-lg-4 text-muted">
-                            Status
-                        </label>
-                        <div class="col-lg-8">
-                            <data class="fs-6 text-gray-800">
-                                <TenantStatusBadge Status="@Model.Status.ToString()" />
-                            </data>
-                        </div>
-                    </div>
-                </div>
-            </div>
             <EditForm FormName="EditTenantForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
                 <FluentValidationValidator />
                 <div class="row">
                     <div class="col-lg-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Created
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            @Model.CreationTime.ToString("dd-MM-yyyy hh:mm:ss")
+                                        </data>
+                                    </div>
+                                </div>
+                                @if (Model.LastModificationTime is not null)
+                                {
+                                    <div class="row">
+                                        <label class="col-lg-6 text-muted">
+                                            Last Modified
+                                        </label>
+                                        <div class="col-lg-6">
+                                            <data class="fs-6 text-gray-800">
+                                                @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
+                                            </data>
+                                        </div>
+                                    </div>
+                                }
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Status
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            <TenantStatusBadge Status="@Model.Status.ToString()" />
+                                        </data>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="row mb-3">
                             <div class="col">
                                 <SelectFormField @bind-Value="Model.ManagerId"
@@ -450,7 +450,7 @@
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
-        
+
         _tenant = await TenantService.GetByIdAsync(Id);
         if (RenderContext.IsPrerendering)
         {
