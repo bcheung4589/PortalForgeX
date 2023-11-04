@@ -494,9 +494,9 @@
             var result = await TenantService.UpdateAsync(_tenant);
             if (result is not null)
             {
-                ToastService.ShowSuccess($"Tenant {_tenant.Name} was successfully updated.");
-
                 await LoadDataAsync();
+
+                ToastService.ShowSuccess($"Tenant {_tenant.Name} was successfully updated.");
             }
         });
 

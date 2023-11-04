@@ -375,48 +375,40 @@
     protected string? Password;
     protected string? PasswordConfirm;
 
-    private Tenant _tenant = null!;
-    private ApplicationUser _user = null!;
+    private Tenant? _tenant;
+    private ApplicationUser? _user;
 
-    // protected override async Task OnInitializedAsync()
-    // {
-    //     IsLoading = true;
-    //     if (RenderContext.IsPrerendering)
-    //     {
-    //         return; // only load once
-    //     }
-
-    //     IsLoading = false;
-    //     await base.OnInitializedAsync();
-    // }
-
-    protected override async Task InitDataSourcesAsync()
+    protected override async Task OnInitializedAsync()
     {
         IsLoading = true;
 
-        var user = await UserManager.FindByIdAsync(UserId.ToString());
-        if (user is null || user.TenantId is null)
+        _user = await UserManager.FindByIdAsync(UserId.ToString());
+        _tenant = await TenantService.GetByIdAsync(_user.TenantId.Value);
+        if (RenderContext.IsPrerendering)
+        {
+            return; // only load once
+        }
+
+        await LoadDataAsync();
+    }
+
+    protected async Task LoadDataAsync()
+    {
+        IsLoading = true;
+
+        if (_user is null || _user.TenantId is null || _tenant is null)
         {
             Navigation.NavigateTo("tenants");
             return;
         }
 
-        var tenant = await TenantService.GetByIdAsync(user.TenantId.Value);
-        if (tenant is null)
-        {
-            Navigation.NavigateTo("tenants");
-            return;
-        }
-
-        var userFormModel = await TenantService.ProvideTenantProfileForEdit(tenant, user.Id);
+        var userFormModel = await TenantService.ProvideTenantProfileForEdit(_tenant, _user.Id);
         if (userFormModel is null)
         {
             Navigation.NavigateTo("tenants");
             return;
         }
 
-        _user = user;
-        _tenant = tenant;
         Model = userFormModel;
         UserRoles = new Dictionary<ApplicationRole, bool>();
         var roles = RoleManager.Roles.OrderBy(x => x.Name).ToArray();
@@ -431,9 +423,9 @@
         }
 
         await base.OnInitializedAsync();
+        await InvokeAsync(StateHasChanged);
 
         IsLoading = false;
-        StateHasChanged();
     }
 
     protected void OnChanged(ChangeEventArgs args, string key)
@@ -454,6 +446,8 @@
             var result = await TenantService.UpdateTenantProfileAsync(_tenant, Model);
             if (result)
             {
+                await LoadDataAsync();
+
                 ToastService.ShowSuccess("Profile was successfully updated.");
             }
         });
@@ -473,6 +467,8 @@
 
                 return;
             }
+
+            await LoadDataAsync();
 
             ToastService.ShowSuccess("User roles was successfully updated. Login again for it to take effect.");
         });
@@ -528,7 +524,7 @@
             return;
         }
 
-        await OnInitializedAsync();
+        Navigation.NavigateTo($"tenant/{_tenant.Id}");
         ToastService.ShowSuccess($"Profile for {_user.UserName} was succesfully deleted.");
     }
 
