@@ -1,12 +1,589 @@
 ﻿@page "/tenant/{Id:guid}"
 
+@using AutoMapper
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Client.Components.ContextMenu
+@using PortalForgeX.Components.Dialogs
+@using PortalForgeX.Domain.Entities.Tenants
+@using PortalForgeX.Shared.Features.Tenants
+
+@inherits FormPage<TenantFormModel>
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
+
+@inject IRenderContext RenderContext
+@inject ITenantService TenantService
+@inject IMapper Mapper
+@inject UserManager<ApplicationUser> UserManager
+
 <PageTitle>Tenant Details</PageTitle>
 
-<h1>Tenant Details</h1>
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
+        <Breadcrumb DisplayText="@(_tenant?.Name)" IconCssClass="fas fa-user-tie" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<LoadingArea IsLoading="IsLoading">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>@Model.Name</h1>
+            </div>
+            <div class="col-lg-4 text-end">
+                @if (Model.Status.ToTenantStatus() == Domain.Enums.TenantStatus.Created)
+                {
+                    <div class="d-inline-block mx-3">
+                        <small class="d-block text-start text-muted">Review</small>
+                        <div class="btn-group" role="group" aria-label="Review options">
+                            <button @onclick="RejectAsync" class="btn btn-warning" type="button">Reject</button>
+                            <button @onclick="ApproveAsync" class="btn btn-success" type="button">Approve</button>
+                        </div>
+                    </div>
+                }
+
+                @if (Model.Status.ToTenantStatus() >= Domain.Enums.TenantStatus.DbMigrated)
+                {
+                    <button @onclick="ImpersonateAsync" class="btn btn-primary mx-3" type="button">Impersonate</button>
+                }
+
+                <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <EditForm FormName="EditTenantForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <FluentValidationValidator />
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card bg-light mb-3">
+                            <div class="card-body">
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Created
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            @Model.CreationTime.ToString("dd-MM-yyyy hh:mm:ss")
+                                        </data>
+                                    </div>
+                                </div>
+                                @if (Model.LastModificationTime is not null)
+                                {
+                                    <div class="row">
+                                        <label class="col-lg-6 text-muted">
+                                            Last Modified
+                                        </label>
+                                        <div class="col-lg-6">
+                                            <data class="fs-6 text-gray-800">
+                                                @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
+                                            </data>
+                                        </div>
+                                    </div>
+                                }
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Status
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            <TenantStatusBadge Status="@Model.Status.ToString()" />
+                                        </data>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <SelectFormField @bind-Value="Model.ManagerId"
+                                                 TViewModel="TenantFormModel"
+                                                 TValue="string?"
+                                                 TSourceModel="ApplicationUser"
+                                                 DataSource="TenantManagers"
+                                                 DisplayText="x => x.UserName"
+                                                 DisplayValue="x => x.Id"
+                                                 DisplayName="Manager"
+                                                 ShowEmptyOption="true"
+                                                 HelpText="Manager for the tenant."
+                                                 Model="Model"
+                                                 SaveCallback="SaveAsync"
+                                                 ValidationFor="() => Model.ManagerId">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Manager for the tenant." />
+                                            <span class="text-muted">Manager</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            <NullableField Value="@template.Model.ManagerId">
+                                                <a href="user/@template.Model.ManagerId">@template.Model!.ManagerName</a>
+                                            </NullableField>
+                                        </data>
+                                    </ViewTemplate>
+                                </SelectFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.Name"
+                                               TViewModel="TenantFormModel"
+                                               DisplayName="Name"
+                                               HelpText="Name of the tenant."
+                                               Required="true"
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Name"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Name of the tenant." />
+                                            <span class="text-muted">Name</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            @template.Model.Name
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.ExternalId"
+                                               TViewModel="TenantFormModel"
+                                               DisplayName="External Id"
+                                               HelpText="External ID that can be used for public communication."
+                                               Required="true"
+                                               MaxLength="50"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.ExternalId"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="External ID that can be used for public communication." />
+                                            <span class="text-muted">External Id</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            @template.Model.ExternalId
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.InternalName"
+                                               TViewModel="TenantFormModel"
+                                               DisplayName="Internal Name"
+                                               HelpText="Internal name is used for naming system resources bound to this tenant."
+                                               Required="true"
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.InternalName"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Internal name is used for naming system resources bound to this tenant." />
+                                            <span class="text-muted">Internal Name</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            @template.Model.InternalName
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.Host"
+                                               TViewModel="TenantFormModel"
+                                               DisplayName="Host"
+                                               HelpText="Host(domain) name of the tenant."
+                                               Required="true"
+                                               MaxLength="150"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Host"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Host(domain) name of the tenant." />
+                                            <span class="text-muted">Host</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            @template.Model.Host
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <CheckboxFormField @bind-Value="Model.IsActive"
+                                                   TViewModel="TenantFormModel"
+                                                   DisplayName="Actief"
+                                                   HelpText="Indicator if the tenant is active."
+                                                   Model="Model"
+                                                   ValidationFor="() => Model.IsActive"
+                                                   SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Indicator if the tenant is active." />
+                                            <span class="text-muted">Actief</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            <SwitchCircleIndicator IsOn="@template.Model.IsActive" Title="Actief" OffTitle="Inactief" CssClass="ms-3 mb-2 mt-2" />
+                                        </data>
+                                    </ViewTemplate>
+                                </CheckboxFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextAreaFormField @bind-Value="Model.Remarks"
+                                                   TViewModel="TenantFormModel"
+                                                   DisplayName="Remarks about the tenant."
+                                                   HelpText="Remarks about the tenant."
+                                                   MaxLength="2000"
+                                                   Model="Model"
+                                                   SaveCallback="SaveAsync"
+                                                   ValidationFor="() => Model.Remarks">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Remarks about the tenant." />
+                                            <span class="text-muted">Remarks</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            <NullableField Value="@template.Model.Remarks" />
+                                        </data>
+                                    </ViewTemplate>
+                                </TextAreaFormField>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                        <div class="card warning border-1 p-2 py-3">
+                            <div class="card-header">
+                                <h5>Settings</h5>
+                            </div>
+                            <div class="card-body pb-0">
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <TextFormField @bind-Value="Model.Brand"
+                                                       TViewModel="TenantFormModel"
+                                                       DisplayName="Brand"
+                                                       HelpText="Brand of the tenant."
+                                                       MaxLength="150"
+                                                       Model="Model"
+                                                       SaveCallback="SaveAsync">
+                                            <ViewTemplate Context="template">
+                                                <div>
+                                                    <HelpTextTool Content="Brand of the tenant." />
+                                                    <span class="text-muted">Brand</span>
+                                                </div>
+                                                <data @ondblclick="template.Edit" class="ps-4">
+                                                    <NullableField Value="@template.Model.Brand" />
+                                                </data>
+                                            </ViewTemplate>
+                                        </TextFormField>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <TextFormField @bind-Value="Model.LogoUrl"
+                                                       TViewModel="TenantFormModel"
+                                                       DisplayName="Logo Url"
+                                                       HelpText="Logo Url of the tenant."
+                                                       MaxLength="250"
+                                                       Model="Model"
+                                                       SaveCallback="SaveAsync">
+                                            <ViewTemplate Context="template">
+                                                <div>
+                                                    <HelpTextTool Content="Logo Url of the tenant." />
+                                                    <span class="text-muted">Logo Url</span>
+                                                </div>
+                                                <data @ondblclick="template.Edit" class="ps-4">
+                                                    <NullableField Value="@template.Model.LogoUrl" />
+                                                </data>
+                                            </ViewTemplate>
+                                        </TextFormField>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <TextFormField @bind-Value="Model.PrimaryColor"
+                                                       TViewModel="TenantFormModel"
+                                                       DisplayName="Primary Color"
+                                                       HelpText="Primary Color of the tenant."
+                                                       MaxLength="50"
+                                                       Model="Model"
+                                                       Type="color"
+                                                       SaveCallback="SaveAsync">
+                                            <ViewTemplate Context="template">
+                                                <div>
+                                                    <HelpTextTool Content="Primary Color of the tenant." />
+                                                    <span class="text-muted">Primary Color</span>
+                                                </div>
+                                                <data @ondblclick="template.Edit" class="ps-4">
+                                                    <span class="badge" style="background-color: @template.Model.PrimaryColor">&nbsp;</span>
+                                                    <NullableField Value="@template.Model.PrimaryColor" />
+                                                </data>
+                                            </ViewTemplate>
+                                        </TextFormField>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <TextFormField @bind-Value="Model.SecondaryColor"
+                                                       TViewModel="TenantFormModel"
+                                                       DisplayName="Secondary Color"
+                                                       HelpText="Secondary Color of the tenant."
+                                                       MaxLength="50"
+                                                       Model="Model"
+                                                       SaveCallback="SaveAsync">
+                                            <ViewTemplate Context="template">
+                                                <div>
+                                                    <HelpTextTool Content="Secondary Color of the tenant." />
+                                                    <span class="text-muted">Secondary Color</span>
+                                                </div>
+                                                <data @ondblclick="template.Edit" class="ps-4">
+                                                    <span class="badge" style="background-color: @template.Model.SecondaryColor">&nbsp;</span>
+                                                    <NullableField Value="@template.Model.SecondaryColor" />
+                                                </data>
+                                            </ViewTemplate>
+                                        </TextFormField>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <CheckboxFormField @bind-Value="Model.IsPublicRegisterEnabled"
+                                                           TViewModel="TenantFormModel"
+                                                           DisplayName="Public Register Enabled"
+                                                           HelpText="Indicator if public registration is enabled."
+                                                           Model="Model"
+                                                           ValidationFor="() => Model.IsPublicRegisterEnabled"
+                                                           SaveCallback="SaveAsync">
+                                            <ViewTemplate Context="template">
+                                                <div>
+                                                    <HelpTextTool Content="Indicator if public registration is enabled." />
+                                                    <span class="text-muted">Public Register Enabled</span>
+                                                </div>
+                                                <data @ondblclick="template.Edit" class="ps-4">
+                                                    <SwitchCircleIndicator IsOn="@template.Model.IsPublicRegisterEnabled" Title="Enabled" OffTitle="Disabled" CssClass="ms-3 mb-2 mt-2" />
+                                                </data>
+                                            </ViewTemplate>
+                                        </CheckboxFormField>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col">
+                                        <TextAreaFormField @bind-Value="Model.AdditionalData"
+                                                           TViewModel="TenantFormModel"
+                                                           DisplayName="Additional Data."
+                                                           HelpText="Additional data for the tenant."
+                                                           Model="Model"
+                                                           SaveCallback="SaveAsync">
+                                            <ViewTemplate Context="template">
+                                                <div>
+                                                    <HelpTextTool Content="Additional data for the tenant." />
+                                                    <span class="text-muted">Additional Data</span>
+                                                </div>
+                                                <data @ondblclick="template.Edit" class="ps-4">
+                                                    <NullableField Value="@template.Model.AdditionalData" />
+                                                </data>
+                                            </ViewTemplate>
+                                        </TextAreaFormField>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </EditForm>
+
+            @if (Model.Status.ToTenantStatus() >= Domain.Enums.TenantStatus.DbMigrated)
+            {
+                <details class="my-4" open>
+                    <summary>
+                        <h4 class="d-inline-block">Tenant Users</h4>
+                        <TenantUserCreateDialog Tenant="_tenant" />
+                        <span class="clearfix"></span>
+                        <div class="text-muted">Manage the tenant users.</div>
+                    </summary>
+                    @if (TenantUsers is not null && TenantUsers.Any())
+                    {
+                        <p>@TenantUsers.Count() items found.</p>
+                        <QuickGrid Items="TenantUsers" Class="table table-striped">
+                            <TemplateColumn Title="Name" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.FirstName)">
+                                <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                                <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.FullName">@context.FullName</span>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Title" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.Title)">
+                                <NullableField Value="@context.Title" />
+                            </TemplateColumn>
+                            <TemplateColumn Title="Email" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.Email)">
+                                <a href="mailto:@context.Email">@context.Email</a>
+                            </TemplateColumn>
+                            <TemplateColumn Title="Last logged in" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.LastLoggedInTime)">
+                                <NullableField Value="@context.LastLoggedInTime?.ToString("dd-MM-yyyy HH:mm")" />
+                            </TemplateColumn>
+                            <TemplateColumn>
+                                <ContextMenu Model="@context">
+                                    <MenuItem TEntity="TenantUserViewModel" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                    <MenuItem TEntity="TenantUserViewModel" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteProfileAsync(e)"></MenuItem>
+                                </ContextMenu>
+                            </TemplateColumn>
+                        </QuickGrid>
+                    }
+                </details>
+            }
+        </div>
+    </div>
+</LoadingArea>
 
 @code {
 
     [Parameter]
     public Guid Id { get; set; }
+
+    protected override TenantFormModel InitModel => new();
+    protected IList<ApplicationUser> TenantManagers = null!;
+    protected IQueryable<TenantUserViewModel>? TenantUsers;
+
+    private Tenant? _tenant;
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        _tenant = await TenantService.GetByIdAsync(Id);
+        if (RenderContext.IsPrerendering)
+        {
+            return; // no need for prerendering
+        }
+
+        await LoadDataAsync();
+    }
+
+    protected async Task LoadDataAsync()
+    {
+        IsLoading = true;
+
+        if (_tenant is null)
+        {
+            Navigation.NavigateTo("tenants");
+            return;
+        }
+
+        Model = Mapper.Map<TenantFormModel>(_tenant);
+        Mapper.Map(_tenant.TenantSettings, Model);
+
+        TenantManagers = await UserManager.GetUsersInRoleAsync(SystemRolesNames.MANAGER);
+        TenantUsers = (await TenantService.GetTenantProfiles(_tenant))?.AsQueryable();
+
+        BindModelContext();
+        await InvokeAsync(StateHasChanged);
+
+        IsLoading = false;
+    }
+
+    protected void NavigateTo(TenantUserViewModel user)
+        => Navigation.NavigateTo($"tenant/profile/{user.Id}");
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            Mapper.Map(Model, _tenant);
+            Mapper.Map(Model, _tenant.TenantSettings);
+
+            var result = await TenantService.UpdateAsync(_tenant);
+            if (result is not null)
+            {
+                ToastService.ShowSuccess($"Tenant {_tenant.Name} was successfully updated.");
+
+                await LoadDataAsync();
+            }
+        });
+
+    protected async Task DeleteAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete tenant {Model.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await TenantService.DeleteAsync(Model.Id);
+        if (!result)
+        {
+            ToastService.ShowError($"Failed deleting Tenant {Model.Name}.");
+            return;
+        }
+
+        ToastService.ShowSuccess($"Tenant {Model.Name} was succesfully deleted.");
+        Navigation.NavigateTo("tenants");
+    }
+
+    protected async Task ApproveAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to approve tenant {Model.Name}?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await TenantService.ApproveTenantAsync(Model.Id);
+        if (result)
+        {
+            ToastService.ShowSuccess($"Tenant {Model.Name} has been Approved.");
+
+            await LoadDataAsync();
+        }
+    }
+
+    protected async Task RejectAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to reject tenant {Model.Name}?");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await TenantService.RejectTenantAsync(Model.Id);
+        if (result)
+        {
+            ToastService.ShowSuccess($"Tenant {Model.Name} has been Rejected.");
+
+            await LoadDataAsync();
+        }
+    }
+
+    protected async Task DeleteProfileAsync(TenantUserViewModel user)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete profile for {user.UserName}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var successResult = await TenantService.DeleteTenantProfileAsync(_tenant, user.Id);
+        if (!successResult && TenantService.HasError)
+        {
+            foreach (var errorMessage in TenantService.Errors)
+            {
+                ToastService.ShowError(errorMessage);
+            }
+
+            return;
+        }
+
+        ToastService.ShowSuccess($"Profile for {user.UserName} was succesfully deleted.");
+
+        await LoadDataAsync();
+    }
+
+    protected async Task ImpersonateAsync()
+        => Navigation.NavigateTo($"/tenant/impersonation/{Id}", true);
 
 }

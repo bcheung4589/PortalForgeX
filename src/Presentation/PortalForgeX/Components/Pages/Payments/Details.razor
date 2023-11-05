@@ -3,7 +3,7 @@
 @using PortalForgeX.Shared.Features.Payments
 
 @attribute [StreamRendering(true)]
-@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 @inject IPaymentFacade Payments
 
@@ -17,7 +17,7 @@
 </SectionContent>
 
 <LoadingArea IsLoading="IsLoading">
-    <PaymentDetailsView @rendermode="RenderMode.InteractiveAuto" Payment="Model" />
+    <PaymentDetailsView @rendermode="RenderMode.InteractiveWebAssembly" Payment="Model" />
 </LoadingArea>
 
 @code {

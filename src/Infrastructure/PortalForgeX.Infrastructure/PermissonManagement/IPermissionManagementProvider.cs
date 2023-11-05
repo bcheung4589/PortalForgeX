@@ -19,11 +19,6 @@
 //    string PermissionName { get; set; }
 
 //    /// <summary>
-//    /// Name of the module this feature is part of.
-//    /// </summary>
-//    string ModuleName { get; set; }
-
-//    /// <summary>
 //    /// Indicator if the AccessPoint has Access.
 //    /// </summary>
 //    bool HasAccess { get; set; }
@@ -34,7 +29,6 @@
 //    [Column("UserId")]
 //    public Guid ProviderId { get; set; }
 //    public string PermissionName { get; set; } = null!;
-//    public string ModuleName { get; set; } = null!;
 //    public bool HasAccess { get; set; }
 //    public Guid AuthorizedUserId { get; set; }
 //    public DateTime? LastModificationTime { get; set; }

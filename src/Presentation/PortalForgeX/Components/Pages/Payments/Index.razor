@@ -3,7 +3,7 @@
 @using System.Collections.Generic
 
 @attribute [StreamRendering(true)]
-@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 @inject IPaymentFacade Payments
 
@@ -26,11 +26,11 @@
                 <p class="m-0">Browse and manage the payments.</p>
             </div>
             <div class="col-lg-4">
-                <PaymentCreateDialog @rendermode="RenderMode.InteractiveAuto" />
+                <PaymentCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" />
             </div>
         </div>
         <div class="card-body pt-0">
-            <PaymentsBrowser @rendermode="RenderMode.InteractiveAuto" />
+            <PaymentsBrowser @rendermode="RenderMode.InteractiveWebAssembly" />
         </div>
     </div>
 </div>

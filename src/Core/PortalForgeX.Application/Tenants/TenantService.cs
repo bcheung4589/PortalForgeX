@@ -5,11 +5,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PortalForgeX.Application.Data;
 using PortalForgeX.Domain.Entities.Identity;
-using PortalForgeX.Domain.Entities.Internal;
 using PortalForgeX.Domain.Entities.Tenants;
 using PortalForgeX.Domain.Enums;
 using PortalForgeX.Domain.Events;
 using PortalForgeX.Shared.Constants;
+using PortalForgeX.Shared.Extensions;
 using PortalForgeX.Shared.Features.Tenants;
 
 namespace PortalForgeX.Application.Tenants;
@@ -20,21 +20,29 @@ public class TenantService(
     IPortalContext portalContext,
     IDomainContextFactory domainContextFactory,
     UserManager<ApplicationUser> userManager,
-    ISender sender,
+    IMediator sender,
     IMapper mapper
-    ) : ITenantService
+    ) : ITenantService, IDisposable
 {
     private readonly ILogger<TenantService> _logger = logger;
+    private readonly IPortalContext portalContext = portalContext;
+
+    public List<string> Errors { get; } = [];
 
     #region [ Tenants ]
 
     /// <inheritdoc/>
     public async Task<IEnumerable<Tenant>> GetAsync(CancellationToken cancellationToken = default)
-        => await portalContext.Tenants.Include(x => x.Manager).ToListAsync(cancellationToken: cancellationToken);
+        => await portalContext.Tenants
+            .Include(x => x.Manager)
+            .ToListAsync(cancellationToken: cancellationToken);
 
     /// <inheritdoc/>
     public async Task<Tenant?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
-        => await portalContext.Tenants.Include(x => x.Manager).FirstOrDefaultAsync(x => x.Id == id, cancellationToken: cancellationToken);
+        => await portalContext.Tenants
+            .Include(x => x.Manager)
+            .Include(x => x.TenantSettings)
+            .FirstOrDefaultAsync(x => x.Id == id, cancellationToken: cancellationToken);
 
     /// <inheritdoc/>
     public async Task<Tenant?> CreateAsync(Tenant tenant, CancellationToken cancellationToken = default)
@@ -42,6 +50,23 @@ public class TenantService(
         tenant.Id = Guid.NewGuid();
         tenant.CreationTime = DateTime.UtcNow;
         tenant.Status = TenantStatus.Created;
+        tenant.TenantSettings.Id = Guid.NewGuid();
+        tenant.TenantSettings.CreationTime = DateTime.UtcNow;
+
+        if (string.IsNullOrWhiteSpace(tenant.InternalName))
+        {
+            var internalName = tenant.Name.SanitizeAlphaNum();
+            if (internalName.Contains(' '))
+            {
+                do
+                {
+                    internalName = internalName.Replace(" ", "_");
+                }
+                while (internalName.Contains(' '));
+            }
+
+            tenant.InternalName = internalName.ToLower();
+        }
 
         var entity = (await portalContext.Tenants.AddAsync(tenant, cancellationToken)).Entity;
         var changes = await portalContext.SaveChangesAsync(cancellationToken);
@@ -52,37 +77,48 @@ public class TenantService(
     /// <inheritdoc/>
     public async Task<Tenant?> UpdateAsync(Tenant tenant, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
+        var dbTenant = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
+        if (dbTenant is null)
         {
+            Errors.Add($"Tenant not found. ({tenant.Name}).");
+            _logger.LogError("Tenant not found [{Name}/{InternalName}/{Id}].", tenant.Name, tenant.InternalName, tenant.Id);
             return null;
         }
 
-        foundEntity.ExternalId = tenant.ExternalId;
-        foundEntity.Name = tenant.Name;
-        foundEntity.InternalName = tenant.InternalName;
-        foundEntity.Status = tenant.Status;
-        foundEntity.Host = tenant.Host;
-        foundEntity.IsActive = tenant.IsActive;
-        foundEntity.Remarks = tenant.Remarks;
-        foundEntity.TenantSettingsId = tenant.TenantSettingsId;
-        foundEntity.LastModificationTime = DateTime.UtcNow;
+        dbTenant.ExternalId = tenant.ExternalId;
+        dbTenant.Name = tenant.Name;
+        dbTenant.InternalName = tenant.InternalName;
+        dbTenant.Status = tenant.Status;
+        dbTenant.Host = tenant.Host;
+        dbTenant.IsActive = tenant.IsActive;
+        dbTenant.Remarks = tenant.Remarks;
+        dbTenant.LastModificationTime = DateTime.UtcNow;
+
+        dbTenant.TenantSettings.LogoUrl = tenant.TenantSettings.LogoUrl;
+        dbTenant.TenantSettings.Brand = tenant.TenantSettings.Brand;
+        dbTenant.TenantSettings.PrimaryColor = tenant.TenantSettings.PrimaryColor;
+        dbTenant.TenantSettings.SecondaryColor = tenant.TenantSettings.SecondaryColor;
+        dbTenant.TenantSettings.IsPublicRegisterEnabled = tenant.TenantSettings.IsPublicRegisterEnabled;
+        dbTenant.TenantSettings.AdditionalData = tenant.TenantSettings.AdditionalData;
 
         var changes = await portalContext.SaveChangesAsync(cancellationToken);
 
-        return changes > 0 ? await GetByIdAsync(foundEntity.Id, cancellationToken) : null;
+        return changes > 0 ? await GetByIdAsync(dbTenant.Id, cancellationToken) : null;
     }
 
     /// <inheritdoc/>
     public async Task<bool> UpdateStatusAsync(Guid id, TenantStatus newStatus, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
+        var dbTenant = await portalContext.Tenants.FindAsync([id], cancellationToken: cancellationToken);
+        if (dbTenant is null)
         {
+            Errors.Add($"Tenant not found. ({id}).");
+            _logger.LogError("Tenant not found [{id}].", id);
             return false;
         }
 
-        foundEntity.Status = newStatus;
+        dbTenant.Status = newStatus;
+        dbTenant.LastModificationTime = DateTime.UtcNow;
 
         var changes = await portalContext.SaveChangesAsync(cancellationToken);
 
@@ -92,9 +128,11 @@ public class TenantService(
     /// <inheritdoc/>
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
+        var dbTenant = await portalContext.Tenants.FindAsync([id], cancellationToken: cancellationToken);
+        if (dbTenant is null)
         {
+            Errors.Add($"Tenant not found. ({id}).");
+            _logger.LogError("Tenant not found [{id}].", id);
             return false;
         }
 
@@ -112,19 +150,21 @@ public class TenantService(
     /// <inheritdoc/>
     public async Task<bool> ApproveTenantAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await GetByIdAsync(id, cancellationToken);
-        if (foundEntity is null)
+        var tenant = await GetByIdAsync(id, cancellationToken);
+        if (tenant is null)
         {
+            Errors.Add($"Tenant not found. ({id}).");
+            _logger.LogError("Tenant not found [{Id}].", id);
             return false;
         }
 
-        foundEntity.Status = TenantStatus.Approved;
+        tenant.Status = TenantStatus.Approved;
 
         var succeeded = await portalContext.SaveChangesAsync(cancellationToken) > 0;
         if (succeeded)
         {
             /// <see cref="TenantReviewEventHandler"/>
-            await sender.Send(new TenantApprovedEvent(foundEntity), cancellationToken);
+            await sender.Publish(new TenantApprovedEvent(tenant), cancellationToken);
         }
 
         return succeeded;
@@ -133,19 +173,21 @@ public class TenantService(
     /// <inheritdoc/>
     public async Task<bool> RejectTenantAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await GetByIdAsync(id, cancellationToken);
-        if (foundEntity is null)
+        var tenant = await GetByIdAsync(id, cancellationToken);
+        if (tenant is null)
         {
+            Errors.Add($"Tenant not found. ({id}).");
+            _logger.LogError("Tenant not found [{Id}].", id);
             return false;
         }
 
-        foundEntity.Status = TenantStatus.Rejected;
+        tenant.Status = TenantStatus.Rejected;
 
         var succeeded = await portalContext.SaveChangesAsync(cancellationToken) > 0;
         if (succeeded)
         {
             /// <see cref="TenantReviewEventHandler"/>
-            await sender.Send(new TenantRejectedEvent(foundEntity), cancellationToken);
+            await sender.Publish(new TenantRejectedEvent(tenant), cancellationToken);
         }
 
         return succeeded;
@@ -156,55 +198,111 @@ public class TenantService(
     #region [ User Profiles ]
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TenantUserViewModel>?> GetTenantUsers(Tenant tenant, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<TenantUserViewModel>?> GetTenantProfiles(Tenant tenant, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
+        var tenantUsers = await userManager.Users.Where(x => x.TenantId == tenant.Id).ToListAsync(cancellationToken: cancellationToken);
+        if (tenantUsers.Count == 0)
         {
             return null;
         }
 
-        var tenantUsers = await userManager.Users.Where(x => x.TenantId == tenant.Id).ToListAsync(cancellationToken: cancellationToken);
-        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers); // map ApplicationUser
-
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
         var userProfiles = await domainContext.UserProfiles
             .Include(x => x.Groups)
             .Where(x => tenantUsersIds.Contains(x.UserId))
             .ToListAsync(cancellationToken: cancellationToken);
-        mapper.Map(userProfiles, tenantUsersViews); // map TenantUserProfile
+
+        foreach (var userProfile in userProfiles)
+        {
+            var tenantUser = tenantUsersViews.FirstOrDefault(x => x.Id == userProfile.UserId);
+            if (tenantUser is null)
+            {
+                continue;
+            }
+
+            mapper.Map(userProfile, tenantUser);
+        }
 
         return tenantUsersViews;
     }
 
-    /// <inheritdoc/>
-    public async Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserProfile newProfile, CancellationToken cancellationToken = default)
+    public async Task<TenantUserFormModel?> ProvideTenantProfileForEdit(Tenant tenant, string userId, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
+        var tenantUser = await userManager.FindByIdAsync(userId);
+        if (tenantUser is null)
         {
+            return null;
+        }
+
+        var tenantUserView = mapper.Map<TenantUserFormModel>(tenantUser);
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        var userProfile = await domainContext.UserProfiles
+            .Include(x => x.Groups)
+            .FirstOrDefaultAsync(x => x.UserId == tenantUser.Id, cancellationToken: cancellationToken);
+
+        mapper.Map(userProfile, tenantUserView);
+
+        return tenantUserView;
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserFormModel formModel, string password, IEnumerable<string>? roles = null, CancellationToken cancellationToken = default)
+    {
+        var dbTenant = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
+        if (dbTenant is null)
+        {
+            Errors.Add($"Tenant not found. ({tenant.Name}).");
+            _logger.LogError("Tenant not found [{Name}/{InternalName}/{Id}].", tenant.Name, tenant.InternalName, tenant.Id);
             return false;
         }
 
-        var foundUser = await userManager.FindByIdAsync(newProfile.UserId.ToString());
-        if (foundUser is null)
+        /// create portal user for login
+        var appUser = mapper.Map<ApplicationUser>(formModel);
+        appUser.Tenant = null;
+        appUser.CreationTime = DateTime.UtcNow;
+        appUser.UserName = appUser.Email;
+        appUser.EmailConfirmed = true;
+
+        var resultUser = await userManager.CreateAsync(appUser, password);
+        if (!resultUser.Succeeded)
         {
+            Errors.Add("Failed creating user login.");
+            _logger.LogError("Failed creating user login ([{Name}/{InternalName}/{Id}].", tenant.Name, tenant.InternalName, tenant.Id);
             return false;
         }
 
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
-        await domainContext.UserProfiles.AddAsync(newProfile, cancellationToken);
+        var user = await userManager.FindByNameAsync(appUser.UserName!);
+        if (user is null)
+        {
+            Errors.Add($"User not found. ({appUser.UserName})");
+            return false;
+        }
+
+        if (roles is not null && roles.Any())
+        {
+            _ = await userManager.AddToRolesAsync(user, roles);
+        }
+
+        /// add profile to tenant for user
+        formModel.Id = user.Id;
+        var tenantProfile = mapper.Map<TenantUserProfile>(formModel);
+
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        await domainContext.UserProfiles.AddAsync(tenantProfile, cancellationToken);
         var result = await domainContext.SaveChangesAsync(cancellationToken);
         if (result < 1)
         {
+            Errors.Add("Failed creating user profile.");
+            _logger.LogError("Failed creating user profile [{Name}/{InternalName}/{Id}].", tenant.Name, tenant.InternalName, tenant.Id);
             return false;
         }
 
-        // move tenant status to ready if it contains atleast 1 tenant admin user
-        if (tenant.Status == TenantStatus.DbMigrated && await userManager.IsInRoleAsync(foundUser, SystemRolesNames.TENANT_ADMIN))
+        /// move tenant status to ready if it contains atleast 1 tenant admin user
+        if (tenant.Status == TenantStatus.DbMigrated && await userManager.IsInRoleAsync(user, SystemRolesNames.TENANT_ADMIN))
         {
-            foundEntity.Status = TenantStatus.Ready;
+            dbTenant.Status = TenantStatus.Ready;
 
             _ = await portalContext.SaveChangesAsync(cancellationToken);
         }
@@ -213,107 +311,77 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserProfile updateProfile, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserFormModel updateProfile, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
+        var updateUser = await userManager.FindByIdAsync(updateProfile.Id);
+        if (updateUser is null)
         {
+            Errors.Add($"User not found. ({updateProfile.Email}).");
+            _logger.LogError("User not found ({Email}) [{Name}/{InternalName}/{Id}].", updateProfile.Email, tenant.Name, tenant.InternalName, tenant.Id);
             return false;
         }
 
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
-        var tenantProfile = await domainContext.UserProfiles.FindAsync([updateProfile.UserId], cancellationToken: cancellationToken);
+        /// update user data
+        mapper.Map(updateProfile, updateUser);
+        updateUser.LastModificationTime = DateTime.UtcNow;
+        var userUpdateResult = await userManager.UpdateAsync(updateUser);
+        if (!userUpdateResult.Succeeded)
+        {
+            Errors.Add($"Failed updating user. ({updateProfile.Email}).");
+            _logger.LogError("Failed updating user ({Email}) [{Name}/{InternalName}/{Id}].", updateProfile.Email, tenant.Name, tenant.InternalName, tenant.Id);
+            return false;
+        }
+
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        var tenantProfile = await domainContext.UserProfiles.FindAsync([updateProfile.Id], cancellationToken: cancellationToken);
         if (tenantProfile is null)
         {
+            Errors.Add($"Profile not found. ({updateProfile.Email}).");
+            _logger.LogError("Profile not found ({Email}) [{Name}/{InternalName}/{Id}].", updateProfile.Email, tenant.Name, tenant.InternalName, tenant.Id);
+
             return false;
         }
 
+        /// update profile data
         tenantProfile.Title = updateProfile.Title;
-        var result = await domainContext.SaveChangesAsync(cancellationToken);
+        _ = await domainContext.SaveChangesAsync(cancellationToken);
 
-        return result > 0;
+        return true;
     }
 
     /// <inheritdoc/>
     public async Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default)
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
+        var deleteUser = await userManager.FindByIdAsync(userId);
+        if (deleteUser is null)
         {
+            Errors.Add($"User not found. ({userId}).");
+            _logger.LogError("User not found ({userId}) [{Name}/{InternalName}/{Id}].", userId, tenant.Name, tenant.InternalName, tenant.Id);
             return false;
         }
 
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        var deleteResult = await userManager.DeleteAsync(deleteUser);
+        if (!deleteResult.Succeeded)
+        {
+            Errors.Add($"Failed deleting user {deleteUser.Email}.");
+            _logger.LogError("Failed deleting user ({Email}) [{Name}/{InternalName}/{Id}].", deleteUser.Email, tenant.Name, tenant.InternalName, tenant.Id);
+            return false;
+        }
 
-        var result = await domainContext.UserProfiles
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        _ = await domainContext.UserProfiles
             .Where(x => x.UserId.Equals(userId))
             .ExecuteDeleteAsync(cancellationToken);
 
-        return result > 0;
+        return true;
     }
 
     #endregion [ User Profiles ]
 
-    #region [ UserGroups ]
-
-    // CREATE, UPDATE, DELETE UserGroup
-
-    /// <inheritdoc/>
-    public async Task<int> AddProfileToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
+    public void Dispose()
     {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
-        {
-            return 0;
-        }
+        portalContext.Dispose();
 
-        var foundUser = await userManager.FindByIdAsync(userId);
-        if (foundUser is null)
-        {
-            return 0;
-        }
-
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
-        foreach (var groupId in groupIds)
-        {
-            if ((await domainContext.UserGroups.FindAsync([groupId], cancellationToken: cancellationToken)) == null)
-            {
-                continue;
-            }
-
-            await domainContext.UserInGroups.AddAsync(new Domain.Entities.UserInGroup
-            {
-                UserGroupId = groupId,
-                UserId = userId
-            }, cancellationToken);
-        }
-
-        return await domainContext.SaveChangesAsync(cancellationToken);
+        GC.SuppressFinalize(this);
     }
-
-    /// <inheritdoc/>
-    public async Task<int> RemoveProfileFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default)
-    {
-        var foundEntity = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
-        if (foundEntity is null)
-        {
-            return 0;
-        }
-
-        var foundUser = await userManager.FindByIdAsync(userId);
-        if (foundUser is null)
-        {
-            return 0;
-        }
-
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
-        var result = await domainContext.UserInGroups
-            .Where(x => x.UserId.Equals(userId) && groupIds.Contains(x.UserGroupId))
-            .ExecuteDeleteAsync(cancellationToken: cancellationToken);
-
-        return result;
-    }
-
-    #endregion [ UserGroups ]
-
 }

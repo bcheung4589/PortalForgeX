@@ -14,7 +14,7 @@
         </Header>
         <Body>
             <LoadingArea IsLoading="@IsLoading">
-                <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                <EditForm FormName="EditClientContactForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
                     <FluentValidationValidator />
                     <div class="card bg-secondary text-white mb-3">
                         <div class="card-body">
@@ -186,10 +186,7 @@
                 Model = result.Data!;
                 FormEditContext = new(Model);
 
-                if (OnSave.HasDelegate)
-                {
-                    await OnSave.InvokeAsync();
-                }
+                await OnSave.InvokeAsync();
 
                 ToastService.ShowSuccess("Contact was successfully updated.");
             }

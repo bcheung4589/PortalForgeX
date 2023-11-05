@@ -13,20 +13,16 @@ namespace PortalForgeX.Persistence.EFCore;
 /// </summary>
 public class PortalContextInitializer(
     ILogger<PortalContextInitializer> logger,
-    PortalContext context,
+    IDbContextFactory<PortalContext> portalContextFactory,
     UserManager<ApplicationUser> userManager,
-    RoleManager<ApplicationRole> roleManager,
-    IUserStore<ApplicationUser> userStore
+    RoleManager<ApplicationRole> roleManager
     )
 {
     private readonly ILogger<PortalContextInitializer> _logger = logger;
-    private readonly PortalContext _context = context;
+    private readonly PortalContext _context = portalContextFactory.CreateDbContext();
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly RoleManager<ApplicationRole> _roleManager = roleManager;
-    private readonly IUserStore<ApplicationUser> _userStore = userStore;
 
-    private const string ADMIN_USERNAME = SystemUserAccounts.ADMIN;
-    private const string ADMIN_EMAIL = SystemUserAccounts.ADMIN_EMAIL;
     private const string ADMIN_DEFAULT_PASSWORD = "Test@123";
 
     /// <summary>
@@ -71,17 +67,17 @@ public class PortalContextInitializer(
             }
 
             // seed admin user
-            if (_userManager.Users.All(u => u.UserName != ADMIN_USERNAME))
+            if (_userManager.Users.All(u => u.UserName != SystemUserAccounts.ADMIN_EMAIL))
             {
                 var user = new ApplicationUser
                 {
-                    UserName = ADMIN_USERNAME,
-                    Email = ADMIN_EMAIL,
+                    UserName = SystemUserAccounts.ADMIN_EMAIL,
+                    Email = SystemUserAccounts.ADMIN_EMAIL,
                     EmailConfirmed = true,
                     IsActive = true,
                     CreationTime = DateTime.UtcNow
                 };
-                await _userStore.SetUserNameAsync(user, user.Email, CancellationToken.None);
+
                 await _userManager.CreateAsync(user, ADMIN_DEFAULT_PASSWORD);
                 await _userManager.AddToRolesAsync(user, SystemRolesNames.ToList());
             }

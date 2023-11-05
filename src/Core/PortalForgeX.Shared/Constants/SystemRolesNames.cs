@@ -10,7 +10,7 @@ public static class SystemRolesNames
     /// <summary>
     /// Tenant Managers are responsible for Tenants.
     /// </summary>
-    public const string TENANT_MANAGER = "Tenant Manager";
+    public const string MANAGER = "Manager";
 
     /// <summary>
     /// Tenant with Administrator role within Tenant application.
@@ -22,5 +22,5 @@ public static class SystemRolesNames
     /// </summary>
     public const string TENANT_USER = "Tenant User";
 
-    public static IEnumerable<string> ToList() => new[] { ADMIN, TENANT_MANAGER, TENANT_ADMIN, TENANT_USER };
+    public static IEnumerable<string> ToList() => new[] { ADMIN, MANAGER, TENANT_ADMIN, TENANT_USER };
 }

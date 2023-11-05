@@ -30,6 +30,14 @@ public abstract class FormPage<TModel> : PageBase
     {
         await base.OnInitializedAsync();
 
+        BindModelContext();
+    }
+
+    /// <summary>
+    /// Binds the FormEditContext to the Model.
+    /// </summary>
+    protected void BindModelContext()
+    {
         Model ??= InitModel;
         FormEditContext = new(Model!);
     }
@@ -43,7 +51,4 @@ public abstract class FormPage<TModel> : PageBase
             await JSRuntime.InvokeVoidAsync("formPageLoad");
         }
     }
-
-    protected override Task InitDataSourcesAsync()
-        => Task.CompletedTask;
 }

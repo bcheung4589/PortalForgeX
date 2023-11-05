@@ -61,38 +61,47 @@ Log.Logger = new LoggerConfiguration()
 builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
 /**
- * Database Context for Domain Objects.
- * - The DomainContext is used by Tenants for data persistance.
- * - Each Tenant gets its own database.
+ * Portal Context Factory
+ * Usage: Razor Component and recommended way of retrieving DbContext for Blazor
  */
+var portalConnection = builder.Configuration.GetConnectionString("PortalConnection");
+builder.Services.AddDbContextFactory<PortalContext>(options => options.UseSqlServer(portalConnection), lifetime: ServiceLifetime.Scoped);
+
+/**
+ * Database Context for Portal objects like Users and Tenants.
+ * Usage: Backend projects that uses IPortalContext to retrieve DbContext
+ */
+builder.Services.AddDbContext<IPortalContext, PortalContext>(options => options.UseSqlServer(portalConnection,
+    sqlServerOptionsAction: sqlOptions => sqlOptions.MigrationsAssembly(typeof(PortalContext).Assembly.FullName)));
+
+/**
+ * Database Context for Domain Objects.
+ * - The DomainContext is used by Tenants for data persistance and each Tenant gets its own database.
+ * - Retrieving by IDomainContext or DomainContext will provide a DbContext coupled to Tenant in TenantAccessor (login/claim).
+ */
+builder.Services.AddSingleton<ITenantConnectionProvider>(new TenantConnectionProvider(builder.Configuration.GetConnectionString("DomainConnection")!));
 builder.Services.AddDbContext<IDomainContext, DomainContext>((services, options) =>
 {
     var connectionProvider = services.GetRequiredService<ITenantConnectionProvider>();
     var accessor = services.GetRequiredService<TenantAccessor>();
 
-    connectionProvider.RegisterFromConfig(builder.Configuration.GetConnectionString("DomainConnection")!);
-    var tenantConnection = connectionProvider.Provide(accessor.CurrentTenant);
-
-    options.UseSqlServer(tenantConnection, sqlServerOptionsAction: sqlOptions =>
-    {
-        sqlOptions.MigrationsAssembly(typeof(DomainContext).Assembly.FullName);
-    });
+    options.UseSqlServer(connectionProvider.Provide(accessor.CurrentTenant), sqlServerOptionsAction: sqlOptions => sqlOptions.MigrationsAssembly(typeof(DomainContext).Assembly.FullName));
 });
 
-// Add IDomainContextFactory to mainly execute tenant processes like database migrations and user pushing.
+/**
+ * Add IDomainContextFactory to create DomainContexts based on provided Tenant.
+ * Use the IDomainContextFactory if Tenant should be provided runtime.
+ */
 builder.Services.AddScoped<IDomainContextFactory, DomainContextFactory>();
 
-/**
- * Portal Context for Users and Tenants.
- */
-builder.Services.AddDbContext<IPortalContext, PortalContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("PortalConnection"),
-    sqlServerOptionsAction: sqlOptions =>
-    {
-        sqlOptions.MigrationsAssembly(typeof(PortalContext).Assembly.FullName);
-    }));
+// Unit of Work for DomainContext and Domain Repositories
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+#if DEBUG
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+#endif
 
 /**
  * Configure and add (Identity) Authentication and -Cookies
@@ -113,6 +122,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<PortalContext>();
 
 /**
+ * Database Initializers are used for migrations and seeding on startup.
+ * For manual seeders see: PortalForgeX.Persistence.EFCore.Seeders (ISeedService)
+ */
+builder.Services.AddScoped<PortalContextInitializer>();
+
+/**
  * Override the LoginPath for the Application. (Logout redirects to /Identity/Account/Login)
  */
 builder.Services.ConfigureApplicationCookie(options =>
@@ -122,6 +137,22 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Remove the inbound role claim.
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("role");
+
+// Configure AutoMapper
+builder.Services.AddSingleton(new MapperConfiguration(cfg =>
+{
+    cfg.AddMaps(Assembly.GetAssembly(typeof(DomainProfiles)));
+}).CreateMapper());
+
+// Configure MediatR
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(ICommand).Assembly);
+});
+
+// Add Tenants Services
+builder.Services.AddScoped<TenantAccessor>();
+builder.Services.AddScoped<ITenantService, TenantService>();
 
 // Reset; because this breaks the application
 builder.Services.AddSingleton<IEmailSender, NoOpEmailSender>();
@@ -143,15 +174,6 @@ builder.Services.AddScoped<IBusinessLocationFacade, BusinessLocationFacade>();
 builder.Services.AddScoped<ICheckoutFacade, CheckoutFacade>();
 builder.Services.AddScoped<IPaymentFacade, PaymentFacade>();
 
-/**
- * Database Initializers are used for migrations and seeding on startup.
- * For manual seeders see: PortalForgeX.Persistence.EFCore.Seeders (ISeedService)
- */
-builder.Services.AddScoped<PortalContextInitializer>();
-
-// Unit of Work for DomainContext and Domain Repositories
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
 // Add (portal) middlewares from infrastructure.
 builder.Services.AddInfrastructureMiddleware();
 
@@ -172,23 +194,6 @@ builder.Services.AddScoped<IClientSeeder, ClientSeeder>();
 builder.Services.AddScoped<ITenantSeeder, TenantSeeder>();
 
 #endif
-
-// Configure AutoMapper
-builder.Services.AddSingleton(new MapperConfiguration(cfg =>
-{
-    cfg.AddMaps(Assembly.GetAssembly(typeof(DomainProfiles)));
-}).CreateMapper());
-
-// MediatR
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(ICommand).Assembly);
-});
-
-// Add Tenants Services
-builder.Services.AddScoped<TenantAccessor>();
-builder.Services.AddScoped<ITenantService, TenantService>();
-builder.Services.AddScoped<ITenantConnectionProvider, TenantConnectionProvider>();
 
 // Features Endpoints
 builder.Services.AddFeaturesEndpoints();

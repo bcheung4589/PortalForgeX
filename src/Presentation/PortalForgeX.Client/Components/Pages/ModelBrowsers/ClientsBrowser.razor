@@ -89,7 +89,14 @@
     };
 
     protected override async Task InitDataSourcesAsync()
-        => DataSource = (await Clients.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false, Filters.Values.ToEncodedString()))?.Data;
+    {
+        if (!RenderContext.IsClient)
+        {
+            return;
+        }
+
+        DataSource = (await Clients.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false, Filters.Values.ToEncodedString()))?.Data;
+    }
 
     protected async Task ResetFilters()
     {

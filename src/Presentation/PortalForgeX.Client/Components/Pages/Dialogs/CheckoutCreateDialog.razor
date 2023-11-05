@@ -1,5 +1,4 @@
-﻿@using FluentValidation
-@using PortalForgeX.Shared.Features.Checkouts
+﻿@using PortalForgeX.Shared.Features.Checkouts
 @using PortalForgeX.Shared.Facades
 
 @inherits FormComponent<CheckoutDto>
@@ -18,7 +17,7 @@
             <span class="text-muted">Fill in the contact details.</span>
         </Header>
         <Body>
-            <EditForm EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+            <EditForm FormName="CreateCheckoutForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
                 <FluentValidationValidator />
                 <div class="row">
                     <div class="col">
@@ -77,9 +76,6 @@
 @code {
 
     [Parameter]
-    public EventCallback OnSave { get; set; }
-
-    [Parameter]
     public int BusinessLocationId { get; set; }
 
     protected Dialog Dialog = null!;
@@ -91,14 +87,11 @@
             var result = await Checkouts.CreateAsync(Model);
             if (result is not null && result.IsSuccess)
             {
+                Model = InitModel;
                 await Dialog.CloseDialog();
 
-                if (OnSave.HasDelegate)
-                {
-                    await OnSave.InvokeAsync();
-                }
-
                 ToastService.ShowSuccess("Checkout was successfully created.");
+                Navigation.NavigateTo($"/businesslocation/{result.Data?.BusinessLocationId}");
             }
         });
 

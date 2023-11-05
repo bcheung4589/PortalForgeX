@@ -1,6 +1,8 @@
-﻿@using PortalForgeX.Components.Identity
+﻿@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Components.Identity
 
 @inject IJSRuntime JsRuntime
+@inject TenantAccessor TenantAccessor
 
 <div class="nav-menu-collapse">
     <span class="fas fa-thumbtack" aria-hidden="true" role="button" onclick="document.querySelector('.compact-toggler').click()" title="Toggle Menu"></span>
@@ -24,23 +26,27 @@
                     <span>Dashboard</span>
                 </NavLink>
             </div>
-            <div class="nav-item divider-title pt-3 ps-4">
-                <span class="text-muted fw-bold text-uppercase">
-                    Application
-                </span>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/clients">
-                    <span class="fas fa-users me-2" aria-hidden="true" title="Clients"></span>
-                    <span>Clients</span>
-                </NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="/payments">
-                    <span class="fas fa-money-bill me-2" aria-hidden="true" title="Payments"></span>
-                    <span>Payments</span>
-                </NavLink>
-            </div>
+
+            @if (TenantAccessor.HasTenant)
+            {
+                <div class="nav-item divider-title pt-3 ps-4">
+                    <span class="text-muted fw-bold text-uppercase">
+                        Application
+                    </span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/clients">
+                        <span class="fas fa-users me-2" aria-hidden="true" title="Clients"></span>
+                        <span>Clients</span>
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/payments">
+                        <span class="fas fa-money-bill me-2" aria-hidden="true" title="Payments"></span>
+                        <span>Payments</span>
+                    </NavLink>
+                </div>
+            }
         </AuthorizeView>
 
         @* ADMIN *@

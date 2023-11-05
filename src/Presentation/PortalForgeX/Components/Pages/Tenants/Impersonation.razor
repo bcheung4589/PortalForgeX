@@ -1,0 +1,44 @@
+﻿@page "/tenant/impersonation/{Id:guid}"
+@page "/tenant/impersonation/stop"
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Infrastructure.Tenants
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Navigation
+@inject IHttpContextAccessor HttpContextAccessor
+
+<h1>Impersonating Tenant</h1>
+<p>Redirecting...</p>
+
+@code {
+
+    [Parameter]
+    public Guid Id { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var claimsPrincipal = (await AuthenticationStateProvider.GetAuthenticationStateAsync()).User;
+        var user = await SignInManager.UserManager.GetUserAsync(claimsPrincipal);
+        if (user is null)
+        {
+            return;
+        }
+
+        // start impersonation
+        if (Id != Guid.Empty)
+        {
+            await SignInManager.SignInWithClaimsAsync(user, false, new[] { new Claim(TenantClaimTypes.TenantId, Id.ToString()) });
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        // stop impersonation
+        await SignInManager.SignInWithClaimsAsync(user, false, []);
+        Navigation.NavigateTo("/");
+        return;
+    }
+
+}

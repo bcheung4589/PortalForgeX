@@ -1,4 +1,6 @@
-﻿@inherits LayoutComponentBase
+﻿@using PortalForgeX.Application.Tenants
+
+@inherits LayoutComponentBase
 
 <div class="page">
     <input type="checkbox" title="Compact menu" class="compact-toggler" checked />
@@ -7,8 +9,9 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row justify-content-between px-4">
             <SectionOutlet SectionName="top-row" />
+            <TenantImpersonation />
         </div>
 
         <article class="content px-4">
@@ -16,7 +19,7 @@
         </article>
     </main>
 
-    @* <BlazoredToasts @rendermode="RenderMode.InteractiveAuto" ShowProgressBar="true" ShowCloseButton="false" /> *@
+    <BlazoredToasts @rendermode="RenderMode.InteractiveAuto" ShowProgressBar="true" ShowCloseButton="false" Position="Blazored.Toast.Configuration.ToastPosition.BottomRight" />
 </div>
 
 <div id="blazor-error-ui">

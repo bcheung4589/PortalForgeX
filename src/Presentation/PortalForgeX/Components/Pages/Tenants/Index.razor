@@ -5,16 +5,18 @@
 @using PortalForgeX.Application.Tenants
 @using PortalForgeX.Client.Components.ContextMenu
 @using PortalForgeX.Shared.Features.Tenants
+@using PortalForgeX.Components.Dialogs
 
 @rendermode RenderMode.InteractiveServer
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
 
+@inject IRenderContext RenderContext
 @inject ITenantService TenantService
-@inject NavigationManager Navigation
 @inject IToastService ToastService
 @inject IJSRuntime JSRuntime
 @inject IMapper Mapper
+@inject NavigationManager Navigation
 
 <PageTitle>Tenants</PageTitle>
 
@@ -35,7 +37,7 @@
                 <p class="m-0">Browse and manage the tenants.</p>
             </div>
             <div class="col-lg-4">
-                @* CREATE DIALOG *@
+                <TenantCreateDialog @rendermode="RenderMode.InteractiveServer" />
             </div>
         </div>
         <div class="card-body mt-0">
@@ -55,7 +57,9 @@
                         <PropertyColumn Title="Internal Name" Property="x => x.InternalName" Sortable="true" />
                         <PropertyColumn Title="Host" Property="x => x.Host" Sortable="true" />
                         <TemplateColumn Title="Manager" SortBy="GridSort<TenantViewModel>.ByAscending(p => p.ManagerName)">
-                            <a href="user/@context.ManagerId">@context.ManagerName</a>
+                            <NullableField Value="context.ManagerName">
+                                <a href="user/@context.ManagerId">@context.ManagerName</a>
+                            </NullableField>
                         </TemplateColumn>
                         <TemplateColumn>
                             <ContextMenu Model="@context">
@@ -67,7 +71,7 @@
                 }
                 else
                 {
-                    <p class="text-muted">No users found.</p>
+                    <p class="text-muted">No tenants found.</p>
                 }
             </LoadingArea>
         </div>
@@ -77,12 +81,20 @@
 @code {
 
     private IQueryable<TenantViewModel> tenantsSource = null!;
-    private bool isLoading;
+    private bool isLoading = true;
 
     protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
+    {  
+        if (RenderContext.IsPrerendering)
+        {
+            return; // no need for prerendering
+        }
 
+        await LoadDataAsync();
+    }
+
+    private async Task LoadDataAsync()
+    {
         isLoading = true;
 
         var tenants = await TenantService.GetAsync();
@@ -111,7 +123,8 @@
         }
 
         ToastService.ShowSuccess($"Tenant {tenant.Name} was succesfully deleted.");
-        await OnInitializedAsync();
+
+        await LoadDataAsync();
     }
 
 }

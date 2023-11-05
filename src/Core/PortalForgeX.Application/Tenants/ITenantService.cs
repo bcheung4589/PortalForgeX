@@ -10,6 +10,10 @@ namespace PortalForgeX.Application.Tenants;
 /// </summary>
 public interface ITenantService
 {
+    List<string> Errors { get; }
+
+    bool HasError => Errors is not null && Errors.Count != 0;
+
     /// <summary>
     /// Get all the Tenants.
     /// </summary>
@@ -50,6 +54,7 @@ public interface ITenantService
     /// Delete the Tenant.
     /// </summary>
     /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
 
@@ -57,6 +62,7 @@ public interface ITenantService
     /// Review: Approve the new Tenant.
     /// </summary>
     /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<bool> ApproveTenantAsync(Guid id, CancellationToken cancellationToken = default);
 
@@ -64,34 +70,47 @@ public interface ITenantService
     /// Review: Reject the new Tenant.
     /// </summary>
     /// <param name="id"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<bool> RejectTenantAsync(Guid id, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Get all the users registered for the given tenant.
+    /// Get all the user profiles registered for the given tenant.
     /// </summary>
     /// <param name="tenant"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<IEnumerable<TenantUserViewModel>?> GetTenantUsers(Tenant tenant, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TenantUserViewModel>?> GetTenantProfiles(Tenant tenant, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get the user profile for the given userId.
+    /// </summary>
+    /// <param name="tenant"></param>
+    /// <param name="userId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<TenantUserFormModel?> ProvideTenantProfileForEdit(Tenant tenant, string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create user for Tenant by creating a profile for the user at the tenant.
     /// DbMigrated Tenants will be set to ready when the first Tenant Admin is pushed.
     /// </summary>
     /// <param name="tenant"></param>
-    /// <param name="newProfile"></param>
+    /// <param name="formModel"></param>
+    /// <param name="password"></param>
+    /// <param name="roles"></param>
+    /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserProfile newProfile, CancellationToken cancellationToken = default);
+    Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserFormModel formModel, string password, IEnumerable<string>? roles = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Update the tenant user profile.
     /// </summary>
     /// <param name="tenant"></param>
-    /// <param name="updateProfile"></param>
+    /// <param name="formModel"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserProfile updateProfile, CancellationToken cancellationToken = default);
+    Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserFormModel formModel, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Delete the tenant user profile.
@@ -101,24 +120,4 @@ public interface ITenantService
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Add a tenants user profile to the specified groups.
-    /// </summary>
-    /// <param name="tenant"></param>
-    /// <param name="userId"></param>
-    /// <param name="groupIds"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>Amount of groups added to.</returns>
-    Task<int> AddProfileToGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Remove a tenants user profile from the specified groups.
-    /// </summary>
-    /// <param name="tenant"></param>
-    /// <param name="userId"></param>
-    /// <param name="groupIds"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns>Amount of groups removed from.</returns>
-    Task<int> RemoveProfileFromGroups(Tenant tenant, string userId, IEnumerable<int> groupIds, CancellationToken cancellationToken = default);
 }

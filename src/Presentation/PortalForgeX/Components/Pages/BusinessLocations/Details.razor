@@ -5,7 +5,7 @@
 @using PortalForgeX.Shared.Facades
 
 @attribute [StreamRendering(true)]
-@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 @inject IBusinessLocationFacade BusinessLocations
 @inject NavigationManager Navigation
@@ -21,16 +21,16 @@
 </SectionContent>
 
 <LoadingArea IsLoading="IsLoading">
-    <BusinessLocationDetailsView @rendermode="RenderMode.InteractiveAuto" BusinessLocation="Model" ClientName="@Model.Client?.Name" />
+    <BusinessLocationDetailsView @rendermode="RenderMode.InteractiveWebAssembly" BusinessLocation="Model" ClientName="@Model.Client?.Name" />
 
     <details class="mb-4 mt-2" open>
         <summary>
             <h4 class="d-inline-block">Checkouts (@Model.Checkouts?.Count())</h4>
-            <CheckoutCreateDialog @rendermode="RenderMode.InteractiveAuto" BusinessLocationId="Model.Id" OnSave="OnInitializedAsync"></CheckoutCreateDialog>
+            <CheckoutCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" BusinessLocationId="Model.Id"></CheckoutCreateDialog>
             <span class="clearfix"></span>
             <div class="text-muted">Manage the checkouts of this location.</div>
         </summary>
-        <CheckoutsBrowser @rendermode="RenderMode.InteractiveAuto" BusinessLocation="Model" />
+        <CheckoutsBrowser @rendermode="RenderMode.InteractiveWebAssembly" BusinessLocation="Model" />
     </details>
 </LoadingArea>
 
@@ -42,10 +42,6 @@
     protected bool IsLoading;
     protected BusinessLocationDto Model { get; set; } = null!;
 
-    /// <summary>
-    /// Load the Model on page initialization.
-    /// </summary>
-    /// <returns></returns>
     protected override async Task OnInitializedAsync()
     {
         IsLoading = true;

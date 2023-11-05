@@ -3,7 +3,7 @@
 @using System.Collections.Generic
 
 @attribute [StreamRendering(true)]
-@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 @inject IClientFacade Clients
 
@@ -26,11 +26,11 @@
                 <p class="m-0">Browse and manage the clients.</p>
             </div>
             <div class="col-lg-4">
-                <ClientCreateDialog @rendermode="RenderMode.InteractiveAuto" />
+                <ClientCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" />
             </div>
         </div>
         <div class="card-body pt-0">
-            <ClientsBrowser @rendermode="RenderMode.InteractiveAuto" />
+            <ClientsBrowser @rendermode="RenderMode.InteractiveWebAssembly" />
         </div>
     </div>
 </div>

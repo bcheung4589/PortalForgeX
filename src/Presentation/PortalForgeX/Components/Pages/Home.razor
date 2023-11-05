@@ -1,13 +1,18 @@
 ﻿@page "/"
 
-@rendermode RenderMode.InteractiveServer
-@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.TENANT_MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 <PageTitle>Home</PageTitle>
 
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Dashboard" IconCssClass="fas fa-gauge-high" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
 <h1>Dashboard</h1>
 
-<p>Welcome to the POSCana CRM Portal.</p>
+<p>Welcome to PortalForgeX.</p>
 
 <AuthorizeView>
     <Authorized>
