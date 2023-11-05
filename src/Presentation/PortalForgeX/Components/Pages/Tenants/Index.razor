@@ -87,7 +87,7 @@
     {  
         if (RenderContext.IsPrerendering)
         {
-            return; // only load once
+            return; // no need for prerendering
         }
 
         await LoadDataAsync();

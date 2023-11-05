@@ -25,6 +25,7 @@ public class TenantService(
     ) : ITenantService
 {
     private readonly ILogger<TenantService> _logger = logger;
+    private readonly IPortalContext portalContext = portalContext;
 
     public List<string> Errors { get; } = [];
 
@@ -206,7 +207,7 @@ public class TenantService(
         }
 
         var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
         var userProfiles = await domainContext.UserProfiles
             .Include(x => x.Groups)
@@ -236,7 +237,7 @@ public class TenantService(
         }
 
         var tenantUserView = mapper.Map<TenantUserFormModel>(tenantUser);
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var userProfile = await domainContext.UserProfiles
             .Include(x => x.Groups)
             .FirstOrDefaultAsync(x => x.UserId == tenantUser.Id, cancellationToken: cancellationToken);
@@ -288,7 +289,7 @@ public class TenantService(
         formModel.Id = user.Id;
         var tenantProfile = mapper.Map<TenantUserProfile>(formModel);
 
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
         await domainContext.UserProfiles.AddAsync(tenantProfile, cancellationToken);
         var result = await domainContext.SaveChangesAsync(cancellationToken);
         if (result < 1)
@@ -331,7 +332,7 @@ public class TenantService(
             return false;
         }
 
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var tenantProfile = await domainContext.UserProfiles.FindAsync([updateProfile.Id], cancellationToken: cancellationToken);
         if (tenantProfile is null)
         {
@@ -367,7 +368,7 @@ public class TenantService(
             return false;
         }
 
-        var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
 
         var result = await domainContext.UserProfiles
             .Where(x => x.UserId.Equals(userId))

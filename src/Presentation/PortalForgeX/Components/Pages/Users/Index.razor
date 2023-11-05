@@ -49,12 +49,12 @@
                 {
                     <p>@users.Count() items found.</p>
                     <QuickGrid Items="users" Class="table table-striped">
-                        <TemplateColumn Title="Name" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.UserName)">
-                            <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
-                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.FirstName @context.LastName</span>
-                        </TemplateColumn>
                         <TemplateColumn Title="Email" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.Email)">
+                            <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
                             <a href="mailto:@context.Email">@context.Email</a>
+                        </TemplateColumn>
+                        <TemplateColumn Title="Name" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.UserName)">
+                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.FirstName @context.LastName</span>
                         </TemplateColumn>
                         <TemplateColumn Title="Tenant" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.TenantId)">
                             <NullableField Value="@context.TenantId">
@@ -89,11 +89,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        if (isLoading)
-        {
-            return;
-        }
-
         isLoading = true;
 
         tenants = new Dictionary<Guid, Tenant>();
@@ -152,7 +147,7 @@
 
         if (user.Tenant is not null)
         {
-            var domainContext = DomainContextFactory.CreateDomainContext(user.Tenant);
+            using var domainContext = DomainContextFactory.CreateDomainContext(user.Tenant);
             var profileDeleteResult = await domainContext.UserProfiles
                 .Where(x => x.UserId.Equals(user.Id))
                 .ExecuteDeleteAsync();

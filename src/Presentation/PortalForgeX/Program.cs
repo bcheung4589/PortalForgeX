@@ -61,43 +61,44 @@ Log.Logger = new LoggerConfiguration()
 builder.Services.AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true));
 
 /**
+ * Portal Context Factory
+ * Usage: Razor Component and recommended way of retrieving DbContext for Blazor
+ */
+var portalConnection = builder.Configuration.GetConnectionString("PortalConnection");
+builder.Services.AddDbContextFactory<PortalContext>(options => options.UseSqlServer(portalConnection), lifetime: ServiceLifetime.Scoped);
+
+/**
+ * Database Context for Portal objects like Users and Tenants.
+ * Usage: Backend projects that uses IPortalContext to retrieve service
+ */
+builder.Services.AddDbContext<IPortalContext, PortalContext>(options => options.UseSqlServer(portalConnection,
+    sqlServerOptionsAction: sqlOptions => sqlOptions.MigrationsAssembly(typeof(PortalContext).Assembly.FullName)));
+
+/**
  * Database Context for Domain Objects.
- * - The DomainContext is used by Tenants for data persistance.
- * - Each Tenant gets its own database.
+ * - The DomainContext is used by Tenants for data persistance and each Tenant gets its own database.
+ * - Retrieving by IDomainContext or DomainContext will provide a DbContext coupled to Tenant in TenantAccessor (login/claim).
  */
 builder.Services.AddSingleton<ITenantConnectionProvider>(new TenantConnectionProvider(builder.Configuration.GetConnectionString("DomainConnection")!));
 builder.Services.AddDbContext<IDomainContext, DomainContext>((services, options) =>
 {
     var connectionProvider = services.GetRequiredService<ITenantConnectionProvider>();
     var accessor = services.GetRequiredService<TenantAccessor>();
-    var tenantConnection = connectionProvider.Provide(accessor.CurrentTenant);
 
-    options.UseSqlServer(tenantConnection, sqlServerOptionsAction: sqlOptions =>
-    {
-        sqlOptions.MigrationsAssembly(typeof(DomainContext).Assembly.FullName);
-    });
+    options.UseSqlServer(connectionProvider.Provide(accessor.CurrentTenant), sqlServerOptionsAction: sqlOptions => sqlOptions.MigrationsAssembly(typeof(DomainContext).Assembly.FullName));
 });
 
-// Add IDomainContextFactory to mainly execute tenant processes like database migrations and user pushing.
+/**
+ * Add IDomainContextFactory to create DomainContexts based on provided Tenant.
+ * Use the IDomainContextFactory if Tenant should be provided runtime.
+ */
 builder.Services.AddScoped<IDomainContextFactory, DomainContextFactory>();
 
-/**
- * Portal Context for Users and Tenants.
- */
-builder.Services.AddDbContext<IPortalContext, PortalContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("PortalConnection"),
-    sqlServerOptionsAction: sqlOptions =>
-    {
-        sqlOptions.MigrationsAssembly(typeof(PortalContext).Assembly.FullName);
-    }));
-
-/**
- * Portal Context Factory
- * Usage: Razor Component
- */
-builder.Services.AddDbContextFactory<PortalContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("PortalConnection")), lifetime: ServiceLifetime.Scoped);
+#if DEBUG
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
+
+#endif
 
 /**
  * Configure and add (Identity) Authentication and -Cookies

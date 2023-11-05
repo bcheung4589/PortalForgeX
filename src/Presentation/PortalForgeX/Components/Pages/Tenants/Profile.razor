@@ -383,6 +383,11 @@
         IsLoading = true;
 
         _user = await UserManager.FindByIdAsync(UserId.ToString());
+        if (_user is null || _user.TenantId is null)
+        {
+            return;
+        }
+
         _tenant = await TenantService.GetByIdAsync(_user.TenantId.Value);
         if (RenderContext.IsPrerendering)
         {
@@ -443,7 +448,7 @@
     {
         await TryRunAsync(async () =>
         {
-            var result = await TenantService.UpdateTenantProfileAsync(_tenant, Model);
+            var result = await TenantService.UpdateTenantProfileAsync(_tenant!, Model);
             if (result)
             {
                 await LoadDataAsync();
@@ -457,7 +462,7 @@
     {
         await TryRunAsync(async () =>
         {
-            var updateResult = await UserManager.UpdateRolesAsync(_user, UserRoles);
+            var updateResult = await UserManager.UpdateRolesAsync(_user!, UserRoles);
             if (!updateResult.Succeeded)
             {
                 foreach (var errorMessage in updateResult.Errors)
@@ -490,7 +495,7 @@
                 return;
             }
 
-            var changePasswordResult = await UserManager.UpdatePasswordAsync(_user, Password);
+            var changePasswordResult = await UserManager.UpdatePasswordAsync(_user!, Password);
             if (!changePasswordResult.Succeeded)
             {
                 foreach (var errorMessage in changePasswordResult.Errors)
@@ -507,13 +512,13 @@
 
     protected async Task DeleteAsync()
     {
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete profile for {_user.UserName}? Deleting is permanent.");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete profile for {_user!.UserName}? Deleting is permanent.");
         if (!confirmed)
         {
             return;
         }
 
-        var successResult = await TenantService.DeleteTenantProfileAsync(_tenant, _user.Id);
+        var successResult = await TenantService.DeleteTenantProfileAsync(_tenant!, _user.Id);
         if (!successResult && TenantService.HasError)
         {
             foreach (var errorMessage in TenantService.Errors)
@@ -524,7 +529,7 @@
             return;
         }
 
-        Navigation.NavigateTo($"tenant/{_tenant.Id}");
+        Navigation.NavigateTo($"tenant/{_tenant!.Id}");
         ToastService.ShowSuccess($"Profile for {_user.UserName} was succesfully deleted.");
     }
 

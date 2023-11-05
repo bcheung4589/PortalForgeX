@@ -4,7 +4,7 @@ using PortalForgeX.Domain.Entities.Tenants;
 
 namespace PortalForgeX.Application.Data;
 
-public interface IDomainContext
+public interface IDomainContext : IDisposable
 {
     // Entities
     DbSet<Client> Clients { get; set; }

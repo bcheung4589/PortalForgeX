@@ -1,8 +1,11 @@
 ﻿@page "/user/{Id:guid}"
 
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
+@using PortalForgeX.Application.Data
 @using PortalForgeX.Domain.Entities.Identity
 @using PortalForgeX.Identity.Extensions
+@using PortalForgeX.Persistence.EFCore
 
 @inherits FormPage<ApplicationUser>
 
@@ -10,6 +13,8 @@
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
 
+@inject IDbContextFactory<PortalContext> PortalContextFactory
+@inject IDomainContextFactory DomainContextFactory
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<ApplicationRole> RoleManager
 
@@ -96,6 +101,15 @@
                                     </data>
                                 </div>
                             </div>
+                            @if (Model.Tenant is not null)
+                            {
+                                <div class="row">
+                                    <a class="mx-2" href="/tenant/@Model.TenantId">
+                                        <span class="fas fa-handshake-angle me-1"></span>
+                                        @Model.Tenant?.Name
+                                    </a>
+                                </div>
+                            }
                         </div>
                     </div>
                     <EditForm FormName="EditUserForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
@@ -313,6 +327,13 @@
         }
 
         Model = result;
+
+        using var portalContext = await PortalContextFactory.CreateDbContextAsync();
+        if (Model.TenantId is not null)
+        {
+            Model.Tenant = await portalContext.Tenants.FindAsync(Model.TenantId);
+        }
+
         UserRoles = new Dictionary<ApplicationRole, bool>();
         var roles = RoleManager.Roles.OrderBy(x => x.Name).ToArray();
         foreach (var role in roles)
@@ -436,7 +457,19 @@
             return;
         }
 
-        // TODO: Delete UserProfile
+        if (Model.Tenant is not null)
+        {
+            using var domainContext = DomainContextFactory.CreateDomainContext(Model.Tenant);
+            var profileDeleteResult = await domainContext.UserProfiles
+                .Where(x => x.UserId.Equals(Model.Id))
+                .ExecuteDeleteAsync();
+
+            if (profileDeleteResult < 1)
+            {
+                ToastService.ShowError("Failed deleting profile.");
+                return;
+            }
+        }
 
         ToastService.ShowSuccess($"User {Model.Email} was succesfully deleted.");
         Navigation.NavigateTo("users");

@@ -40,7 +40,7 @@ public class TenantReviewEventHandler(
 
         try
         {
-            var domainContext = domainContextFactory.CreateDomainContext(notification.Tenant);
+            using var domainContext = domainContextFactory.CreateDomainContext(notification.Tenant);
 
             _logger.LogInformation("Tenant Migration Started on {Name}", notification.Tenant.Name);
 

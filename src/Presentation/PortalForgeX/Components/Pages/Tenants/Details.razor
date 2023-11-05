@@ -15,7 +15,6 @@
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
 
-@inject IRenderContext RenderContext
 @inject ITenantService TenantService
 @inject IMapper Mapper
 @inject UserManager<ApplicationUser> UserManager
@@ -401,7 +400,7 @@
                 <details class="my-4" open>
                     <summary>
                         <h4 class="d-inline-block">Tenant Users</h4>
-                        <TenantUserCreateDialog Tenant="_tenant" OnSave="InitDataSourcesAsync" />
+                        <TenantUserCreateDialog Tenant="_tenant" />
                         <span class="clearfix"></span>
                         <div class="text-muted">Manage the tenant users.</div>
                     </summary>
@@ -449,14 +448,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        IsLoading = true;
-
-        _tenant = await TenantService.GetByIdAsync(Id);
-        if (RenderContext.IsPrerendering)
-        {
-            return; // only load once
-        }
-
         await LoadDataAsync();
     }
 
@@ -464,6 +455,7 @@
     {
         IsLoading = true;
 
+        _tenant = await TenantService.GetByIdAsync(Id);
         if (_tenant is null)
         {
             Navigation.NavigateTo("tenants");
@@ -546,6 +538,7 @@
         var result = await TenantService.RejectTenantAsync(Model.Id);
         if (result)
         {
+            await LoadDataAsync();
             ToastService.ShowSuccess($"Tenant {Model.Name} has been Rejected.");
         }
     }

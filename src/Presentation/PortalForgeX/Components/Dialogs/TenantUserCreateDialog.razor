@@ -152,9 +152,6 @@
 @code {
 
     [Parameter]
-    public EventCallback OnSave { get; set; }
-
-    [Parameter]
     public Tenant Tenant { get; set; } = null!;
 
     protected Dialog Dialog = null!;
@@ -202,8 +199,6 @@
 
                 return;
             }
-
-            await OnSave.InvokeAsync();
 
             Navigation.NavigateTo($"/tenant/profile/{Model.Id}");
         });

@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using PortalForgeX.Application.Data;
+using Microsoft.EntityFrameworkCore;
 using PortalForgeX.Domain.Entities.Identity;
 using PortalForgeX.Domain.Entities.Tenants;
 using PortalForgeX.Domain.Services;
@@ -8,9 +8,12 @@ using PortalForgeX.Shared.Extensions;
 
 namespace PortalForgeX.Persistence.EFCore.Seeders;
 
-public sealed class TenantSeeder(IPortalContext portalContext, UserManager<ApplicationUser> userManager) : ITenantSeeder
+public sealed class TenantSeeder(
+    IDbContextFactory<PortalContext> portalContextFactory,
+    UserManager<ApplicationUser> userManager
+    ) : ITenantSeeder
 {
-    private readonly IPortalContext _portalContext = portalContext;
+    private readonly PortalContext _portalContext = portalContextFactory.CreateDbContext();
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly List<string> _generatedNames = [];
 
