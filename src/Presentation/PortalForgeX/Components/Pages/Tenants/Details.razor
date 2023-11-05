@@ -494,9 +494,9 @@
             var result = await TenantService.UpdateAsync(_tenant);
             if (result is not null)
             {
-                await LoadDataAsync();
-
                 ToastService.ShowSuccess($"Tenant {_tenant.Name} was successfully updated.");
+                
+                await LoadDataAsync();
             }
         });
 
@@ -530,8 +530,9 @@
         var result = await TenantService.ApproveTenantAsync(Model.Id);
         if (result)
         {
-            await LoadDataAsync();
             ToastService.ShowSuccess($"Tenant {Model.Name} has been Approved.");
+            
+            await LoadDataAsync();
         }
     }
 
@@ -546,8 +547,9 @@
         var result = await TenantService.RejectTenantAsync(Model.Id);
         if (result)
         {
-            await LoadDataAsync();
             ToastService.ShowSuccess($"Tenant {Model.Name} has been Rejected.");
+
+            await LoadDataAsync();
         }
     }
 
@@ -570,7 +572,8 @@
             return;
         }
 
-        await LoadDataAsync();
         ToastService.ShowSuccess($"Profile for {user.UserName} was succesfully deleted.");
+
+        await LoadDataAsync();
     }
 }

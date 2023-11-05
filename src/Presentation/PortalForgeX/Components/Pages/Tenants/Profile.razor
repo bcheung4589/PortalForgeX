@@ -451,9 +451,9 @@
             var result = await TenantService.UpdateTenantProfileAsync(_tenant!, Model);
             if (result)
             {
-                await LoadDataAsync();
-
                 ToastService.ShowSuccess("Profile was successfully updated.");
+
+                await LoadDataAsync();
             }
         });
     }
