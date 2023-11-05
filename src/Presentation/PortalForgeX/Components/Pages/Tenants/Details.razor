@@ -46,6 +46,12 @@
                         </div>
                     </div>
                 }
+
+                @if (Model.Status.ToTenantStatus() >= Domain.Enums.TenantStatus.DbMigrated)
+                {
+                    <button @onclick="ImpersonateAsync" class="btn btn-primary mx-3" type="button">Impersonate</button>
+                }
+
                 <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
             </div>
         </div>
@@ -495,7 +501,7 @@
             if (result is not null)
             {
                 ToastService.ShowSuccess($"Tenant {_tenant.Name} was successfully updated.");
-                
+
                 await LoadDataAsync();
             }
         });
@@ -531,7 +537,7 @@
         if (result)
         {
             ToastService.ShowSuccess($"Tenant {Model.Name} has been Approved.");
-            
+
             await LoadDataAsync();
         }
     }
@@ -576,4 +582,8 @@
 
         await LoadDataAsync();
     }
+
+    protected async Task ImpersonateAsync()
+        => Navigation.NavigateTo($"/tenant/impersonation/{Id}", true);
+
 }

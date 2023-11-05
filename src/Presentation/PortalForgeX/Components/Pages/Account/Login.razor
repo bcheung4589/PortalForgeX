@@ -108,7 +108,7 @@
         var result = await SignInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
         if (result.Succeeded)
         {
-            await SignInManager.RegisterSucceededLoginAsync(Input.Email);
+            await SignInManager.UserManager.RegisterSucceededLoginAsync(Input.Email);
 
             Logger.LogInformation("User logged in.");
             RedirectManager.RedirectTo(ReturnUrl);

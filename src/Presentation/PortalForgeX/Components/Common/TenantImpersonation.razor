@@ -1,0 +1,18 @@
+﻿@using PortalForgeX.Application.Tenants
+
+@inject TenantAccessor TenantAccessor
+
+<AuthorizeView Roles="@($"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}")">
+    @if (TenantAccessor.HasTenant)
+    {
+        <div class="impersonation-tenant row">
+            <div class="col-lg text-end lh-1">
+                <small class="text-muted">Impersonating</small>
+                <strong>@TenantAccessor.CurrentTenant?.Name</strong>
+            </div>
+            <div class="col-lg-4 text-center">
+                <a href="/tenant/impersonation/stop" class="btn btn-warning">Stop</a>
+            </div>
+        </div>
+    }
+</AuthorizeView>
