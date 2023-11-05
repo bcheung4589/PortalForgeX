@@ -19,23 +19,31 @@
 <div class="row">
     <div class="col-md-6">
         <EditForm id="profile-form" Model="Input" FormName="profile" OnValidSubmit="OnValidSubmitAsync" Enhance method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" />
-            <div class="form-floating mb-3">
-                <input id="username" type="text" value="@_username" class="form-control" placeholder="Please choose your username." disabled />
-                <label for="username" class="form-label">Username</label>
-            </div>
-            <div class="form-floating mb-3">
-                <InputText id="phone-number" @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
-                <label for="phone-number" class="form-label">Phone number</label>
-                <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
-            </div>
-            <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
-        </EditForm>
-    </div>
-</div>
+             <DataAnnotationsValidator />
+             <ValidationSummary class="text-danger" />
+             <div class="form-floating mb-3">
+                 <input id="username" type="text" value="@_username" class="form-control" placeholder="Please choose your username." disabled />
+                 <label for="username" class="form-label">Username</label>
+             </div>
+             <div class="form-floating mb-3">
+                 <InputText id="firstname" @bind-Value="Input.Firstname" class="form-control" placeholder="Please enter your firstname." maxlength="100" />
+                 <label for="firstname" class="form-label">Firstname</label>
+             </div>
+             <div class="form-floating mb-3">
+                 <InputText id="lastname" @bind-Value="Input.Lastname" class="form-control" placeholder="Please enter your lastname." maxlength="100" />
+                 <label for="lastname" class="form-label">Lastname</label>
+             </div>
+             <div class="form-floating mb-3">
+                 <InputText id="phone-number" @bind-Value="Input.PhoneNumber" class="form-control" placeholder="Please enter your phone number." />
+                 <label for="phone-number" class="form-label">Phone number</label>
+                 <ValidationMessage For="() => Input.PhoneNumber" class="text-danger" />
+             </div>
+             <button id="update-profile-button" type="submit" class="w-100 btn btn-lg btn-primary">Save</button>
+         </EditForm>
+     </div>
+ </div>
 
-@code {
+ @code {
     private ApplicationUser _user = default!;
     private string? _username;
     private string? _phoneNumber;
@@ -52,12 +60,12 @@
         _phoneNumber = await UserManager.GetPhoneNumberAsync(_user);
 
         Input.PhoneNumber ??= _phoneNumber;
+        Input.Firstname ??= _user.FirstName;
+        Input.Lastname ??= _user.LastName;
     }
 
     private async Task OnValidSubmitAsync()
     {
-        // TODO: FirstName, LastName
-
         if (Input.PhoneNumber != _phoneNumber)
         {
             var setPhoneResult = await UserManager.SetPhoneNumberAsync(_user, Input.PhoneNumber);
@@ -68,12 +76,26 @@
             }
         }
 
+        var user = await UserManager.FindByIdAsync(_user.Id);
+        if (user is not null)
+        {
+            user.FirstName = Input.Firstname;
+            user.LastName = Input.Lastname;
+            _ = await UserManager.UpdateAsync(user);
+        }
+
         await SignInManager.RefreshSignInAsync(_user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated");
+        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated.");
     }
 
     private sealed class InputModel
     {
+        [Display(Name = "Firstname")]
+        public string? Firstname { get; set; }
+        
+        [Display(Name = "Lastname")]
+        public string? Lastname { get; set; }
+
         [Phone]
         [Display(Name = "Phone number")]
         public string? PhoneNumber { get; set; }

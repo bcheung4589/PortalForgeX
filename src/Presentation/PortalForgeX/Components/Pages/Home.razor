@@ -1,12 +1,14 @@
 ﻿@page "/"
 
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
+
 <PageTitle>Home</PageTitle>
+
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
         <Breadcrumb DisplayText="Dashboard" IconCssClass="fas fa-gauge-high" />
     </BreadcrumbNavigation>
 </SectionContent>
-
 
 <h1>Dashboard</h1>
 
