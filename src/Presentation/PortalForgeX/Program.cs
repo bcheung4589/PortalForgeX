@@ -94,6 +94,9 @@ builder.Services.AddDbContext<IDomainContext, DomainContext>((services, options)
  */
 builder.Services.AddScoped<IDomainContextFactory, DomainContextFactory>();
 
+// Unit of Work for DomainContext and Domain Repositories
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 #if DEBUG
 
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -119,6 +122,12 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddEntityFrameworkStores<PortalContext>();
 
 /**
+ * Database Initializers are used for migrations and seeding on startup.
+ * For manual seeders see: PortalForgeX.Persistence.EFCore.Seeders (ISeedService)
+ */
+builder.Services.AddScoped<PortalContextInitializer>();
+
+/**
  * Override the LoginPath for the Application. (Logout redirects to /Identity/Account/Login)
  */
 builder.Services.ConfigureApplicationCookie(options =>
@@ -128,6 +137,22 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 // Remove the inbound role claim.
 JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Remove("role");
+
+// Configure AutoMapper
+builder.Services.AddSingleton(new MapperConfiguration(cfg =>
+{
+    cfg.AddMaps(Assembly.GetAssembly(typeof(DomainProfiles)));
+}).CreateMapper());
+
+// Configure MediatR
+builder.Services.AddMediatR(cfg =>
+{
+    cfg.RegisterServicesFromAssembly(typeof(ICommand).Assembly);
+});
+
+// Add Tenants Services
+builder.Services.AddScoped<TenantAccessor>();
+builder.Services.AddScoped<ITenantService, TenantService>();
 
 // Reset; because this breaks the application
 builder.Services.AddSingleton<IEmailSender, NoOpEmailSender>();
@@ -148,31 +173,6 @@ builder.Services.AddScoped<IClientContactFacade, ClientContactFacade>();
 builder.Services.AddScoped<IBusinessLocationFacade, BusinessLocationFacade>();
 builder.Services.AddScoped<ICheckoutFacade, CheckoutFacade>();
 builder.Services.AddScoped<IPaymentFacade, PaymentFacade>();
-
-/**
- * Database Initializers are used for migrations and seeding on startup.
- * For manual seeders see: PortalForgeX.Persistence.EFCore.Seeders (ISeedService)
- */
-builder.Services.AddScoped<PortalContextInitializer>();
-
-// Unit of Work for DomainContext and Domain Repositories
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
-
-// Configure AutoMapper
-builder.Services.AddSingleton(new MapperConfiguration(cfg =>
-{
-    cfg.AddMaps(Assembly.GetAssembly(typeof(DomainProfiles)));
-}).CreateMapper());
-
-// MediatR
-builder.Services.AddMediatR(cfg =>
-{
-    cfg.RegisterServicesFromAssembly(typeof(ICommand).Assembly);
-});
-
-// Add Tenants Services
-builder.Services.AddScoped<TenantAccessor>();
-builder.Services.AddScoped<ITenantService, TenantService>();
 
 // Add (portal) middlewares from infrastructure.
 builder.Services.AddInfrastructureMiddleware();
