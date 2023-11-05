@@ -30,6 +30,14 @@ public abstract class FormPage<TModel> : PageBase
     {
         await base.OnInitializedAsync();
 
+        BindModelContext();
+    }
+
+    /// <summary>
+    /// Binds the FormEditContext to the Model.
+    /// </summary>
+    protected void BindModelContext()
+    {
         Model ??= InitModel;
         FormEditContext = new(Model!);
     }

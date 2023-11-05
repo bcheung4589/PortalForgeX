@@ -22,6 +22,7 @@ public record TenantUserFormModel
     public bool LockoutEnabled { get; set; }
 
     public Guid TenantId { get; set; }
+    public string TenantName { get; set; } = null!;
 
     /*
      * TenantUserProfile

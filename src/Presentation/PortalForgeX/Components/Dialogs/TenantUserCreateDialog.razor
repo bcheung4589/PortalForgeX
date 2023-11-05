@@ -200,6 +200,7 @@
                 return;
             }
 
+            ToastService.ShowSuccess("Profile was successfully created.");
             Navigation.NavigateTo($"/tenant/profile/{Model.Id}");
         });
 

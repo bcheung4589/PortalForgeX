@@ -103,6 +103,7 @@
             var result = await TenantService.CreateAsync(Model);
             if (result != null)
             {
+                ToastService.ShowSuccess("Tenant was successfully created.");
                 Navigation.NavigateTo($"/tenant/{result?.Id}");
             }
         });

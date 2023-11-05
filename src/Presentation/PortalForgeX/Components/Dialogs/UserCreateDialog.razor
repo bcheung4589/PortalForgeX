@@ -162,31 +162,34 @@
                     return;
                 }
 
+                Model.CreationTime = DateTime.UtcNow;
                 Model.UserName = Model.Email;
+                Model.EmailConfirmed = true;
                 var result = await UserManager.CreateAsync(Model, Password);
-                if (result.Succeeded)
-                {
-                    var user = await UserManager.FindByNameAsync(Model.UserName!);
-                    if (user is null)
-                    {
-                        return;
-                    }
-
-                    var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key);
-                    if (selectedRoles is not null && selectedRoles.Any())
-                    {
-                        _ = await UserManager.AddToRolesAsync(user, selectedRoles.Select(x => x.Name!));
-                    }
-
-                    Navigation.NavigateTo($"/user/{user?.Id}");
-                }
-                else
+                if (!result.Succeeded)
                 {
                     foreach (var errorMessage in result.Errors)
                     {
                         ToastService.ShowError(errorMessage.Description);
                     }
+
+                    return;
                 }
+
+                var user = await UserManager.FindByEmailAsync(Model.Email!);
+                if (user is null)
+                {
+                    return;
+                }
+
+                var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key);
+                if (selectedRoles is not null && selectedRoles.Any())
+                {
+                    _ = await UserManager.AddToRolesAsync(user, selectedRoles.Select(x => x.Name!));
+                }
+
+                ToastService.ShowSuccess("User was successfully created.");
+                Navigation.NavigateTo($"/user/{user?.Id}");
             });
 
     protected void OnChanged(ChangeEventArgs args, string key)

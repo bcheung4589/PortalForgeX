@@ -22,7 +22,7 @@ public class TenantService(
     UserManager<ApplicationUser> userManager,
     IMediator sender,
     IMapper mapper
-    ) : ITenantService
+    ) : ITenantService, IDisposable
 {
     private readonly ILogger<TenantService> _logger = logger;
     private readonly IPortalContext portalContext = portalContext;
@@ -260,7 +260,7 @@ public class TenantService(
 
         /// create portal user for login
         var appUser = mapper.Map<ApplicationUser>(formModel);
-
+        appUser.Tenant = null;
         appUser.CreationTime = DateTime.UtcNow;
         appUser.UserName = appUser.Email;
         appUser.EmailConfirmed = true;
@@ -369,14 +369,19 @@ public class TenantService(
         }
 
         using var domainContext = domainContextFactory.CreateDomainContext(tenant);
-
-        var result = await domainContext.UserProfiles
+        _ = await domainContext.UserProfiles
             .Where(x => x.UserId.Equals(userId))
             .ExecuteDeleteAsync(cancellationToken);
 
-        return result > 0;
+        return true;
     }
 
     #endregion [ User Profiles ]
 
+    public void Dispose()
+    {
+        portalContext.Dispose();
+
+        GC.SuppressFinalize(this);
+    }
 }

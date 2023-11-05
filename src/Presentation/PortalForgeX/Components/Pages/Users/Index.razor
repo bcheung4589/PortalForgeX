@@ -1,5 +1,6 @@
 ﻿@page "/users"
 
+@using AutoMapper
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
@@ -9,6 +10,7 @@
 @using PortalForgeX.Components.Dialogs
 @using PortalForgeX.Domain.Entities.Tenants
 @using PortalForgeX.Persistence.EFCore
+@using PortalForgeX.Shared.Features.Tenants
 
 @rendermode RenderMode.InteractiveServer
 @attribute [StreamRendering(true)]
@@ -18,6 +20,7 @@
 @inject IDomainContextFactory DomainContextFactory
 @inject IToastService ToastService
 @inject IJSRuntime JSRuntime
+@inject IMapper Mapper
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager Navigation
 
@@ -49,25 +52,20 @@
                 {
                     <p>@users.Count() items found.</p>
                     <QuickGrid Items="users" Class="table table-striped">
-                        <TemplateColumn Title="Email" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.Email)">
+                        <TemplateColumn Title="Email" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.Email)">
                             <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
-                            <a href="mailto:@context.Email">@context.Email</a>
+                            <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.Email">@context.Email</span>
                         </TemplateColumn>
-                        <TemplateColumn Title="Name" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.UserName)">
+                        <TemplateColumn Title="Name" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.UserName)">
                             <span @onclick="@(() => NavigateTo(context))" role="button" title="View details of @context.UserName">@context.FirstName @context.LastName</span>
                         </TemplateColumn>
-                        <TemplateColumn Title="Tenant" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.TenantId)">
-                            <NullableField Value="@context.TenantId">
-                                <a href="@($"/tenant/{context.TenantId}")">@context.Tenant?.Name</a>
-                            </NullableField>
-                        </TemplateColumn>
-                        <TemplateColumn Title="Last logged in" SortBy="GridSort<ApplicationUser>.ByAscending(p => p.LastLoggedInTime)">
+                        <TemplateColumn Title="Last logged in" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.LastLoggedInTime)">
                             <NullableField Value="@context.LastLoggedInTime?.ToString("dd-MM-yyyy HH:mm")" />
                         </TemplateColumn>
                         <TemplateColumn>
                             <ContextMenu Model="@context">
-                                <MenuItem TEntity="ApplicationUser" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
-                                <MenuItem TEntity="ApplicationUser" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                                <MenuItem TEntity="TenantUserViewModel" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                <MenuItem TEntity="TenantUserViewModel" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
                             </ContextMenu>
                         </TemplateColumn>
                     </QuickGrid>
@@ -83,54 +81,40 @@
 
 @code {
 
-    private IQueryable<ApplicationUser> users = null!;
-    private IDictionary<Guid, Tenant> tenants = null!;
+    private IQueryable<TenantUserViewModel> users = null!;
     private bool isLoading;
 
-    protected override async Task OnInitializedAsync()
+    protected override Task OnInitializedAsync()
     {
         isLoading = true;
 
-        tenants = new Dictionary<Guid, Tenant>();
-        users = UserManager.Users
-            .ToArray().AsQueryable(); // detach from the EF IQueryable
-
-        using var portalContext = await PortalContextFactory.CreateDbContextAsync();
-        foreach (var tenantUser in users.Where(x => x.TenantId != null).ToArray())
-        {
-            var tenantId = tenantUser.TenantId!.Value;
-            if (tenants.ContainsKey(tenantId))
-            {
-                tenantUser.Tenant = tenants[tenantId];
-                continue;
-            }
-
-            var dbTenant = await portalContext.Tenants.FindAsync(tenantId);
-            if (dbTenant is null)
-            {
-                continue;
-            }
-
-            tenantUser.Tenant = dbTenant;
-            tenants[dbTenant.Id] = dbTenant;
-        }
+        var appUsers = UserManager.Users.ToArray();
+        users = Mapper.Map<IEnumerable<TenantUserViewModel>>(appUsers).AsQueryable();
 
         isLoading = false;
+
+        return Task.CompletedTask;
     }
 
-    protected void NavigateTo(ApplicationUser user)
+    protected void NavigateTo(TenantUserViewModel user)
         => Navigation.NavigateTo($"user/{user.Id}");
 
-    protected async Task DeleteAsync(ApplicationUser user)
+    protected async Task DeleteAsync(TenantUserViewModel modelUser)
     {
-        if (user.Email == SystemUserAccounts.ADMIN_EMAIL)
+        if (modelUser.Email == SystemUserAccounts.ADMIN_EMAIL)
         {
             ToastService.ShowError("You are not allowed to delete the root admin.");
             return;
         }
 
-        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete user {user.UserName}? Deleting is permanent.");
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete user {modelUser.UserName}? Deleting is permanent.");
         if (!confirmed)
+        {
+            return;
+        }
+
+        var user = await UserManager.FindByIdAsync(modelUser.Id);
+        if (user is null)
         {
             return;
         }
@@ -145,21 +129,22 @@
             return;
         }
 
-        if (user.Tenant is not null)
+        if (modelUser.TenantId is not null)
         {
-            using var domainContext = DomainContextFactory.CreateDomainContext(user.Tenant);
-            var profileDeleteResult = await domainContext.UserProfiles
-                .Where(x => x.UserId.Equals(user.Id))
-                .ExecuteDeleteAsync();
-
-            if (profileDeleteResult < 1)
+            using var portalContext = await PortalContextFactory.CreateDbContextAsync();
+            var dbTenant = await portalContext.Tenants.FindAsync(modelUser.TenantId);
+            if (dbTenant is null)
             {
-                ToastService.ShowError("Failed deleting profile.");
                 return;
             }
+
+            using var domainContext = DomainContextFactory.CreateDomainContext(dbTenant);
+            _ = await domainContext.UserProfiles
+                .Where(x => x.UserId.Equals(modelUser.Id))
+                .ExecuteDeleteAsync();
         }
 
-        ToastService.ShowSuccess($"User {user.Email} was succesfully deleted.");
+        ToastService.ShowSuccess($"User {modelUser.Email} was succesfully deleted.");
         await OnInitializedAsync();
     }
 

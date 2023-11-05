@@ -58,15 +58,16 @@
             var result = await RoleManager.CreateAsync(Model);
             if (result.Succeeded)
             {
-                Navigation.NavigateTo($"/role/{Model?.Id}");
-            }
-            else
-            {
                 foreach (var errorMessage in result.Errors)
                 {
                     ToastService.ShowError(errorMessage.Description);
                 }
+
+                return;
             }
+
+            ToastService.ShowSuccess("Role was successfully created.");
+            Navigation.NavigateTo($"/role/{Model?.Id}");
         });
 
 }

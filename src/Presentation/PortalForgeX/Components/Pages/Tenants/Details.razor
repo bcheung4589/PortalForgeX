@@ -15,6 +15,7 @@
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = SystemRolesNames.ADMIN)]
 
+@inject IRenderContext RenderContext
 @inject ITenantService TenantService
 @inject IMapper Mapper
 @inject UserManager<ApplicationUser> UserManager
@@ -448,6 +449,14 @@
 
     protected override async Task OnInitializedAsync()
     {
+        IsLoading = true;
+
+        _tenant = await TenantService.GetByIdAsync(Id);
+        if (RenderContext.IsPrerendering)
+        {
+            return; // no need for prerendering
+        }
+
         await LoadDataAsync();
     }
 
@@ -455,7 +464,6 @@
     {
         IsLoading = true;
 
-        _tenant = await TenantService.GetByIdAsync(Id);
         if (_tenant is null)
         {
             Navigation.NavigateTo("tenants");
@@ -468,7 +476,7 @@
         TenantManagers = await UserManager.GetUsersInRoleAsync(SystemRolesNames.MANAGER);
         TenantUsers = (await TenantService.GetTenantProfiles(_tenant))?.AsQueryable();
 
-        await base.OnInitializedAsync();
+        BindModelContext();
         await InvokeAsync(StateHasChanged);
 
         IsLoading = false;

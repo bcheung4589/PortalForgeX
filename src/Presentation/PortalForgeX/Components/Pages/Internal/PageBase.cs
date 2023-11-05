@@ -59,7 +59,7 @@ public abstract class PageBase : ComponentBase
             await loadDataCallback();
             return true;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             ToastService.ShowError("Something went wrong!");
             return false;

@@ -1,13 +1,15 @@
 ﻿@page "/user/{Id:guid}"
 
+@using AutoMapper
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.EntityFrameworkCore
 @using PortalForgeX.Application.Data
 @using PortalForgeX.Domain.Entities.Identity
 @using PortalForgeX.Identity.Extensions
 @using PortalForgeX.Persistence.EFCore
+@using PortalForgeX.Shared.Features.Tenants
 
-@inherits FormPage<ApplicationUser>
+@inherits FormPage<TenantUserFormModel>
 
 @rendermode RenderMode.InteractiveServer
 @attribute [StreamRendering(true)]
@@ -15,6 +17,7 @@
 
 @inject IDbContextFactory<PortalContext> PortalContextFactory
 @inject IDomainContextFactory DomainContextFactory
+@inject IMapper Mapper
 @inject UserManager<ApplicationUser> UserManager
 @inject RoleManager<ApplicationRole> RoleManager
 
@@ -54,42 +57,42 @@
                             </div>
                             @if (Model.LastModificationTime is not null)
                             {
-                                <div class="row">
-                                    <label class="col-lg-6 text-muted">
-                                        Last Modified
-                                    </label>
-                                    <div class="col-lg-6">
-                                        <data class="fs-6 text-gray-800">
+                                    <div class="row">
+                                        <label class="col-lg-6 text-muted">
+                                            Last Modified
+                                        </label>
+                                        <div class="col-lg-6">
+                                            <data class="fs-6 text-gray-800">
                                             @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
-                                        </data>
+                                            </data>
+                                        </div>
                                     </div>
-                                </div>
                             }
                             @if (Model.LastLoggedInTime is not null)
                             {
-                                <div class="row">
-                                    <label class="col-lg-6 text-muted">
-                                        Last Logged in
-                                    </label>
-                                    <div class="col-lg-6">
-                                        <data class="fs-6 text-gray-800">
+                                    <div class="row">
+                                        <label class="col-lg-6 text-muted">
+                                            Last Logged in
+                                        </label>
+                                        <div class="col-lg-6">
+                                            <data class="fs-6 text-gray-800">
                                             @Model.LastLoggedInTime?.ToString("dd-MM-yyyy hh:mm:ss")
-                                        </data>
+                                            </data>
+                                        </div>
                                     </div>
-                                </div>
                             }
                             @if (Model.LockoutEnd is not null)
                             {
-                                <div class="row">
-                                    <label class="col-lg-6 text-muted">
-                                        Lockout Enddate
-                                    </label>
-                                    <div class="col-lg-6">
-                                        <data class="fs-6 text-gray-800">
+                                    <div class="row">
+                                        <label class="col-lg-6 text-muted">
+                                            Lockout Enddate
+                                        </label>
+                                        <div class="col-lg-6">
+                                            <data class="fs-6 text-gray-800">
                                             @Model.LockoutEnd
-                                        </data>
+                                            </data>
+                                        </div>
                                     </div>
-                                </div>
                             }
                             <div class="row">
                                 <label class="col-lg-6 text-muted">
@@ -101,14 +104,14 @@
                                     </data>
                                 </div>
                             </div>
-                            @if (Model.Tenant is not null)
+                            @if (Model.TenantId != Guid.Empty)
                             {
-                                <div class="row">
-                                    <a class="mx-2" href="/tenant/@Model.TenantId">
-                                        <span class="fas fa-handshake-angle me-1"></span>
-                                        @Model.Tenant?.Name
-                                    </a>
-                                </div>
+                                                    <div class="row">
+                                                        <a class="mx-2" href="/tenant/@Model.TenantId">
+                                                            <span class="fas fa-handshake-angle me-1"></span>
+                                        @Model.TenantName
+                                                        </a>
+                                                    </div>
                             }
                         </div>
                     </div>
@@ -117,7 +120,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <TextFormField @bind-Value="Model.Email"
-                                               TViewModel="ApplicationUser"
+                                               TViewModel="TenantUserFormModel"
                                                DisplayName="Email"
                                                HelpText="Email of the user."
                                                Required="true"
@@ -139,8 +142,52 @@
                         </div>
                         <div class="row mb-3">
                             <div class="col">
+                                <TextFormField @bind-Value="Model.FirstName"
+                                               TViewModel="TenantUserFormModel"
+                                               DisplayName="Firstname"
+                                               HelpText="Firstname of the user."
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.FirstName"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Firstname of the user." />
+                                            <span class="text-muted">Firstname</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            @template.Model.FirstName
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.LastName"
+                                               TViewModel="TenantUserFormModel"
+                                               DisplayName="Lastname"
+                                               HelpText="Lastname of the user."
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.LastName"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Lastname of the user." />
+                                            <span class="text-muted">Lastname</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            @template.Model.LastName
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
                                 <TextFormField @bind-Value="Model.PhoneNumber"
-                                               TViewModel="ApplicationUser"
+                                               TViewModel="TenantUserFormModel"
                                                DisplayName="Phonenumber"
                                                HelpText="PhoneNumber of the user."
                                                Model="Model"
@@ -161,7 +208,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <CheckboxFormField @bind-Value="Model.LockoutEnabled"
-                                                   TViewModel="ApplicationUser"
+                                                   TViewModel="TenantUserFormModel"
                                                    DisplayName="Lockout Enabled"
                                                    HelpText="Indicator if the user can be locked out."
                                                    Model="Model"
@@ -182,7 +229,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <CheckboxFormField @bind-Value="Model.IsActive"
-                                                   TViewModel="ApplicationUser"
+                                                   TViewModel="TenantUserFormModel"
                                                    DisplayName="Actief"
                                                    HelpText="Indicator if the user is active."
                                                    Model="Model"
@@ -203,7 +250,7 @@
                         <div class="row mb-3">
                             <div class="col">
                                 <TextAreaFormField @bind-Value="Model.Remarks"
-                                                   TViewModel="ApplicationUser"
+                                                   TViewModel="TenantUserFormModel"
                                                    DisplayName="Remarks about the user."
                                                    HelpText="Remarks about the user."
                                                    MaxLength="2000"
@@ -266,36 +313,36 @@
                                 var inputId = "cbRole";
                                 var checkboxId = inputId;
                                 var i = 0;
-                                <EditForm FormName="EditUserRolesForm" EditContext="FormEditContext" OnValidSubmit="UpdateRolesAsync">
-                                    <div class="card warning border-1 p-2 py-3">
-                                        <div class="card-header">
-                                            <h5>Roles</h5>
-                                        </div>
-                                        <div class="card-body py-0">
+                                    <EditForm FormName="EditUserRolesForm" EditContext="FormEditContext" OnValidSubmit="UpdateRolesAsync">
+                                        <div class="card warning border-1 p-2 py-3">
+                                            <div class="card-header">
+                                                <h5>Roles</h5>
+                                            </div>
+                                            <div class="card-body py-0">
                                             @foreach (var role in UserRoles)
                                             {
                                                 i += 1;
                                                 checkboxId = inputId + i;
 
-                                                <span class="form-check form-check-custom form-check-solid">
-                                                    <input @oninput="(e) => OnChanged(e, role.Key.Id)"
-                                                           class="form-check-input" checked="@UserRoles[role.Key]" id="@checkboxId" type="checkbox" />
-                                                    <label for="@checkboxId" class="form-check-label">
+                                                        <span class="form-check form-check-custom form-check-solid">
+                                                            <input @oninput="(e) => OnChanged(e, role.Key.Id)"
+                                                                   class="form-check-input" checked="@UserRoles[role.Key]" id="@checkboxId" type="checkbox" />
+                                                            <label for="@checkboxId" class="form-check-label">
                                                         @role.Key.Name
-                                                        <span class="text-muted small">(@role.Key.RoleType)</span>
-                                                    </label>
-                                                </span>
+                                                                <span class="text-muted small">(@role.Key.RoleType)</span>
+                                                            </label>
+                                                        </span>
                                             }
+                                            </div>
+                                            <div class="card-footer">
+                                                <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Update Roles" BtnCssClass="btn-warning"></SubmitSpinnerButton>
+                                            </div>
                                         </div>
-                                        <div class="card-footer">
-                                            <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Update Roles" BtnCssClass="btn-warning"></SubmitSpinnerButton>
-                                        </div>
-                                    </div>
-                                </EditForm>
+                                    </EditForm>
                             }
                             else
                             {
-                                <span>No roles found.</span>
+                                    <span>No roles found.</span>
                             }
                         </div>
                     </div>
@@ -310,15 +357,15 @@
     [Parameter]
     public Guid Id { get; set; }
 
-    protected override ApplicationUser InitModel => new() { IsActive = true };
+    protected override TenantUserFormModel InitModel => new() { IsActive = true };
     protected IDictionary<ApplicationRole, bool> UserRoles = null!;
     protected string? Password;
     protected string? PasswordConfirm;
 
-    protected override async Task OnInitializedAsync()
-    {
-        IsLoading = true;
+    protected override async Task OnInitializedAsync() => await LoadDataAsync();
 
+    protected async Task LoadDataAsync() => await TryRunAsync(async () =>
+    {
         var result = await UserManager.FindByIdAsync(Id.ToString());
         if (result is null)
         {
@@ -326,12 +373,16 @@
             return;
         }
 
-        Model = result;
+        Model = Mapper.Map<TenantUserFormModel>(result);
 
-        using var portalContext = await PortalContextFactory.CreateDbContextAsync();
-        if (Model.TenantId is not null)
+        if (Model.TenantId != Guid.Empty)
         {
-            Model.Tenant = await portalContext.Tenants.FindAsync(Model.TenantId);
+            using var portalContext = await PortalContextFactory.CreateDbContextAsync();
+            var dbTenant = await portalContext.Tenants.FindAsync(Model.TenantId);
+            if (dbTenant is not null)
+            {
+                Model.TenantName = dbTenant.Name;
+            }
         }
 
         UserRoles = new Dictionary<ApplicationRole, bool>();
@@ -343,14 +394,12 @@
                 continue;
             }
 
-            UserRoles[role] = await UserManager.IsInRoleAsync(Model, role.Name);
+            UserRoles[role] = await UserManager.IsInRoleAsync(result, role.Name);
         }
 
-        await base.OnInitializedAsync();
-
-        IsLoading = false;
+        BindModelContext();
         StateHasChanged();
-    }
+    });
 
     protected void OnChanged(ChangeEventArgs args, string key)
     {
@@ -363,77 +412,98 @@
         UserRoles[role] = !UserRoles[role];
     }
 
-    protected async Task SaveAsync()
+    protected async Task SaveAsync() => await TryRunAsync(async () =>
     {
-        await TryRunAsync(async () =>
+        var user = await UserManager.FindByIdAsync(Model.Id);
+        if (user is null)
         {
-            Model.LastModificationTime = DateTime.UtcNow;
-            var result = await UserManager.UpdateAsync(Model);
-            if (result.Succeeded)
-            {
-                ToastService.ShowSuccess("User was successfully updated.");
-            }
-            else
-            {
-                foreach (var errorMessage in result.Errors)
-                {
-                    ToastService.ShowError(errorMessage.Description);
-                }
-            }
-        });
-    }
+            return;
+        }
 
-    protected async Task UpdateRolesAsync()
+        user.Email = Model.Email;
+        user.PhoneNumber = Model.PhoneNumber;
+        user.LockoutEnabled = Model.LockoutEnabled;
+        user.IsActive = Model.IsActive;
+        user.Remarks = Model.Remarks;
+        user.LastModificationTime = DateTime.UtcNow;
+
+        var result = await UserManager.UpdateAsync(user);
+        if (!result.Succeeded)
+        {
+            foreach (var errorMessage in result.Errors)
+            {
+                ToastService.ShowError(errorMessage.Description);
+            }
+
+            return;
+        }
+
+        ToastService.ShowSuccess("User was successfully updated.");
+
+        await LoadDataAsync();
+    });
+
+    protected async Task UpdateRolesAsync() => await TryRunAsync(async () =>
     {
-        await TryRunAsync(async () =>
+        var user = await UserManager.FindByIdAsync(Model.Id);
+        if (user is null)
         {
-            var updateResult = await UserManager.UpdateRolesAsync(Model, UserRoles);
-            if (!updateResult.Succeeded)
-            {
-                foreach (var errorMessage in updateResult.Errors)
-                {
-                    ToastService.ShowError(errorMessage.Description);
-                }
+            return;
+        }
 
-                return;
+        var updateResult = await UserManager.UpdateRolesAsync(user, UserRoles);
+        if (!updateResult.Succeeded)
+        {
+            foreach (var errorMessage in updateResult.Errors)
+            {
+                ToastService.ShowError(errorMessage.Description);
             }
 
-            ToastService.ShowSuccess("User roles was successfully updated. Login again for it to take effect.");
-        });
-    }
+            return;
+        }
 
-    protected async Task UpdatePasswordAsync()
+        ToastService.ShowSuccess("User roles was successfully updated. Login again for it to take effect.");
+
+        await LoadDataAsync();
+    });
+
+    protected async Task UpdatePasswordAsync() => await TryRunAsync(async () =>
     {
-        await TryRunAsync(async () =>
+        if (string.IsNullOrWhiteSpace(Password))
         {
-            if (string.IsNullOrWhiteSpace(Password))
+            ToastService.ShowError("Password is required.");
+            return;
+        }
+
+        if (Password != PasswordConfirm)
+        {
+            ToastService.ShowError("Password did not match confirmation password.");
+            return;
+        }
+
+        var user = await UserManager.FindByIdAsync(Model.Id);
+        if (user is null)
+        {
+            return;
+        }
+
+        var changePasswordResult = await UserManager.UpdatePasswordAsync(user, Password);
+        if (!changePasswordResult.Succeeded)
+        {
+            foreach (var errorMessage in changePasswordResult.Errors)
             {
-                ToastService.ShowError("Password is required.");
-                return;
+                ToastService.ShowError(errorMessage.Description);
             }
+            return;
+        }
 
-            if (Password != PasswordConfirm)
-            {
-                ToastService.ShowError("Password did not match confirmation password.");
-                return;
-            }
+        Password = PasswordConfirm = null;
+        ToastService.ShowSuccess("Password was successfully updated.");
 
-            var changePasswordResult = await UserManager.UpdatePasswordAsync(Model, Password);
-            if (!changePasswordResult.Succeeded)
-            {
-                foreach (var errorMessage in changePasswordResult.Errors)
-                {
-                    ToastService.ShowError(errorMessage.Description);
-                }
-                return;
-            }
+        await LoadDataAsync();
+    });
 
-            Password = PasswordConfirm = null;
-            ToastService.ShowSuccess("Password was successfully updated.");
-        });
-    }
-
-    protected async Task DeleteAsync()
+    protected async Task DeleteAsync() => await TryRunAsync(async () =>
     {
         if (Model.Email == SystemUserAccounts.ADMIN_EMAIL)
         {
@@ -447,7 +517,13 @@
             return;
         }
 
-        var result = await UserManager.DeleteAsync(Model);
+        var user = await UserManager.FindByIdAsync(Model.Id);
+        if (user is null)
+        {
+            return;
+        }
+
+        var result = await UserManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
             foreach (var errorMessage in result.Errors)
@@ -457,22 +533,23 @@
             return;
         }
 
-        if (Model.Tenant is not null)
+        if (Model.TenantId != Guid.Empty)
         {
-            using var domainContext = DomainContextFactory.CreateDomainContext(Model.Tenant);
-            var profileDeleteResult = await domainContext.UserProfiles
-                .Where(x => x.UserId.Equals(Model.Id))
-                .ExecuteDeleteAsync();
-
-            if (profileDeleteResult < 1)
+            using var portalContext = await PortalContextFactory.CreateDbContextAsync();
+            var dbTenant = await portalContext.Tenants.FindAsync(Model.TenantId);
+            if (dbTenant is null)
             {
-                ToastService.ShowError("Failed deleting profile.");
                 return;
             }
+
+            using var domainContext = DomainContextFactory.CreateDomainContext(dbTenant);
+            _ = await domainContext.UserProfiles
+                .Where(x => x.UserId.Equals(Model.Id))
+                .ExecuteDeleteAsync();
         }
 
         ToastService.ShowSuccess($"User {Model.Email} was succesfully deleted.");
         Navigation.NavigateTo("users");
-    }
+    });
 
 }

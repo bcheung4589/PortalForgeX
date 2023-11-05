@@ -427,7 +427,7 @@
             UserRoles[role] = await UserManager.IsInRoleAsync(_user, role.Name);
         }
 
-        await base.OnInitializedAsync();
+        BindModelContext();
         await InvokeAsync(StateHasChanged);
 
         IsLoading = false;
@@ -529,8 +529,8 @@
             return;
         }
 
-        Navigation.NavigateTo($"tenant/{_tenant!.Id}");
         ToastService.ShowSuccess($"Profile for {_user.UserName} was succesfully deleted.");
+        Navigation.NavigateTo($"tenant/{_tenant!.Id}");
     }
 
 }

@@ -106,7 +106,7 @@
 
         Model = result;
 
-        await base.OnInitializedAsync();
+        BindModelContext();
 
         IsLoading = false;
         StateHasChanged();

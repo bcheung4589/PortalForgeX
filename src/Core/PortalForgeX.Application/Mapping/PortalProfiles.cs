@@ -93,6 +93,7 @@ public class PortalProfiles : Profile
             .ForMember(x => x.AccessFailedCount, opt => opt.MapFrom(x => x.AccessFailedCount))
             .ForMember(x => x.LockoutEnabled, opt => opt.MapFrom(x => x.LockoutEnabled))
             .ForMember(x => x.TenantId, opt => opt.MapFrom(x => x.TenantId))
+            .ForMember(x => x.TenantName, opt => opt.MapFrom(x => x.Tenant!.Name))
             .ReverseMap()
             .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.CreationTime, opt => opt.Ignore())

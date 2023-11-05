@@ -69,7 +69,7 @@ builder.Services.AddDbContextFactory<PortalContext>(options => options.UseSqlSer
 
 /**
  * Database Context for Portal objects like Users and Tenants.
- * Usage: Backend projects that uses IPortalContext to retrieve service
+ * Usage: Backend projects that uses IPortalContext to retrieve DbContext
  */
 builder.Services.AddDbContext<IPortalContext, PortalContext>(options => options.UseSqlServer(portalConnection,
     sqlServerOptionsAction: sqlOptions => sqlOptions.MigrationsAssembly(typeof(PortalContext).Assembly.FullName)));
