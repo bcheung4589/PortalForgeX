@@ -56,7 +56,7 @@
         => await TryRunAsync(async () =>
         {
             var result = await RoleManager.CreateAsync(Model);
-            if (result.Succeeded)
+            if (!result.Succeeded)
             {
                 foreach (var errorMessage in result.Errors)
                 {

@@ -112,24 +112,21 @@
         StateHasChanged();
     }
 
-    protected async Task SaveAsync()
+    protected async Task SaveAsync() => await TryRunAsync(async () =>
     {
-        await TryRunAsync(async () =>
+        var result = await RoleManager.UpdateAsync(Model);
+        if (!result.Succeeded)
         {
-            var result = await RoleManager.UpdateAsync(Model);
-            if (result.Succeeded)
+            foreach (var errorMessage in result.Errors)
             {
-                ToastService.ShowSuccess("Role was successfully updated.");
+                ToastService.ShowError(errorMessage.Description);
             }
-            else
-            {
-                foreach (var errorMessage in result.Errors)
-                {
-                    ToastService.ShowError(errorMessage.Description);
-                }
-            }
-        });
-    }
+
+            return;
+        }
+            
+        ToastService.ShowSuccess("Role was successfully updated.");
+    });
 
     protected async Task DeleteAsync()
     {
