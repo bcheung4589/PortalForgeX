@@ -17,7 +17,7 @@
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
         <Breadcrumb DisplayText="Roles" Url="/roles" IconCssClass="fas fa-users-gear" />
-        <Breadcrumb DisplayText="@(Model?.Name)" IconCssClass="fas fa-gears" />
+        <Breadcrumb DisplayText="@Model?.Name" IconCssClass="fas fa-gears" />
     </BreadcrumbNavigation>
 </SectionContent>
 
@@ -25,7 +25,11 @@
     <div class="card">
         <div class="card-header">
             <div class="col-lg-8">
-                <h1>@Model.Name</h1>
+                <h1>
+                    <span class="fas fa-gears"></span>
+                    @Model.Name
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
+                </h1>
             </div>
             <div class="col-lg-4 text-end">
                 <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
@@ -105,6 +109,7 @@
         }
 
         Model = result;
+        StateHasChanged();
 
         BindModelContext();
 

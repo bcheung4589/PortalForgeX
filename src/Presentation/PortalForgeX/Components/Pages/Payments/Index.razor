@@ -6,6 +6,7 @@
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 @inject IPaymentFacade Payments
+@inject NavigationManager Navigation
 
 <PageTitle>Payments</PageTitle>
 
@@ -22,6 +23,7 @@
                 <h1>
                     <span class="fas fa-money-bill"></span>
                     Payments Management
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
                 </h1>
                 <p class="m-0">Browse and manage the payments.</p>
             </div>

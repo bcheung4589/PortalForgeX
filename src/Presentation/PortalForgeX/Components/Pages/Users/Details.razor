@@ -26,7 +26,7 @@
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
         <Breadcrumb DisplayText="Users" Url="/users" IconCssClass="fas fa-users-rectangle" />
-        <Breadcrumb DisplayText="@(Model?.Email)" IconCssClass="fas fa-user" />
+        <Breadcrumb DisplayText="@Model?.Email" IconCssClass="fas fa-user" />
     </BreadcrumbNavigation>
 </SectionContent>
 
@@ -34,7 +34,11 @@
     <div class="card">
         <div class="card-header">
             <div class="col-lg-8">
-                <h1>@Model.UserName</h1>
+                <h1>
+                    <span class="fas fa-user"></span>
+                    @Model.UserName
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
+                </h1>
             </div>
             <div class="col-lg-4 text-end">
                 <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
@@ -57,42 +61,42 @@
                             </div>
                             @if (Model.LastModificationTime is not null)
                             {
-                                    <div class="row">
-                                        <label class="col-lg-6 text-muted">
-                                            Last Modified
-                                        </label>
-                                        <div class="col-lg-6">
-                                            <data class="fs-6 text-gray-800">
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Last Modified
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
                                             @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
-                                            </data>
-                                        </div>
+                                        </data>
                                     </div>
+                                </div>
                             }
                             @if (Model.LastLoggedInTime is not null)
                             {
-                                    <div class="row">
-                                        <label class="col-lg-6 text-muted">
-                                            Last Logged in
-                                        </label>
-                                        <div class="col-lg-6">
-                                            <data class="fs-6 text-gray-800">
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Last Logged in
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
                                             @Model.LastLoggedInTime?.ToString("dd-MM-yyyy hh:mm:ss")
-                                            </data>
-                                        </div>
+                                        </data>
                                     </div>
+                                </div>
                             }
                             @if (Model.LockoutEnd is not null)
                             {
-                                    <div class="row">
-                                        <label class="col-lg-6 text-muted">
-                                            Lockout Enddate
-                                        </label>
-                                        <div class="col-lg-6">
-                                            <data class="fs-6 text-gray-800">
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Lockout Enddate
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
                                             @Model.LockoutEnd
-                                            </data>
-                                        </div>
+                                        </data>
                                     </div>
+                                </div>
                             }
                             <div class="row">
                                 <label class="col-lg-6 text-muted">
@@ -106,12 +110,12 @@
                             </div>
                             @if (Model.TenantId != Guid.Empty)
                             {
-                                                    <div class="row">
-                                                        <a class="mx-2" href="/tenant/@Model.TenantId">
-                                                            <span class="fas fa-handshake-angle me-1"></span>
+                                <div class="row">
+                                    <a class="mx-2" href="/tenant/@Model.TenantId">
+                                        <span class="fas fa-handshake-angle me-1"></span>
                                         @Model.TenantName
-                                                        </a>
-                                                    </div>
+                                    </a>
+                                </div>
                             }
                         </div>
                     </div>
@@ -313,36 +317,36 @@
                                 var inputId = "cbRole";
                                 var checkboxId = inputId;
                                 var i = 0;
-                                    <EditForm FormName="EditUserRolesForm" EditContext="FormEditContext" OnValidSubmit="UpdateRolesAsync">
-                                        <div class="card warning border-1 p-2 py-3">
-                                            <div class="card-header">
-                                                <h5>Roles</h5>
-                                            </div>
-                                            <div class="card-body py-0">
+                                <EditForm FormName="EditUserRolesForm" EditContext="FormEditContext" OnValidSubmit="UpdateRolesAsync">
+                                    <div class="card warning border-1 p-2 py-3">
+                                        <div class="card-header">
+                                            <h5>Roles</h5>
+                                        </div>
+                                        <div class="card-body py-0">
                                             @foreach (var role in UserRoles)
                                             {
                                                 i += 1;
                                                 checkboxId = inputId + i;
 
-                                                        <span class="form-check form-check-custom form-check-solid">
-                                                            <input @oninput="(e) => OnChanged(e, role.Key.Id)"
-                                                                   class="form-check-input" checked="@UserRoles[role.Key]" id="@checkboxId" type="checkbox" />
-                                                            <label for="@checkboxId" class="form-check-label">
+                                                <span class="form-check form-check-custom form-check-solid">
+                                                    <input @oninput="(e) => OnChanged(e, role.Key.Id)"
+                                                           class="form-check-input" checked="@UserRoles[role.Key]" id="@checkboxId" type="checkbox" />
+                                                    <label for="@checkboxId" class="form-check-label">
                                                         @role.Key.Name
-                                                                <span class="text-muted small">(@role.Key.RoleType)</span>
-                                                            </label>
-                                                        </span>
+                                                        <span class="text-muted small">(@role.Key.RoleType)</span>
+                                                    </label>
+                                                </span>
                                             }
-                                            </div>
-                                            <div class="card-footer">
-                                                <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Update Roles" BtnCssClass="btn-warning"></SubmitSpinnerButton>
-                                            </div>
                                         </div>
-                                    </EditForm>
+                                        <div class="card-footer">
+                                            <SubmitSpinnerButton IsLoading="@IsLoading" IdleText="Update Roles" BtnCssClass="btn-warning"></SubmitSpinnerButton>
+                                        </div>
+                                    </div>
+                                </EditForm>
                             }
                             else
                             {
-                                    <span>No roles found.</span>
+                                <span>No roles found.</span>
                             }
                         </div>
                     </div>
@@ -374,6 +378,7 @@
         }
 
         Model = Mapper.Map<TenantUserFormModel>(result);
+        StateHasChanged();
 
         if (Model.TenantId != Guid.Empty)
         {
