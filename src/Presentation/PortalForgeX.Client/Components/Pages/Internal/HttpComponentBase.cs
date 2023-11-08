@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
-namespace PortalForgeX.Client.Components.Internal;
+namespace PortalForgeX.Client.Components.Pages.Internal;
 
 public abstract class HttpComponentBase : ComponentBase
 {

@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.JSInterop;
 
-namespace PortalForgeX.Client.Components.Internal;
+namespace PortalForgeX.Client.Components.Pages.Internal;
 
 public abstract class FormComponent<TModel> : HttpComponentBase
 {
