@@ -1,7 +1,12 @@
 ﻿@page "/payments"
 
 @using System.Collections.Generic
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Sections
+@using PortalForgeX.Client.Components.Breadcrumbs
+@using PortalForgeX.Client.Components.Pages.ModelBrowsers
 
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
@@ -28,11 +33,11 @@
                 <p class="m-0">Browse and manage the payments.</p>
             </div>
             <div class="col-lg-4">
-                <PaymentCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" />
+                <PaymentCreateDialog />
             </div>
         </div>
         <div class="card-body pt-0">
-            <PaymentsBrowser @rendermode="RenderMode.InteractiveWebAssembly" />
+            <PaymentsBrowser />
         </div>
     </div>
 </div>

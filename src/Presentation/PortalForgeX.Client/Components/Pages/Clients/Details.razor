@@ -1,9 +1,15 @@
 ﻿@page "/client/{Id:guid}"
 
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Sections
+@using PortalForgeX.Client.Components.Breadcrumbs
+@using PortalForgeX.Client.Components.Pages.DetailsViews
+@using PortalForgeX.Client.Components.Pages.ModelBrowsers
 @using PortalForgeX.Shared.Features.Clients
 @using PortalForgeX.Shared.Facades
 @using PortalForgeX.Shared.Constants
 
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
@@ -20,26 +26,26 @@
 </SectionContent>
 
 <LoadingArea IsLoading="IsLoading">
-    <ClientDetailsView @rendermode="RenderMode.InteractiveWebAssembly" Client="Model" />
+    <ClientDetailsView Client="Model" />
 
     <details class="mb-5" open>
         <summary>
             <h4 class="d-inline-block">Contacts (@Model.Contacts?.Count())</h4>
-            <ClientContactCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" ClientId="Model.Id"></ClientContactCreateDialog>
+            <ClientContactCreateDialog ClientId="Model.Id"></ClientContactCreateDialog>
             <span class="clearfix"></span>
             <div class="text-muted">Manage the contactpersons.</div>
         </summary>
-        <ClientContactsBrowser @rendermode="RenderMode.InteractiveWebAssembly" Client="Model" />
+        <ClientContactsBrowser Client="Model" />
     </details>
 
     <details class="mb-5" open>
         <summary>
             <h4 class="d-inline-block">Locations (@Model.Locations?.Count())</h4>
-            <BusinessLocationCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" ClientId="Model.Id"></BusinessLocationCreateDialog>
+            <BusinessLocationCreateDialog ClientId="Model.Id"></BusinessLocationCreateDialog>
             <span class="clearfix"></span>
             <div class="text-muted">Manage the work locations.</div>
         </summary>
-        <BusinessLocationsBrowser @rendermode="RenderMode.InteractiveWebAssembly" Client="Model" />
+        <BusinessLocationsBrowser Client="Model" />
     </details>
 </LoadingArea>
 

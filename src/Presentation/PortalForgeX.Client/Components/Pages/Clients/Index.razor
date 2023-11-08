@@ -1,11 +1,17 @@
 ﻿@page "/clients"
 
 @using System.Collections.Generic
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Sections
+@using PortalForgeX.Client.Components.Breadcrumbs
+@using PortalForgeX.Client.Components.Pages.ModelBrowsers
 
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
 @inject IClientFacade Clients
+@inject NavigationManager Navigation
 
 <PageTitle>Clients</PageTitle>
 
@@ -22,15 +28,16 @@
                 <h1>
                     <span class="fas fa-users"></span>
                     Clients Management
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
                 </h1>
                 <p class="m-0">Browse and manage the clients.</p>
             </div>
             <div class="col-lg-4">
-                <ClientCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" />
+                <ClientCreateDialog />
             </div>
         </div>
         <div class="card-body pt-0">
-            <ClientsBrowser @rendermode="RenderMode.InteractiveWebAssembly" />
+            <ClientsBrowser />
         </div>
     </div>
 </div>
