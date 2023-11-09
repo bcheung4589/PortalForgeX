@@ -1,7 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PortalForgeX.Application.Repositories;
 using PortalForgeX.Domain.Entities;
-using PortalForgeX.Persistence.EFCore;
 using PortalForgeX.Persistence.EFCore.Repositories.Internal;
 
 namespace PortalForgeX.Persistence.EFCore.Repositories;
