@@ -12,6 +12,7 @@ namespace PortalForgeX.Client.Facades;
 /// available concerning client entities.
 /// </summary>
 /// <param name="httpClientFactory"></param>
+/// <param name="toastService"></param>
 public class HttpClientFacade(IHttpClientFactory httpClientFactory, IToastService toastService) : IClientFacade
 {
     private readonly HttpClient http = httpClientFactory.CreateServerClient();
@@ -26,9 +27,7 @@ public class HttpClientFacade(IHttpClientFactory httpClientFactory, IToastServic
         string? projectionFields = null,
         CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath("clients");
-        var request = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        var request = new HttpRequestMessage(HttpMethod.Get, ApiEndpoint_v1.BuildEndpointPath("clients"))
             .PopulateHeadersWith(new Dictionary<string, string?>
             {
                 { "pageIndex", pageIndex.ToString() },
@@ -39,66 +38,44 @@ public class HttpClientFacade(IHttpClientFactory httpClientFactory, IToastServic
                 { "projectionFields", projectionFields }
             });
 
-        var responseMessage = await http.SendAsync(request, cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<GetClientsResponse>(cancellationToken: cancellationToken);
-
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Get.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<GetClientsResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<GetClientByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"client/{id}");
-        var response = await http.GetFromJsonAsync<GetClientByIdResponse>(requestUri, cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, ApiEndpoint_v1.BuildEndpointPath($"client/{id}"));
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Get.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<GetClientByIdResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<CreateClientResponse?> CreateAsync(ClientDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath("client");
-        var responseMessage = await http.PostAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<CreateClientResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Post, ApiEndpoint_v1.BuildEndpointPath("client"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Post.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<CreateClientResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<UpdateClientResponse?> UpdateAsync(Guid id, ClientDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"client/{id}");
-        var responseMessage = await http.PutAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<UpdateClientResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Put, ApiEndpoint_v1.BuildEndpointPath($"client/{id}"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Put.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<UpdateClientResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<DeleteClientResponse?> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"client/{id}");
-        var response = await http.DeleteFromJsonAsync<DeleteClientResponse>(requestUri, cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Delete, ApiEndpoint_v1.BuildEndpointPath($"client/{id}"));
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Delete.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<DeleteClientResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 }

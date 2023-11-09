@@ -39,7 +39,7 @@ public class ClientFacade(ISender sender) : IClientFacade
 
     /// <inheritdoc/>
     public async Task<UpdateClientResponse?> UpdateAsync(Guid id, ClientDto model, CancellationToken cancellationToken = default)
-        => await sender.Send(new UpdateClientRequest(model, id), cancellationToken);
+        => await sender.Send(new UpdateClientRequest(id, model), cancellationToken);
 
     /// <inheritdoc/>
     public async Task<DeleteClientResponse?> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
