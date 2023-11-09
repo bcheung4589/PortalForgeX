@@ -3,37 +3,17 @@ using PortalForgeX.Shared.Resources.Common;
 
 namespace PortalForgeX.Filters;
 
-public class FeatureFilter(IFeatureManager featureManager) : IEndpointFilter
+public class FeatureFilter(IFeatureManager featureManager, string featureName) : IEndpointFilter
 {
-    private const string FEATURE_FILTER_KEY = "endpoint.feature";
+    private readonly string _featureName = featureName;
 
     public async ValueTask<object?> InvokeAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
-        try
+        if (string.IsNullOrWhiteSpace(_featureName) || !await featureManager.IsEnabledAsync(_featureName))
         {
-            if (!context.HttpContext.Items.ContainsKey(FEATURE_FILTER_KEY))
-            {
-                return Results.Problem(FeaturesResources.FeatureDisabled);
-            }
-
-            var feature = context.HttpContext.Items[FEATURE_FILTER_KEY]?.ToString();
-            if (feature is null || string.IsNullOrWhiteSpace(feature) || !await featureManager.IsEnabledAsync(feature))
-            {
-                return Results.Problem(FeaturesResources.FeatureDisabled);
-            }
-
-            return await next(context);
+            return Results.Problem(FeaturesResources.FeatureDisabled);
         }
-        finally
-        {
-            context.HttpContext.Items.Remove(FEATURE_FILTER_KEY);
-        }
-    }
 
-    public static EndpointFilterInvocationContext SetRequestingFeature(EndpointFilterInvocationContext context, string feature)
-    {
-        context.HttpContext.Items[FEATURE_FILTER_KEY] = feature;
-
-        return context;
+        return await next(context);
     }
 }

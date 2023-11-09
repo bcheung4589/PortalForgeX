@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.FeatureManagement;
 using PortalForgeX.Endpoints.Internal;
 using PortalForgeX.Extensions;
 using PortalForgeX.Filters;
@@ -9,7 +10,7 @@ using PortalForgeX.Shared.Features.Clients;
 
 namespace PortalForgeX.Endpoints;
 
-public class GetClientsEndpoint : ApiEndpoint_v1, IFeatureEndpoint
+public class GetClientsEndpoint(IFeatureManager featureManager) : ApiEndpoint_v1, IFeatureEndpoint
 {
     public string FeatureName => nameof(FeatureFlags.GetClients);
 
@@ -25,11 +26,10 @@ public class GetClientsEndpoint : ApiEndpoint_v1, IFeatureEndpoint
             CancellationToken cancellationToken)
                 => (await clients.GetAsync(pageIndex, pageSize, sortField, sortAsc, filters, projectionFields, cancellationToken))?.ToResponse()
         ).WithTags("Clients")
-        .AddEndpointFilter(async (context, next) => await next(FeatureFilter.SetRequestingFeature(context, FeatureName)))
-        .AddEndpointFilter<FeatureFilter>();
+        .AddEndpointFilter(new FeatureFilter(featureManager, FeatureName));
 }
 
-public class GetClientByIdEndpoint : ApiEndpoint_v1, IFeatureEndpoint
+public class GetClientByIdEndpoint(IFeatureManager featureManager) : ApiEndpoint_v1, IFeatureEndpoint
 {
     public string FeatureName => nameof(FeatureFlags.GetClientById);
 
@@ -37,11 +37,10 @@ public class GetClientByIdEndpoint : ApiEndpoint_v1, IFeatureEndpoint
         => app.MapGet(BuildEndpointPath("client/{id:Guid}"), async (Guid id, IClientFacade clients, CancellationToken cancellationToken)
             => (await clients.GetByIdAsync(id, cancellationToken))?.ToResponse()
         ).WithTags("Clients")
-        .AddEndpointFilter(async (context, next) => await next(FeatureFilter.SetRequestingFeature(context, FeatureName)))
-        .AddEndpointFilter<FeatureFilter>();
+        .AddEndpointFilter(new FeatureFilter(featureManager, FeatureName));
 }
 
-public class CreateClientEndpoint : ApiEndpoint_v1, IFeatureEndpoint
+public class CreateClientEndpoint(IFeatureManager featureManager) : ApiEndpoint_v1, IFeatureEndpoint
 {
     public string FeatureName => nameof(FeatureFlags.CreateClient);
 
@@ -49,12 +48,10 @@ public class CreateClientEndpoint : ApiEndpoint_v1, IFeatureEndpoint
         => app.MapPost(BuildEndpointPath("client"), async ([FromBody] ClientDto client, IClientFacade clients, CancellationToken cancellationToken)
             => (await clients.CreateAsync(client, cancellationToken))?.ToResponse()
         ).WithTags("Clients")
-        .AddEndpointFilter<ValidationFilter<ClientDto>>()
-        .AddEndpointFilter(async (context, next) => await next(FeatureFilter.SetRequestingFeature(context, FeatureName)))
-        .AddEndpointFilter<FeatureFilter>();
+        .AddEndpointFilter(new FeatureFilter(featureManager, FeatureName));
 }
 
-public class UpdateClientEndpoint : ApiEndpoint_v1, IFeatureEndpoint
+public class UpdateClientEndpoint(IFeatureManager featureManager) : ApiEndpoint_v1, IFeatureEndpoint
 {
     public string FeatureName => nameof(FeatureFlags.UpdateClient);
 
@@ -62,12 +59,10 @@ public class UpdateClientEndpoint : ApiEndpoint_v1, IFeatureEndpoint
         => app.MapPut(BuildEndpointPath("client/{id:Guid}"), async ([FromBody] ClientDto client, Guid id, IClientFacade clients, CancellationToken cancellationToken)
             => (await clients.UpdateAsync(id, client, cancellationToken))?.ToResponse()
         ).WithTags("Clients")
-        .AddEndpointFilter<ValidationFilter<ClientDto>>()
-        .AddEndpointFilter(async (context, next) => await next(FeatureFilter.SetRequestingFeature(context, FeatureName)))
-        .AddEndpointFilter<FeatureFilter>();
+        .AddEndpointFilter(new FeatureFilter(featureManager, FeatureName));
 }
 
-public class DeleteClientEndpoint : ApiEndpoint_v1, IFeatureEndpoint
+public class DeleteClientEndpoint(IFeatureManager featureManager) : ApiEndpoint_v1, IFeatureEndpoint
 {
     public string FeatureName => nameof(FeatureFlags.DeleteClient);
 
@@ -75,6 +70,5 @@ public class DeleteClientEndpoint : ApiEndpoint_v1, IFeatureEndpoint
         => app.MapDelete(BuildEndpointPath("client/{id:Guid}"), async (Guid id, IClientFacade clients, CancellationToken cancellationToken)
             => (await clients.DeleteAsync(id, cancellationToken))?.ToResponse()
         ).WithTags("Clients")
-        .AddEndpointFilter(async (context, next) => await next(FeatureFilter.SetRequestingFeature(context, FeatureName)))
-        .AddEndpointFilter<FeatureFilter>();
+        .AddEndpointFilter(new FeatureFilter(featureManager, FeatureName));
 }

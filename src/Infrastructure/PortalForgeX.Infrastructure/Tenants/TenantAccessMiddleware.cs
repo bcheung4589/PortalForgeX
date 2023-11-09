@@ -27,7 +27,7 @@ public class TenantAccessMiddleware : IMiddleware
 
             await next(context);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             throw;
         }
