@@ -1,5 +1,4 @@
 ﻿using Blazored.Toast.Services;
-using Newtonsoft.Json;
 using PortalForgeX.Client.Extensions;
 using PortalForgeX.Shared;
 using PortalForgeX.Shared.Facades;
@@ -13,16 +12,22 @@ namespace PortalForgeX.Client.Facades;
 /// available concerning business location entities.
 /// </summary>
 /// <param name="httpClientFactory"></param>
+/// <param name="toastService"></param>
 public class HttpBusinessLocationFacade(IHttpClientFactory httpClientFactory, IToastService toastService) : IBusinessLocationFacade
 {
     private readonly HttpClient http = httpClientFactory.CreateServerClient();
 
     /// <inheritdoc/>
-    public async Task<GetBusinessLocationsResponse?> GetAsync(int? pageIndex = null, int? pageSize = null, string? sortField = null, bool? sortAsc = null, string? filters = null, string? projectionFields = null, CancellationToken cancellationToken = default)
+    public async Task<GetBusinessLocationsResponse?> GetAsync(
+        int? pageIndex = null,
+        int? pageSize = null,
+        string? sortField = null,
+        bool? sortAsc = null,
+        string? filters = null,
+        string? projectionFields = null,
+        CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath("businesslocations");
-        var request = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        var request = new HttpRequestMessage(HttpMethod.Get, ApiEndpoint_v1.BuildEndpointPath("businesslocations"))
             .PopulateHeadersWith(new Dictionary<string, string?>
             {
                 { "pageIndex", pageIndex.ToString() },
@@ -33,81 +38,44 @@ public class HttpBusinessLocationFacade(IHttpClientFactory httpClientFactory, IT
                 { "projectionFields", projectionFields }
             });
 
-        var responseMessage = await http.SendAsync(request, cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<GetBusinessLocationsResponse>(cancellationToken: cancellationToken);
-
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Get.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<GetBusinessLocationsResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<GetBusinessLocationByIdResponse?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"businesslocation/{id}");
-        var response = await http.GetFromJsonAsync<GetBusinessLocationByIdResponse>(requestUri, cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, ApiEndpoint_v1.BuildEndpointPath($"businesslocation/{id}"));
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Get.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<GetBusinessLocationByIdResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<CreateBusinessLocationResponse?> CreateAsync(BusinessLocationDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath("businesslocation");
-        var responseMessage = await http.PostAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<CreateBusinessLocationResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Post, ApiEndpoint_v1.BuildEndpointPath("businesslocation"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Post.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<CreateBusinessLocationResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<UpdateBusinessLocationResponse?> UpdateAsync(int id, BusinessLocationDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"businesslocation/{id}");
-        var responseMessage = await http.PutAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<UpdateBusinessLocationResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Put, ApiEndpoint_v1.BuildEndpointPath($"businesslocation/{id}"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Put.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<UpdateBusinessLocationResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<DeleteBusinessLocationResponse?> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"businesslocation/{id}");
-        var httpResponse = await http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, requestUri), cancellationToken: cancellationToken);
-        var responseString = await httpResponse.Content.ReadAsStringAsync(cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Delete, ApiEndpoint_v1.BuildEndpointPath($"businesslocation/{id}"));
 
-        DeleteBusinessLocationResponse? response;
-        if (httpResponse.IsSuccessStatusCode)
-        {
-            response = JsonConvert.DeserializeObject<DeleteBusinessLocationResponse>(responseString);
-        }
-        else
-        {
-            response = new DeleteBusinessLocationResponse
-            {
-                HasError = true,
-                ErrorMessages = new string[] { responseString.TrimStart('[').TrimEnd(']').Trim('"') }
-            };
-        }
-
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Delete.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<DeleteBusinessLocationResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 }

@@ -3,6 +3,7 @@ using PortalForgeX.Client.Extensions;
 using PortalForgeX.Shared;
 using PortalForgeX.Shared.Facades;
 using PortalForgeX.Shared.Features.ClientContacts;
+using PortalForgeX.Shared.Features.Clients;
 using System.Net.Http.Json;
 
 namespace PortalForgeX.Client.Facades;
@@ -12,6 +13,7 @@ namespace PortalForgeX.Client.Facades;
 /// available concerning client contact entities.
 /// </summary>
 /// <param name="httpClientFactory"></param>
+/// <param name="toastService"></param>
 public class HttpClientContactFacade(IHttpClientFactory httpClientFactory, IToastService toastService) : IClientContactFacade
 {
     private readonly HttpClient http = httpClientFactory.CreateServerClient();
@@ -19,54 +21,38 @@ public class HttpClientContactFacade(IHttpClientFactory httpClientFactory, IToas
     /// <inheritdoc/>
     public async Task<GetClientContactByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"clientcontact/{id}");
-        var response = await http.GetFromJsonAsync<GetClientContactByIdResponse>(requestUri, cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, ApiEndpoint_v1.BuildEndpointPath($"clientcontact/{id}"));
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Get.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<GetClientContactByIdResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<CreateClientContactResponse?> CreateAsync(ClientContactDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath("clientcontact");
-        var responseMessage = await http.PostAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<CreateClientContactResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Post, ApiEndpoint_v1.BuildEndpointPath("clientcontact"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Post.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<CreateClientContactResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<UpdateClientContactResponse?> UpdateAsync(Guid id, ClientContactDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"clientcontact/{id}");
-        var responseMessage = await http.PutAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<UpdateClientContactResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Put, ApiEndpoint_v1.BuildEndpointPath($"clientcontact/{id}"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Put.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<UpdateClientContactResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<DeleteClientContactResponse?> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"clientcontact/{id}");
-        var response = await http.DeleteFromJsonAsync<DeleteClientContactResponse>(requestUri, cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Delete, ApiEndpoint_v1.BuildEndpointPath($"clientcontact/{id}"));
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Delete.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<DeleteClientContactResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 }

@@ -9,7 +9,10 @@
     <div class="card">
         <div class="card-header p-0">
             <div class="col-lg-8">
-                <h1>@Model.Street @Model.HouseNr</h1>
+                <h1>
+                    @Model.Street @Model.HouseNr
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
+                </h1>
             </div>
             <div class="col-lg-4 text-end">
                 <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>

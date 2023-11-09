@@ -1,11 +1,10 @@
 ﻿@using AutoMapper
 @using Microsoft.AspNetCore.Identity
 @using PortalForgeX.Application.Tenants
-@using PortalForgeX.Client.Components.Internal
 @using PortalForgeX.Domain.Entities.Tenants
 @using PortalForgeX.Shared.Features.Tenants
 
-@inherits FormComponent<TenantUserFormModel>
+@inherits FormPage<TenantUserFormModel>
 
 @inject IMapper Mapper
 @inject ITenantService TenantService

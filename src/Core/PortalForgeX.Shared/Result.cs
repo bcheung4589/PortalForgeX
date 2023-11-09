@@ -44,6 +44,7 @@ public record Result
 
     public void SetFailure(IEnumerable<string> errors, int? errorCode = null)
     {
+        IsSuccess = false;
         HasError = true;
         ErrorMessages = errors;
         ErrorCode = errorCode;
@@ -51,6 +52,7 @@ public record Result
 
     public void SetFailure(string errorMessage, int? errorCode = null)
     {
+        IsSuccess = false;
         HasError = true;
         ErrorMessages = new string[] { errorMessage };
         ErrorCode = errorCode;

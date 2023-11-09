@@ -16,12 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="Components\Pages\Clients\Index.razor~RF5fbc184.TMP" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Include="compilerconfig.json" />
-    <None Include="Components\Pages\Clients\Index.razor" />
   </ItemGroup>
 
   <ItemGroup>

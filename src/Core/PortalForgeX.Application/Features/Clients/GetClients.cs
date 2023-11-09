@@ -1,5 +1,7 @@
 ﻿using AutoMapper;
 using MediatR;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using PortalForgeX.Application.Data;
 using PortalForgeX.Application.Features.Internal;
 using PortalForgeX.Shared.DTOs;
@@ -9,32 +11,32 @@ namespace PortalForgeX.Application.Features.Clients;
 
 public record GetClientsRequest(EntityPageSetting Settings) : ICommand<GetClientsResponse>
 {
-    public GetClientsResponse NewResponse()
-        => new();
+    public GetClientsResponse NewResponse() => new();
 }
 
-internal sealed class GetClientsHandler : IRequestHandler<GetClientsRequest, GetClientsResponse>
+internal sealed class GetClientsHandler(ILogger<GetClientsHandler> logger, IUnitOfWork unitOfWork, IMapper mapper) 
+    : IRequestHandler<GetClientsRequest, GetClientsResponse>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-
-    public GetClientsHandler(IUnitOfWork unitOfWork, IMapper mapper)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-    }
+    private readonly ILogger<GetClientsHandler> _logger = logger;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<GetClientsResponse> Handle(GetClientsRequest request, CancellationToken cancellationToken)
     {
         var response = request.NewResponse();
 
-        // work
-        var result = await _unitOfWork.ClientRepository.GetPageAsync(request.Settings, cancellationToken);
+        try
+        {
+            var result = await _unitOfWork.ClientRepository.GetPageAsync(request.Settings, cancellationToken);
 
-        // process
-        response.SetSuccess(_mapper.Map<PagedList<ClientDto>>(result));
+            response.SetSuccess(_mapper.Map<PagedList<ClientDto>>(result));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, ex.Message);
+            response.SetFailure("There was a technical error.", StatusCodes.Status500InternalServerError);
+        }
 
-        // return
         return response;
     }
 }

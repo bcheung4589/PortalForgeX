@@ -25,17 +25,21 @@
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
         <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
-        <Breadcrumb DisplayText="@(_tenant?.Name)" IconCssClass="fas fa-user-tie" />
+        <Breadcrumb DisplayText="@_tenant?.Name" IconCssClass="fas fa-user-tie" />
     </BreadcrumbNavigation>
 </SectionContent>
 
 <LoadingArea IsLoading="IsLoading">
     <div class="card">
         <div class="card-header">
-            <div class="col-lg-8">
-                <h1>@Model.Name</h1>
+            <div class="col-lg-6">
+                <h1>
+                    <span class="fas fa-user-tie"></span>
+                    @Model.Name
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
+                </h1>
             </div>
-            <div class="col-lg-4 text-end">
+            <div class="col-lg-6 text-end">
                 @if (Model.Status.ToTenantStatus() == Domain.Enums.TenantStatus.Created)
                 {
                     <div class="d-inline-block mx-3">
@@ -85,6 +89,16 @@
                                         </div>
                                     </div>
                                 }
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Internal Name
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            @Model.InternalName
+                                        </data>
+                                    </div>
+                                </div>
                                 <div class="row">
                                     <label class="col-lg-6 text-muted">
                                         Status
@@ -167,29 +181,6 @@
                                         </div>
                                         <data @ondblclick="template.Edit" class="ps-4">
                                             @template.Model.ExternalId
-                                        </data>
-                                    </ViewTemplate>
-                                </TextFormField>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col">
-                                <TextFormField @bind-Value="Model.InternalName"
-                                               TViewModel="TenantFormModel"
-                                               DisplayName="Internal Name"
-                                               HelpText="Internal name is used for naming system resources bound to this tenant."
-                                               Required="true"
-                                               MaxLength="100"
-                                               Model="Model"
-                                               ValidationFor="() => Model!.InternalName"
-                                               SaveCallback="SaveAsync">
-                                    <ViewTemplate Context="template">
-                                        <div>
-                                            <HelpTextTool Content="Internal name is used for naming system resources bound to this tenant." />
-                                            <span class="text-muted">Internal Name</span>
-                                        </div>
-                                        <data @ondblclick="template.Edit" class="ps-4">
-                                            @template.Model.InternalName
                                         </data>
                                     </ViewTemplate>
                                 </TextFormField>
@@ -458,6 +449,8 @@
         IsLoading = true;
 
         _tenant = await TenantService.GetByIdAsync(Id);
+        StateHasChanged();
+
         if (RenderContext.IsPrerendering)
         {
             return; // no need for prerendering

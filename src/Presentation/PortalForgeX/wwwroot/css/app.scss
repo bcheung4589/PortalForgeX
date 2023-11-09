@@ -33,6 +33,10 @@ a {
 
 .content {
     padding-top: 1.1rem;
+
+    > .card .card-header h1 {
+        margin: 0;
+    }
 }
 
 .valid.modified:not([type=checkbox]) {

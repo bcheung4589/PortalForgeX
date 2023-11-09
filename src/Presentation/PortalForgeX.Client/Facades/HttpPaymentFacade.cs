@@ -12,6 +12,7 @@ namespace PortalForgeX.Client.Facades;
 /// available concerning client entities.
 /// </summary>
 /// <param name="httpClientFactory"></param>
+/// <param name="toastService"></param>
 public class HttpPaymentFacade(IHttpClientFactory httpClientFactory, IToastService toastService) : IPaymentFacade
 {
     private readonly HttpClient http = httpClientFactory.CreateServerClient();
@@ -26,9 +27,7 @@ public class HttpPaymentFacade(IHttpClientFactory httpClientFactory, IToastServi
         string? projectionFields = null,
         CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath("payments");
-        var request = new HttpRequestMessage(HttpMethod.Get, requestUri)
+        var request = new HttpRequestMessage(HttpMethod.Get, ApiEndpoint_v1.BuildEndpointPath("payments"))
             .PopulateHeadersWith(new Dictionary<string, string?>
             {
                 { "pageIndex", pageIndex.ToString() },
@@ -39,66 +38,44 @@ public class HttpPaymentFacade(IHttpClientFactory httpClientFactory, IToastServi
                 { "projectionFields", projectionFields }
             });
 
-        var responseMessage = await http.SendAsync(request, cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<GetPaymentsResponse>(cancellationToken: cancellationToken);
-
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Get.Method, requestStartTime);
-        response.HandledErrorResponse();
-
-        return response;
+        return await request.Execute<GetPaymentsResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<GetPaymentByIdResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"payment/{id}");
-        var response = await http.GetFromJsonAsync<GetPaymentByIdResponse>(requestUri, cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Get, ApiEndpoint_v1.BuildEndpointPath($"payment/{id}"));
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Get.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<GetPaymentByIdResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<CreatePaymentResponse?> CreateAsync(PaymentDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath("payment");
-        var responseMessage = await http.PostAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<CreatePaymentResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Post, ApiEndpoint_v1.BuildEndpointPath("payment"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Post.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<CreatePaymentResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<UpdatePaymentResponse?> UpdateAsync(Guid id, PaymentDto model, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"payment/{id}");
-        var responseMessage = await http.PutAsJsonAsync(requestUri, model, cancellationToken: cancellationToken);
-        var response = await responseMessage.Content.ReadFromJsonAsync<UpdatePaymentResponse>(cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Put, ApiEndpoint_v1.BuildEndpointPath($"payment/{id}"))
+        {
+            Content = JsonContent.Create(model)
+        };
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Put.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<UpdatePaymentResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
     public async Task<DeletePaymentResponse?> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var requestStartTime = DateTime.UtcNow;
-        var requestUri = ApiEndpoint_v1.BuildEndpointPath($"payment/{id}");
-        var response = await http.DeleteFromJsonAsync<DeletePaymentResponse>(requestUri, cancellationToken: cancellationToken);
+        var request = new HttpRequestMessage(HttpMethod.Delete, ApiEndpoint_v1.BuildEndpointPath($"payment/{id}"));
 
-        response.LogResponseDetails(http.BaseAddress + requestUri, HttpMethod.Delete.Method, requestStartTime);
-        response.HandledErrorResponse(toastService);
-
-        return response;
+        return await request.Execute<DeletePaymentResponse>(http, toastService: toastService, cancellationToken: cancellationToken);
     }
 }

@@ -1,9 +1,15 @@
 ﻿@page "/businesslocation/{Id:int}"
 
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Sections
+@using PortalForgeX.Client.Components.Breadcrumbs
+@using PortalForgeX.Client.Components.Pages.DetailsViews
+@using PortalForgeX.Client.Components.Pages.ModelBrowsers
 @using PortalForgeX.Shared.Features.BusinessLocations
 @using PortalForgeX.Shared.Constants
 @using PortalForgeX.Shared.Facades
 
+@rendermode RenderMode.InteractiveWebAssembly
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}, {SystemRolesNames.TENANT_USER}")]
 
@@ -21,16 +27,16 @@
 </SectionContent>
 
 <LoadingArea IsLoading="IsLoading">
-    <BusinessLocationDetailsView @rendermode="RenderMode.InteractiveWebAssembly" BusinessLocation="Model" ClientName="@Model.Client?.Name" />
+    <BusinessLocationDetailsView BusinessLocation="Model" ClientName="@Model.Client?.Name" />
 
     <details class="mb-4 mt-2" open>
         <summary>
             <h4 class="d-inline-block">Checkouts (@Model.Checkouts?.Count())</h4>
-            <CheckoutCreateDialog @rendermode="RenderMode.InteractiveWebAssembly" BusinessLocationId="Model.Id"></CheckoutCreateDialog>
+            <CheckoutCreateDialog BusinessLocationId="Model.Id"></CheckoutCreateDialog>
             <span class="clearfix"></span>
             <div class="text-muted">Manage the checkouts of this location.</div>
         </summary>
-        <CheckoutsBrowser @rendermode="RenderMode.InteractiveWebAssembly" BusinessLocation="Model" />
+        <CheckoutsBrowser BusinessLocation="Model" />
     </details>
 </LoadingArea>
 

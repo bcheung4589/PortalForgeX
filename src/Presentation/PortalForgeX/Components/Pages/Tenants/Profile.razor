@@ -24,8 +24,8 @@
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
         <Breadcrumb DisplayText="Tenants" Url="/tenants" IconCssClass="fas fa-handshake-angle" />
-        <Breadcrumb DisplayText="@(_tenant?.Name)" Url="@($"/tenant/{_tenant?.Id}")" IconCssClass="fas fa-user-tie" />
-        <Breadcrumb DisplayText="@(Model?.UserName)" IconCssClass="fas fa-id-card" />
+        <Breadcrumb DisplayText="@_tenant?.Name" Url="@($"/tenant/{_tenant?.Id}")" IconCssClass="fas fa-user-tie" />
+        <Breadcrumb DisplayText="@Model?.UserName" IconCssClass="fas fa-id-card" />
     </BreadcrumbNavigation>
 </SectionContent>
 
@@ -33,7 +33,11 @@
     <div class="card">
         <div class="card-header">
             <div class="col-lg-8">
-                <h1>@Model.UserName</h1>
+                <h1>
+                    <span class="fas fa-id-card"></span>
+                    @Model.UserName
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
+                </h1>
             </div>
             <div class="col-lg-4 text-end">
                 <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
@@ -389,6 +393,8 @@
         }
 
         _tenant = await TenantService.GetByIdAsync(_user.TenantId.Value);
+        StateHasChanged();
+
         if (RenderContext.IsPrerendering)
         {
             return; // only load once

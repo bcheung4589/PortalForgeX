@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.FeatureManagement;
 using Microsoft.OpenApi.Models;
 using PortalForgeX.Application.Data;
+using PortalForgeX.Application.Features.Clients;
 using PortalForgeX.Application.Features.Internal;
 using PortalForgeX.Application.Mapping;
 using PortalForgeX.Application.Notifiers;
@@ -178,6 +179,7 @@ builder.Services.AddScoped<IPaymentFacade, PaymentFacade>();
 builder.Services.AddInfrastructureMiddleware();
 
 // Add FluentValidation
+builder.Services.AddValidatorsFromAssemblyContaining<CreateClientValidation>();
 builder.Services.AddValidatorsFromAssemblyContaining<ClientValidation>();
 
 // Add Toast Service

@@ -1,7 +1,10 @@
 ﻿using AutoMapper;
+using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using PortalForgeX.Application.Data;
+using PortalForgeX.Application.Features.Clients;
 using PortalForgeX.Application.Features.Internal;
 using PortalForgeX.Shared.Features.ClientContacts;
 
@@ -9,47 +12,76 @@ namespace PortalForgeX.Application.Features.ClientContacts;
 
 public record UpdateClientContactRequest(Guid Id, ClientContactDto ClientContact) : ICommand<UpdateClientContactResponse>
 {
-    public UpdateClientContactResponse NewResponse()
-        => new();
+    public UpdateClientContactResponse NewResponse() => new();
 }
 
-internal sealed class UpdateClientContactHandler : IRequestHandler<UpdateClientContactRequest, UpdateClientContactResponse>
+internal sealed class UpdateClientContactHandler(
+    IUnitOfWork unitOfWork,
+    IMapper mapper,
+    ILogger<UpdateClientHandler> logger,
+    UpdateClientContactValidation validator)
+    : ValidationHandlerBase<UpdateClientContactRequest, UpdateClientContactResponse>(validator)
+    , IRequestHandler<UpdateClientContactRequest, UpdateClientContactResponse>
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IMapper _mapper;
-
-    public UpdateClientContactHandler(IUnitOfWork unitOfWork, IMapper mapper)
-    {
-        _unitOfWork = unitOfWork;
-        _mapper = mapper;
-    }
+    private readonly ILogger<UpdateClientHandler> _logger = logger;
+    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IMapper _mapper = mapper;
 
     public async Task<UpdateClientContactResponse> Handle(UpdateClientContactRequest request, CancellationToken cancellationToken)
     {
-        var response = request.NewResponse();
-
-        // work
-        var foundObject = await _unitOfWork.ClientContactRepository.GetByIdAsync(request.Id, cancellationToken);
-        if (foundObject is null)
+        var response = await ValidateRequestAsync(request, cancellationToken);
+        if (response.HasError)
         {
-            response.SetFailure($"Client contactperson with specified Id ({request.Id}) could not be found.", StatusCodes.Status404NotFound);
             return response;
         }
 
-        _mapper.Map(request.ClientContact, foundObject);
-
-        var resultObject = await _unitOfWork.ClientContactRepository.UpdateAsync(foundObject, cancellationToken);
-        var result = await _unitOfWork.SaveChangesAsync(cancellationToken);
-        if (result == 0)
+        try
         {
-            response.SetFailure("Failed updating client contactperson.");
-            return response;
+            var foundObject = await _unitOfWork.ClientContactRepository.GetByIdAsync(request.Id, cancellationToken);
+            if (foundObject is null)
+            {
+                response.SetFailure($"Client contactperson with specified Id ({request.Id}) could not be found.", StatusCodes.Status404NotFound);
+                return response;
+            }
+
+            _mapper.Map(request.ClientContact, foundObject);
+
+            var resultObject = await _unitOfWork.ClientContactRepository.UpdateAsync(foundObject, cancellationToken);
+            var result = await _unitOfWork.SaveChangesAsync(cancellationToken);
+            if (result == 0)
+            {
+                response.SetFailure("Failed updating client contactperson.");
+                return response;
+            }
+
+            response.SetSuccess(_mapper.Map<ClientContactDto>(resultObject));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, ex.Message);
+            response.SetFailure("There was a technical error.", StatusCodes.Status500InternalServerError);
         }
 
-        // process
-        response.SetSuccess(_mapper.Map<ClientContactDto>(resultObject));
-
-        // return
         return response;
+    }
+}
+
+public class UpdateClientContactValidation : AbstractValidator<UpdateClientContactRequest>
+{
+    public UpdateClientContactValidation()
+    {
+        RuleFor(x => x.ClientContact.FullName)
+            .NotEmpty().WithMessage("Name is a required field.")
+            .MaximumLength(100).WithMessage("Name can have max 100 chars.");
+
+        RuleFor(x => x.ClientContact.PhoneNr)
+            .NotEmpty().WithMessage("Phone Nr is a required field.")
+            .MaximumLength(20).WithMessage("Phone Nr can have max 20 chars.");
+
+        RuleFor(x => x.ClientContact.Email)
+            .MaximumLength(150).WithMessage("Email can have max 150 chars.");
+
+        RuleFor(x => x.ClientContact.Remarks)
+            .MaximumLength(2000).WithMessage("Remarks can have max 2000 chars.");
     }
 }

@@ -2,7 +2,7 @@
 using PortalForgeX.Shared.FieldFilters;
 using System.Text.Json;
 
-namespace PortalForgeX.Client.Components.Internal;
+namespace PortalForgeX.Client.Components.Pages.Internal;
 
 public abstract class DataComponent<TModel> : HttpComponentBase
     where TModel : class
