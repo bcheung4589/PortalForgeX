@@ -1,0 +1,40 @@
+﻿@page "/usergroups"
+
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}")]
+
+@inject IUserGroupFacade UserGroups
+@inject NavigationManager Navigation
+
+<PageTitle>Groups</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Groups" IconCssClass="fas fa-user-group" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<div class="row">
+    <div class="card p-0">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-user-group"></span>
+                    Groups Management
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
+                </h1>
+                <p class="m-0">Browse and manage the groups.</p>
+            </div>
+            <div class="col-lg-4">
+
+            </div>
+        </div>
+        <div class="card-body pt-0">
+
+        </div>
+    </div>
+</div>
+
+@code {
+
+}

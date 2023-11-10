@@ -49,6 +49,24 @@
             }
         </AuthorizeView>
 
+        @if (TenantAccessor.HasTenant)
+        {
+            @* TENANT ADMIN *@
+            <AuthorizeView Roles="@SystemRolesNames.TENANT_ADMIN">
+                <div class="nav-item divider-title pt-3 ps-4">
+                    <span class="text-muted fw-bold text-uppercase">
+                        Management
+                    </span>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/usergroups">
+                        <span class="fas fa-user-group me-2" aria-hidden="true" title="Usergroups"></span>
+                        <span>Groups</span>
+                    </NavLink>
+                </div>
+            </AuthorizeView>
+        }
+
         @* ADMIN *@
         <AuthorizeView Roles="@SystemRolesNames.ADMIN">
             <div class="nav-item divider-title pt-3 ps-4">

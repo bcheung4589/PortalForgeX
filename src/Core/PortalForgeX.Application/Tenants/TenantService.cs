@@ -210,7 +210,6 @@ public class TenantService(
         using var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
         var userProfiles = await domainContext.UserProfiles
-            .Include(x => x.Groups)
             .Where(x => tenantUsersIds.Contains(x.UserId))
             .ToListAsync(cancellationToken: cancellationToken);
 
@@ -239,7 +238,6 @@ public class TenantService(
         var tenantUserView = mapper.Map<TenantUserFormModel>(tenantUser);
         using var domainContext = domainContextFactory.CreateDomainContext(tenant);
         var userProfile = await domainContext.UserProfiles
-            .Include(x => x.Groups)
             .FirstOrDefaultAsync(x => x.UserId == tenantUser.Id, cancellationToken: cancellationToken);
 
         mapper.Map(userProfile, tenantUserView);

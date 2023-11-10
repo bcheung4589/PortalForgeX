@@ -174,13 +174,14 @@ builder.Services.AddScoped<IClientContactFacade, ClientContactFacade>();
 builder.Services.AddScoped<IBusinessLocationFacade, BusinessLocationFacade>();
 builder.Services.AddScoped<ICheckoutFacade, CheckoutFacade>();
 builder.Services.AddScoped<IPaymentFacade, PaymentFacade>();
+builder.Services.AddScoped<IUserGroupFacade, UserGroupFacade>();
 
 // Add (portal) middlewares from infrastructure.
 builder.Services.AddInfrastructureMiddleware();
 
 // Add FluentValidation
-builder.Services.AddValidatorsFromAssemblyContaining<CreateClientValidation>();
-builder.Services.AddValidatorsFromAssemblyContaining<ClientValidation>();
+builder.Services.AddValidatorsFromAssemblyContaining<CreateClientValidation>(); // Backend (Server) Validations based on Request.
+builder.Services.AddValidatorsFromAssemblyContaining<ClientValidation>();       // Frontend (Client) Validations based on DTO.
 
 // Add Toast Service
 builder.Services.AddBlazoredToast();
