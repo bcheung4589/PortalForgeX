@@ -16,7 +16,7 @@
                             AppliedFilter="@GetAppliedFilter(nameof(ClientDto.Name))?.Value"
                             ResetCallback="InitDataSourcesAsync"
                             DisplayName="Name"
-                            HelpText="Filter by client name."
+                            HelpText="Filter by name."
                             MaxLength="100">
                 </TextFilter>
                 <SwitchFilter Model="@((SwitchFieldFilter)Filters[nameof(ClientDto.IsActive)])"
@@ -63,8 +63,8 @@
                         <DataGridColumn HeaderCssClass="text-end w-100px" RowCssClass="text-end">
                             <Template>
                                 <ContextMenu Model="@context">
-                                    <MenuItem TEntity="ClientDto" DisplayText="Bekijken" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
-                                    <MenuItem TEntity="ClientDto" DisplayText="Verwijderen" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
+                                    <MenuItem TEntity="ClientDto" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                    <MenuItem TEntity="ClientDto" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
                                 </ContextMenu>
                             </Template>
                         </DataGridColumn>

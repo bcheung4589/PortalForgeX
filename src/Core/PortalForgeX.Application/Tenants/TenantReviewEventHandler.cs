@@ -15,7 +15,7 @@ namespace PortalForgeX.Application.Tenants;
 /// <param name="logger"></param>
 /// <param name="tenantService"></param>
 /// <param name="domainContextFactory"></param>
-/// <param name="tenantAccessor"></param>
+/// <param name="smtpService"></param>
 public class TenantReviewEventHandler(
     ILogger<TenantReviewEventHandler> logger,
     ITenantService tenantService,
