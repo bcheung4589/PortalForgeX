@@ -4,6 +4,7 @@
 @using PortalForgeX.Client.Components.ContextMenu
 @using PortalForgeX.Client.Components.DataGrid
 @using PortalForgeX.Client.Components.FieldFilters
+@using PortalForgeX.Components.Dialogs
 @using PortalForgeX.Shared.Features.UserGroups
 
 @inherits DataPage<UserGroupDto>
@@ -37,13 +38,14 @@
                 <p class="m-0">Browse and manage the groups.</p>
             </div>
             <div class="col-lg-4">
+                <UserGroupCreateDialog />
             </div>
         </div>
         <div class="card-body pt-0">
             <ModuleLoadingArea IsLoading="RenderContext.IsPrerendering">
                 <div class="row">
                     <div class="col-lg">
-                        <LoadingArea IsLoading="@IsLoading" IsEmpty="@(DataSource is null || DataSource.Count < 1)">
+                        <LoadingArea IsLoading="@IsLoading" IsEmpty="@(DataSource is not null && DataSource.Count < 1)">
                             <ChildContent>
                                 <DataGrid TEntity="UserGroupDto"
                                           DataSource="@DataSource"
@@ -83,14 +85,10 @@
             return; // no need for prerendering
         }
 
-        // TenantRequiredPageBase
-        await TenantAccessor.LoadFromAsync((await AuthenticationStateProvider.GetAuthenticationStateAsync()).User);
-        if (!TenantAccessor.HasTenant)
-        {
-            Navigation.NavigateTo("/");
-            return; // tenant required
-        }
+        /// Require loaded Tenant or move away.
+        await TenantAccessor.RequireTenantAsync(AuthenticationStateProvider, Navigation);
 
+        /// Run as usual.
         await base.OnInitializedAsync();
     }
 
