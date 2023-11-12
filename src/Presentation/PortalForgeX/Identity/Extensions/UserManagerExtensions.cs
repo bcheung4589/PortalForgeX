@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using PortalForgeX.Application.Tenants;
 using PortalForgeX.Domain.Entities.Identity;
-using PortalForgeX.Infrastructure.Tenants;
 using System.Security.Claims;
 
 namespace PortalForgeX.Identity.Extensions;

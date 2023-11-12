@@ -4,9 +4,9 @@ using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using PortalForgeX.Application.Tenants;
 using PortalForgeX.Client.Authentication;
 using PortalForgeX.Domain.Entities.Identity;
-using PortalForgeX.Infrastructure.Tenants;
 using System.Diagnostics;
 using System.Security.Claims;
 

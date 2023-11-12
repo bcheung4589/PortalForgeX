@@ -9,7 +9,7 @@ namespace PortalForgeX.Persistence.EFCore;
 public class DomainContextFactory(ITenantConnectionProvider tenantConnectionProvider) : IDomainContextFactory
 {
     /// <inheritdoc/>
-    public IDomainContext CreateDomainContext(string connectionString)
+    public IDomainContext CreateDbContext(string connectionString)
     {
         var optionsBuilder = new DbContextOptionsBuilder<DomainContext>();
         optionsBuilder.UseSqlServer(connectionString);
@@ -18,6 +18,6 @@ public class DomainContextFactory(ITenantConnectionProvider tenantConnectionProv
     }
 
     /// <inheritdoc/>
-    public IDomainContext CreateDomainContext(Tenant tenant)
-        => CreateDomainContext(tenantConnectionProvider.Provide(tenant));
+    public IDomainContext CreateDbContext(Tenant tenant)
+        => CreateDbContext(tenantConnectionProvider.Provide(tenant));
 }

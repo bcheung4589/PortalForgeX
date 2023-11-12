@@ -81,13 +81,6 @@ builder.Services.AddDbContext<IPortalContext, PortalContext>(options => options.
  * - Retrieving by IDomainContext or DomainContext will provide a DbContext coupled to Tenant in TenantAccessor (login/claim).
  */
 builder.Services.AddSingleton<ITenantConnectionProvider>(new TenantConnectionProvider(builder.Configuration.GetConnectionString("DomainConnection")!));
-builder.Services.AddDbContext<IDomainContext, DomainContext>((services, options) =>
-{
-    var connectionProvider = services.GetRequiredService<ITenantConnectionProvider>();
-    var accessor = services.GetRequiredService<TenantAccessor>();
-
-    options.UseSqlServer(connectionProvider.Provide(accessor.CurrentTenant), sqlServerOptionsAction: sqlOptions => sqlOptions.MigrationsAssembly(typeof(DomainContext).Assembly.FullName));
-});
 
 /**
  * Add IDomainContextFactory to create DomainContexts based on provided Tenant.
@@ -152,8 +145,8 @@ builder.Services.AddMediatR(cfg =>
 });
 
 // Add Tenants Services
-builder.Services.AddScoped<TenantAccessor>();
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.AddScoped<TenantAccessor>();
 
 // Reset; because this breaks the application
 builder.Services.AddSingleton<IEmailSender, NoOpEmailSender>();

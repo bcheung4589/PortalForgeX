@@ -12,5 +12,5 @@ public interface ITenantConnectionProvider
     /// </summary>
     /// <param name="tenant"></param>
     /// <returns></returns>
-    string Provide(Tenant? tenant);
+    string Provide(Tenant tenant);
 }

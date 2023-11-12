@@ -13,12 +13,12 @@ public interface IDomainContextFactory
     /// </summary>
     /// <param name="connectionString"></param>
     /// <returns></returns>
-    IDomainContext CreateDomainContext(string connectionString);
+    IDomainContext CreateDbContext(string connectionString);
 
     /// <summary>
     /// Create and provide a DomainContext based on the given <paramref name="tenant"/>.
     /// </summary>
     /// <param name="tenant"></param>
     /// <returns></returns>
-    IDomainContext CreateDomainContext(Tenant tenant);
+    IDomainContext CreateDbContext(Tenant tenant);
 }

@@ -207,7 +207,7 @@ public class TenantService(
         }
 
         var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
-        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDbContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
         var userProfiles = await domainContext.UserProfiles
             .Where(x => tenantUsersIds.Contains(x.UserId))
@@ -236,7 +236,7 @@ public class TenantService(
         }
 
         var tenantUserView = mapper.Map<TenantUserFormModel>(tenantUser);
-        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDbContext(tenant);
         var userProfile = await domainContext.UserProfiles
             .FirstOrDefaultAsync(x => x.UserId == tenantUser.Id, cancellationToken: cancellationToken);
 
@@ -287,7 +287,7 @@ public class TenantService(
         formModel.Id = user.Id;
         var tenantProfile = mapper.Map<TenantUserProfile>(formModel);
 
-        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDbContext(tenant);
         await domainContext.UserProfiles.AddAsync(tenantProfile, cancellationToken);
         var result = await domainContext.SaveChangesAsync(cancellationToken);
         if (result < 1)
@@ -330,7 +330,7 @@ public class TenantService(
             return false;
         }
 
-        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDbContext(tenant);
         var tenantProfile = await domainContext.UserProfiles.FindAsync([updateProfile.Id], cancellationToken: cancellationToken);
         if (tenantProfile is null)
         {
@@ -366,7 +366,7 @@ public class TenantService(
             return false;
         }
 
-        using var domainContext = domainContextFactory.CreateDomainContext(tenant);
+        using var domainContext = domainContextFactory.CreateDbContext(tenant);
         _ = await domainContext.UserProfiles
             .Where(x => x.UserId.Equals(userId))
             .ExecuteDeleteAsync(cancellationToken);
