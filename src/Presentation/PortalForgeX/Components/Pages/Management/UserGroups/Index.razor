@@ -1,4 +1,4 @@
-﻿@page "/usergroups"
+﻿@page "/app-groups"
 
 @using PortalForgeX.Application.Tenants
 @using PortalForgeX.Client.Components.ContextMenu
@@ -95,8 +95,8 @@
     protected override async Task InitDataSourcesAsync()
         => DataSource = (await UserGroups.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false))?.Data;
 
-    protected void NavigateTo(UserGroupDto usergroup)
-        => Navigation.NavigateTo($"usergroup/{usergroup.Id}");
+    protected void NavigateTo(UserGroupDto model)
+        => Navigation.NavigateTo($"app-group/{model.Id}");
 
     protected async Task Delete(UserGroupDto usergroup)
     {

@@ -1,4 +1,4 @@
-﻿@page "/usergroup/{Id:int}"
+﻿@page "/app-group/{Id:int}"
 
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using PortalForgeX.Application.Tenants
@@ -21,7 +21,7 @@
 
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
-        <Breadcrumb DisplayText="Groups" Url="/usergroups" IconCssClass="fas fa-user-group" />
+        <Breadcrumb DisplayText="Groups" Url="/app-groups" IconCssClass="fas fa-user-group" />
         <Breadcrumb DisplayText="@Model?.Name" IconCssClass="fas fa-user-group" />
     </BreadcrumbNavigation>
 </SectionContent>
@@ -229,8 +229,8 @@
         Navigation.NavigateTo("usergroups");
     }
 
-    protected void NavigateTo(TenantUserViewModel user)
-        => Navigation.NavigateTo($"/profile/{user.Id}");
+    protected void NavigateTo(TenantUserViewModel model)
+        => Navigation.NavigateTo($"/app-user/{model.Id}");
 
     protected async Task RemoveMemberAsync(TenantUserViewModel user)
     {
