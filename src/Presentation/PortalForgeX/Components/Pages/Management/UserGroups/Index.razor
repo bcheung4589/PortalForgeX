@@ -85,7 +85,7 @@
             return; // no need for prerendering
         }
 
-        /// Require loaded Tenant or move away.
+        /// Require Tenant or move away.
         await TenantAccessor.RequireTenantAsync(AuthenticationStateProvider, Navigation);
 
         /// Run as usual.

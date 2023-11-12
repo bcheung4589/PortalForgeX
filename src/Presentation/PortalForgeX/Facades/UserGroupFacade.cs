@@ -54,6 +54,6 @@ public class UserGroupFacade(ISender sender) : IUserGroupFacade
         => await sender.Send(new AddUserToGroupsRequest(userId, userGroupIds), cancellationToken);
 
     /// <inheritdoc/>
-    public async Task<RemoveUserFromGroupsResponse> RemoveUserToGroupsAsync(string userId, IEnumerable<int> userGroupIds, CancellationToken cancellationToken = default)
+    public async Task<RemoveUserFromGroupsResponse> RemoveUserFromGroupsAsync(string userId, IEnumerable<int> userGroupIds, CancellationToken cancellationToken = default)
         => await sender.Send(new RemoveUserFromGroupsRequest(userId, userGroupIds), cancellationToken);
 }

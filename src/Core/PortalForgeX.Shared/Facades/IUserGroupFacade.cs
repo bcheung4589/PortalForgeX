@@ -83,5 +83,5 @@ public interface IUserGroupFacade : IAppFeatureFacade
     /// <param name="userGroupIds"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<RemoveUserFromGroupsResponse> RemoveUserToGroupsAsync(string userId, IEnumerable<int> userGroupIds, CancellationToken cancellationToken = default);
+    Task<RemoveUserFromGroupsResponse> RemoveUserFromGroupsAsync(string userId, IEnumerable<int> userGroupIds, CancellationToken cancellationToken = default);
 }

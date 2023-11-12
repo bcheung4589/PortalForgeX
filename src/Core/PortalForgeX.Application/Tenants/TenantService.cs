@@ -198,7 +198,7 @@ public class TenantService(
     #region [ User Profiles ]
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TenantUserViewModel>?> GetTenantProfiles(Tenant tenant, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<TenantUserViewModel>?> GetProfiles(Tenant tenant, CancellationToken cancellationToken = default)
     {
         var tenantUsers = await userManager.Users.Where(x => x.TenantId == tenant.Id).ToListAsync(cancellationToken: cancellationToken);
         if (tenantUsers.Count == 0)
@@ -206,13 +206,13 @@ public class TenantService(
             return null;
         }
 
-        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
         using var domainContext = domainContextFactory.CreateDbContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
         var userProfiles = await domainContext.UserProfiles
             .Where(x => tenantUsersIds.Contains(x.UserId))
             .ToListAsync(cancellationToken: cancellationToken);
 
+        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
         foreach (var userProfile in userProfiles)
         {
             var tenantUser = tenantUsersViews.FirstOrDefault(x => x.Id == userProfile.UserId);
@@ -227,7 +227,42 @@ public class TenantService(
         return tenantUsersViews;
     }
 
-    public async Task<TenantUserFormModel?> ProvideTenantProfileForEdit(Tenant tenant, string userId, CancellationToken cancellationToken = default)
+    /// <inheritdoc/>
+    public async Task<IEnumerable<TenantUserViewModel>?> GetProfilesByGroupId(Tenant tenant, int groupId, CancellationToken cancellationToken = default)
+    {
+        var tenantUsers = await userManager.Users.Where(x => x.TenantId == tenant.Id).ToListAsync(cancellationToken: cancellationToken);
+        if (tenantUsers.Count == 0)
+        {
+            return null;
+        }
+
+        using var domainContext = domainContextFactory.CreateDbContext(tenant);
+        var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
+        var userProfilesInGroup = await domainContext.UserProfiles
+            .Include(x => x.Groups) // include groups
+            .Where(x => tenantUsersIds.Contains(x.UserId))
+            .ToListAsync(cancellationToken: cancellationToken);
+
+        // filter on groups
+        userProfilesInGroup = userProfilesInGroup.Where(x => x.Groups != null && x.Groups.Any(x => x.Id == groupId))
+            .ToList();
+
+        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers.Where(x => userProfilesInGroup.Select(x => x.UserId).Contains(x.Id)));
+        foreach (var userProfile in userProfilesInGroup)
+        {
+            var tenantUser = tenantUsersViews.FirstOrDefault(x => x.Id == userProfile.UserId);
+            if (tenantUser is null)
+            {
+                continue;
+            }
+
+            mapper.Map(userProfile, tenantUser);
+        }
+
+        return tenantUsersViews;
+    }
+
+    public async Task<TenantUserFormModel?> ProvideProfileForEdit(Tenant tenant, string userId, CancellationToken cancellationToken = default)
     {
         var tenantUser = await userManager.FindByIdAsync(userId);
         if (tenantUser is null)
@@ -246,7 +281,7 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserFormModel formModel, string password, IEnumerable<string>? roles = null, CancellationToken cancellationToken = default)
+    public async Task<bool> CreateProfileAsync(Tenant tenant, TenantUserFormModel formModel, string password, IEnumerable<string>? roles = null, CancellationToken cancellationToken = default)
     {
         var dbTenant = await portalContext.Tenants.FindAsync([tenant.Id], cancellationToken: cancellationToken);
         if (dbTenant is null)
@@ -309,7 +344,7 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserFormModel updateProfile, CancellationToken cancellationToken = default)
+    public async Task<bool> UpdateProfileAsync(Tenant tenant, TenantUserFormModel updateProfile, CancellationToken cancellationToken = default)
     {
         var updateUser = await userManager.FindByIdAsync(updateProfile.Id);
         if (updateUser is null)
@@ -348,7 +383,7 @@ public class TenantService(
     }
 
     /// <inheritdoc/>
-    public async Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default)
+    public async Task<bool> DeleteProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default)
     {
         var deleteUser = await userManager.FindByIdAsync(userId);
         if (deleteUser is null)

@@ -473,7 +473,7 @@
         Mapper.Map(_tenant.TenantSettings, Model);
 
         TenantManagers = await UserManager.GetUsersInRoleAsync(SystemRolesNames.MANAGER);
-        TenantUsers = (await TenantService.GetTenantProfiles(_tenant))?.AsQueryable();
+        TenantUsers = (await TenantService.GetProfiles(_tenant))?.AsQueryable();
 
         BindModelContext();
         await InvokeAsync(StateHasChanged);
@@ -560,7 +560,7 @@
             return;
         }
 
-        var successResult = await TenantService.DeleteTenantProfileAsync(_tenant, user.Id);
+        var successResult = await TenantService.DeleteProfileAsync(_tenant, user.Id);
         if (!successResult && TenantService.HasError)
         {
             foreach (var errorMessage in TenantService.Errors)

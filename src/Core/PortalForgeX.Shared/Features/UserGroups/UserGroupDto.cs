@@ -13,5 +13,5 @@ public record UserGroupDto
     public string? Description { get; set; }
 
     [JsonIgnore]
-    public IList<TenantUserViewModel>? Profiles { get; set; }
+    public IEnumerable<TenantUserViewModel>? Profiles { get; set; }
 }

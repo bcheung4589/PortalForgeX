@@ -185,7 +185,7 @@
             }
 
             var selectedRoles = UserRoles.Where(x => x.Value).Select(x => x.Key).Select(x => x.Name!);
-            var successResult = await TenantService.CreateTenantProfileAsync(Tenant, Model, Password, selectedRoles);
+            var successResult = await TenantService.CreateProfileAsync(Tenant, Model, Password, selectedRoles);
             if (!successResult)
             {
                 if (TenantService.HasError)

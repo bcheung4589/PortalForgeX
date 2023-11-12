@@ -40,13 +40,13 @@ public class DomainProfiles : Profile
             .ForMember(x => x.Checkouts, opt => opt.Ignore())
             .ForMember(x => x.Payments, opt => opt.Ignore());
 
-        CreateMap<Checkout, CheckoutDto>().ReverseMap()
+        CreateMap<Checkout, CheckoutDto>()
             .ReverseMap()
             .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.CreationTime, opt => opt.Ignore())
             .ForMember(x => x.LastModificationTime, opt => opt.Ignore());
 
-        CreateMap<Payment, PaymentDto>().ReverseMap()
+        CreateMap<Payment, PaymentDto>()
             .ReverseMap()
             .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.CreationTime, opt => opt.Ignore())
@@ -54,7 +54,7 @@ public class DomainProfiles : Profile
             .ForMember(x => x.Client, opt => opt.Ignore())
             .ForMember(x => x.BusinessLocation, opt => opt.Ignore());
 
-        CreateMap<UserGroup, UserGroupDto>().ReverseMap()
+        CreateMap<UserGroup, UserGroupDto>()
             .ReverseMap()
             .ForMember(x => x.Id, opt => opt.Ignore())
             .ForMember(x => x.CreationTime, opt => opt.Ignore())
