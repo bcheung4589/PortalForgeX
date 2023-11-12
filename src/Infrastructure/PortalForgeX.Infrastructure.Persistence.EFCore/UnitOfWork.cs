@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore.Storage;
 using PortalForgeX.Application.Data;
 using PortalForgeX.Application.Repositories;
+using PortalForgeX.Application.Tenants;
 using PortalForgeX.Persistence.EFCore.Repositories;
 
 namespace PortalForgeX.Persistence.EFCore;
@@ -23,9 +24,14 @@ public class UnitOfWork : IUnitOfWork
     public IPaymentRepository PaymentRepository { get; }
     public IUserGroupRepository UserGroupRepository { get; }
 
-    public UnitOfWork(DomainContext context)
+    public UnitOfWork(IDomainContextFactory domainContextFactory, TenantAccessor tenantAccessor)
     {
-        _context = context;
+        if (!tenantAccessor.HasTenant)
+        {
+            throw new ArgumentException("UnitOfWork: Missing Tenant.");
+        }
+
+        _context = (DomainContext)domainContextFactory.CreateDbContext(tenantAccessor.CurrentTenant!);
 
         /// Register the Repositories.
         ClientRepository = new ClientRepository(_context);

@@ -549,7 +549,7 @@
                 return;
             }
 
-            using var domainContext = DomainContextFactory.CreateDomainContext(dbTenant);
+            using var domainContext = DomainContextFactory.CreateDbContext(dbTenant);
             _ = await domainContext.UserProfiles
                 .Where(x => x.UserId.Equals(Model.Id))
                 .ExecuteDeleteAsync();

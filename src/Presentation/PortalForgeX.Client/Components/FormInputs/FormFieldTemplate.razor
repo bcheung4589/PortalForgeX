@@ -135,9 +135,6 @@ else
 
     public bool InEditMode { get; private set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-        => await JSRuntime.InvokeVoidAsync("formPageLoad");
-
     protected override void OnInitialized()
         => EditContext.SetFieldCssClassProvider(new BootstrapFieldCssClassProvider());
 

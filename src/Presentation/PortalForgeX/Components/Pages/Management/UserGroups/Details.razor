@@ -1,0 +1,254 @@
+﻿@page "/app-group/{Id:int}"
+
+@using Microsoft.AspNetCore.Components.QuickGrid
+@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Client.Components.ContextMenu
+@using PortalForgeX.Shared.Features.Tenants
+@using PortalForgeX.Shared.Features.UserGroups
+
+@inherits FormPage<UserGroupDto>
+
+@rendermode RenderMode.InteractiveServer
+@attribute [StreamRendering(true)]
+@attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}")]
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TenantAccessor TenantAccessor
+@inject IUserGroupFacade UserGroups
+@inject ITenantService TenantService
+
+<PageTitle>Group Details</PageTitle>
+
+<SectionContent SectionName="top-row">
+    <BreadcrumbNavigation>
+        <Breadcrumb DisplayText="Groups" Url="/app-groups" IconCssClass="fas fa-user-group" />
+        <Breadcrumb DisplayText="@Model?.Name" IconCssClass="fas fa-user-group" />
+    </BreadcrumbNavigation>
+</SectionContent>
+
+<LoadingArea IsLoading="IsLoading">
+    <div class="card">
+        <div class="card-header">
+            <div class="col-lg-8">
+                <h1>
+                    <span class="fas fa-user"></span>
+                    @Model.Name
+                    <sup @onclick="() => Navigation.Refresh(true)" class="fas fa-rotate me-3 fs-6" role="button" title="Force refresh the page."></sup>
+                </h1>
+            </div>
+            <div class="col-lg-4 text-end">
+                <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card bg-light mb-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <label class="col-lg-6 text-muted">
+                                    Created
+                                </label>
+                                <div class="col-lg-6">
+                                    <data class="fs-6 text-gray-800">
+                                        @Model.CreationTime.ToString("dd-MM-yyyy hh:mm:ss")
+                                    </data>
+                                </div>
+                            </div>
+                            @if (Model.LastModificationTime is not null)
+                            {
+                                <div class="row">
+                                    <label class="col-lg-6 text-muted">
+                                        Last Modified
+                                    </label>
+                                    <div class="col-lg-6">
+                                        <data class="fs-6 text-gray-800">
+                                            @Model.LastModificationTime?.ToString("dd-MM-yyyy hh:mm:ss")
+                                        </data>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                    <EditForm FormName="EditUserGroupForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+                        <FluentValidationValidator />
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextFormField @bind-Value="Model.Name"
+                                               TViewModel="UserGroupDto"
+                                               DisplayName="Name"
+                                               HelpText="Name of the group."
+                                               MaxLength="100"
+                                               Model="Model"
+                                               ValidationFor="() => Model!.Name"
+                                               SaveCallback="SaveAsync">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Name of the group." />
+                                            <span class="text-muted">Name</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            @template.Model.Name
+                                        </data>
+                                    </ViewTemplate>
+                                </TextFormField>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col">
+                                <TextAreaFormField @bind-Value="Model.Description"
+                                                   TViewModel="UserGroupDto"
+                                                   DisplayName="Description"
+                                                   HelpText="Description about the group."
+                                                   MaxLength="2000"
+                                                   Model="Model"
+                                                   SaveCallback="SaveAsync"
+                                                   ValidationFor="() => Model.Description">
+                                    <ViewTemplate Context="template">
+                                        <div>
+                                            <HelpTextTool Content="Description about the group." />
+                                            <span class="text-muted">Description</span>
+                                        </div>
+                                        <data @ondblclick="template.Edit" class="ps-4">
+                                            <NullableField Value="@template.Model.Description" />
+                                        </data>
+                                    </ViewTemplate>
+                                </TextAreaFormField>
+                            </div>
+                        </div>
+                    </EditForm>
+                </div>
+                <div class="col-lg-6">
+                    <div class="row mb-3">
+                        <div class="col">
+                            <div class="card warning border-1 p-2 py-3">
+                                <div class="card-header">
+                                    <h5>Members</h5>
+                                </div>
+                                <div class="card-body py-0">
+                                    <QuickGrid Items="profiles" Class="table table-striped">
+                                        <TemplateColumn Title="Name" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.FullName)">
+                                            <SwitchCircleIndicator IsOn="@context.IsActive" CssClass="me-2" Title="Active" OffTitle="Inactive" />
+                                            <span @onclick="() => NavigateTo(context)" role="button" title="View details of @context.FullName.">@context.FullName</span>
+                                        </TemplateColumn>
+                                        <TemplateColumn Title="Email" SortBy="GridSort<TenantUserViewModel>.ByAscending(p => p.Email)">
+                                            <a href="mailto:@context.Email">@context.Email</a>
+                                        </TemplateColumn>
+                                        <TemplateColumn>
+                                            <ContextMenu Model="@context">
+                                                <MenuItem TEntity="TenantUserViewModel" DisplayText="View" IconCss="fas fa-eye" OnSelected="() => NavigateTo(context)"></MenuItem>
+                                                <MenuItem TEntity="TenantUserViewModel" DisplayText="Remove" IconCss="fas fa-trash" OnSelected="async () => await RemoveMemberAsync(context)"></MenuItem>
+                                            </ContextMenu>
+                                        </TemplateColumn>
+                                    </QuickGrid>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</LoadingArea>
+
+@code {
+
+    [Parameter]
+    public int Id { get; set; }
+
+    protected override UserGroupDto InitModel => new();
+    private IQueryable<TenantUserViewModel>? profiles => Model.Profiles?.AsQueryable();
+
+    protected override async Task OnInitializedAsync()
+    {
+        IsLoading = true;
+
+        /// Require Tenant or move away.
+        await TenantAccessor.RequireTenantAsync(AuthenticationStateProvider, Navigation);
+
+        await LoadDataAsync();
+    }
+
+    protected async Task LoadDataAsync()
+    {
+        IsLoading = true;
+
+        var result = await UserGroups.GetByIdAsync(Id);
+        if (result is null || !result.IsSuccess)
+        {
+            return;
+        }
+
+        Model = result.Data!;
+        Model.Profiles = await TenantService.GetProfilesByGroupId(TenantAccessor.CurrentTenant!, Id);
+
+        BindModelContext();
+        StateHasChanged();
+
+        IsLoading = false;
+    }
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await UserGroups.UpdateAsync(Id, Model);
+            if (result is null || !result.IsSuccess)
+            {
+                if (result is not null && result.ErrorMessages is not null)
+                {
+                    foreach (var errorMessage in result.ErrorMessages)
+                    {
+                        ToastService.ShowError(errorMessage);
+                    }
+                }
+
+                return;
+            }
+
+            ToastService.ShowSuccess($"Group {Model.Name} was successfully updated.");
+
+            await LoadDataAsync();
+        });
+
+    protected async Task DeleteAsync()
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to delete group {Model.Name}? Deleting is permanent.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await UserGroups.DeleteAsync(Model.Id);
+        if (result is null || !result.IsSuccess)
+        {
+            ToastService.ShowError($"Failed deleting group {Model.Name}.");
+            return;
+        }
+
+        ToastService.ShowSuccess($"Group {Model.Name} was succesfully deleted.");
+        Navigation.NavigateTo("usergroups");
+    }
+
+    protected void NavigateTo(TenantUserViewModel model)
+        => Navigation.NavigateTo($"/app-user/{model.Id}");
+
+    protected async Task RemoveMemberAsync(TenantUserViewModel user)
+    {
+        bool confirmed = await JSRuntime.InvokeAsync<bool>("confirm", $"Are you sure you want to remove member {user.FullName}?.");
+        if (!confirmed)
+        {
+            return;
+        }
+
+        var result = await UserGroups.RemoveUserFromGroupsAsync(user.Id, new[] { Id });
+        if (result is null || !result.IsSuccess)
+        {
+            ToastService.ShowError($"Failed removing member {user.FullName}.");
+            return;
+        }
+
+        ToastService.ShowSuccess($"Member {user.FullName} was succesfully removed.");
+        await LoadDataAsync();
+    }
+
+}

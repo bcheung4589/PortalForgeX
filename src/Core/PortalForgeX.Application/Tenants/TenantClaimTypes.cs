@@ -1,4 +1,4 @@
-﻿namespace PortalForgeX.Infrastructure.Tenants;
+﻿namespace PortalForgeX.Application.Tenants;
 
 public static class TenantClaimTypes
 {

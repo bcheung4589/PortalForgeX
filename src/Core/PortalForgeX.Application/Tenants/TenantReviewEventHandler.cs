@@ -15,7 +15,7 @@ namespace PortalForgeX.Application.Tenants;
 /// <param name="logger"></param>
 /// <param name="tenantService"></param>
 /// <param name="domainContextFactory"></param>
-/// <param name="tenantAccessor"></param>
+/// <param name="smtpService"></param>
 public class TenantReviewEventHandler(
     ILogger<TenantReviewEventHandler> logger,
     ITenantService tenantService,
@@ -40,7 +40,7 @@ public class TenantReviewEventHandler(
 
         try
         {
-            using var domainContext = domainContextFactory.CreateDomainContext(notification.Tenant);
+            using var domainContext = domainContextFactory.CreateDbContext(notification.Tenant);
 
             _logger.LogInformation("Tenant Migration Started on {Name}", notification.Tenant.Name);
 
@@ -48,7 +48,27 @@ public class TenantReviewEventHandler(
 
             _logger.LogInformation("Tenant Migration Completed on {Name}", notification.Tenant.Name);
 
+            await domainContext.UserGroups.AddAsync(new Domain.Entities.UserGroup
+            {
+                CreationTime = DateTime.UtcNow,
+                Name = "Administrators",
+                Description = "Administrators of the application.",
+            }, cancellationToken);
+
+            await domainContext.UserGroups.AddAsync(new Domain.Entities.UserGroup
+            {
+                CreationTime = DateTime.UtcNow,
+                Name = "Users",
+                Description = "Users of the application.",
+            }, cancellationToken);
+
+            _ = await domainContext.SaveChangesAsync(cancellationToken);
+
+            _logger.LogInformation("Default Usergroups created.");
+
             _ = await tenantService.UpdateStatusAsync(notification.Tenant.Id, TenantStatus.DbMigrated, cancellationToken);
+
+            _logger.LogInformation("Tenant {Name} approval completed.", notification.Tenant.Name);
         }
         catch (Exception ex)
         {

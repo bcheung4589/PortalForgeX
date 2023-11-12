@@ -12,7 +12,7 @@
 
 <ModuleLoadingArea IsLoading="!RenderContext.IsClient">
     <div class="row">
-        <div class="col-lg">
+        <div class="col-lg-3">
             <FieldFilterPanel IsLoading="IsLoading"
                               ApplyCallback="@(async () => await DataPageChanged(0))"
                               ResetCallback="ResetFilters">
@@ -65,7 +65,7 @@
                 </CheckboxFilter>
             </FieldFilterPanel>
         </div>
-        <div class="col-lg-9">
+        <div class="col-lg">
             <LoadingArea IsLoading="@IsLoading" IsEmpty="@(DataSource is null || DataSource.Count < 1)">
                 <ChildContent>
                     <DataGrid TEntity="PaymentDto" DataSource="@DataSource"
@@ -134,8 +134,8 @@
                             <DataGridColumn HeaderCssClass="text-end w-100px" RowCssClass="text-end">
                                 <Template>
                                     <ContextMenu Model="@context">
-                                        <MenuItem TEntity="PaymentDto" DisplayText="Bekijken" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
-                                        <MenuItem TEntity="PaymentDto" DisplayText="Verwijderen" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
+                                        <MenuItem TEntity="PaymentDto" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                        <MenuItem TEntity="PaymentDto" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
                                     </ContextMenu>
                                 </Template>
                             </DataGridColumn>

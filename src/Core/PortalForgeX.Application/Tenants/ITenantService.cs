@@ -80,7 +80,16 @@ public interface ITenantService
     /// <param name="tenant"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<IEnumerable<TenantUserViewModel>?> GetTenantProfiles(Tenant tenant, CancellationToken cancellationToken = default);
+    Task<IEnumerable<TenantUserViewModel>?> GetProfiles(Tenant tenant, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Get all the user profiles from a group, registered for the given tenant.
+    /// </summary>
+    /// <param name="tenant"></param>
+    /// <param name="groupId"></param>
+    /// <param name="cancellationToken"></param>
+    /// <returns></returns>
+    Task<IEnumerable<TenantUserViewModel>?> GetProfilesByGroupId(Tenant tenant, int groupId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get the user profile for the given userId.
@@ -89,7 +98,7 @@ public interface ITenantService
     /// <param name="userId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<TenantUserFormModel?> ProvideTenantProfileForEdit(Tenant tenant, string userId, CancellationToken cancellationToken = default);
+    Task<TenantUserFormModel?> ProvideProfileForEdit(Tenant tenant, string userId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create user for Tenant by creating a profile for the user at the tenant.
@@ -101,7 +110,7 @@ public interface ITenantService
     /// <param name="roles"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> CreateTenantProfileAsync(Tenant tenant, TenantUserFormModel formModel, string password, IEnumerable<string>? roles = null, CancellationToken cancellationToken = default);
+    Task<bool> CreateProfileAsync(Tenant tenant, TenantUserFormModel formModel, string password, IEnumerable<string>? roles = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Update the tenant user profile.
@@ -110,7 +119,7 @@ public interface ITenantService
     /// <param name="formModel"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> UpdateTenantProfileAsync(Tenant tenant, TenantUserFormModel formModel, CancellationToken cancellationToken = default);
+    Task<bool> UpdateProfileAsync(Tenant tenant, TenantUserFormModel formModel, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Delete the tenant user profile.
@@ -119,5 +128,5 @@ public interface ITenantService
     /// <param name="userId"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<bool> DeleteTenantProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default);
+    Task<bool> DeleteProfileAsync(Tenant tenant, string userId, CancellationToken cancellationToken = default);
 }

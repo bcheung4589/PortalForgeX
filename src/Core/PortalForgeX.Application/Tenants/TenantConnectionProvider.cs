@@ -9,7 +9,7 @@ public class TenantConnectionProvider(string connectionStringFormat) : ITenantCo
     private readonly string _connectionStringFormat = connectionStringFormat;
 
     /// <inheritdoc/>
-    public string Provide(Tenant? tenant)
+    public string Provide(Tenant tenant)
     {
         if (tenant is null)
         {

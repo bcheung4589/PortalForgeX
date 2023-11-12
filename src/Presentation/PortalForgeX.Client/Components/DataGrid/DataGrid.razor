@@ -182,6 +182,7 @@
                     var property = sourceItem.GetType().GetProperty(column.Field);
                     if (property == null)
                     {
+                        b.AddMarkupContent(++i, "&nbsp;");
                         b.CloseElement();
                         continue;
                     }
@@ -189,6 +190,7 @@
                     var value = property.GetValue(sourceItem, null);
                     if (value == null)
                     {
+                        b.AddMarkupContent(++i, "&nbsp;");
                         b.CloseElement();
                         continue;
                     }

@@ -1,0 +1,73 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Application.Tenants
+@using PortalForgeX.Shared.Features.UserGroups
+
+@inherits FormPage<UserGroupDto>
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject TenantAccessor TenantAccessor
+@inject IUserGroupFacade UserGroups
+
+<button class="btn btn-primary float-end" @onclick="async () => await Dialog.OpenDialog()">
+    <span class="fas fa-plus"></span>
+    Create
+</button>
+<Dialog @ref="Dialog">
+    <Header>
+        <h1>Create Group</h1>
+        <span class="text-muted">Fill in the group details.</span>
+    </Header>
+    <Body>
+        <EditForm FormName="CreateUserGroupForm" EditContext="FormEditContext" OnValidSubmit="SaveAsync">
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputText @bind-Value="Model!.Name" class="form-control form-control-solid" id="nameInput" placeholder="Name" maxlength="100" required />
+                        <label for="nameInput">Name*</label>
+                        <span class="chars-counter">100 chars left</span>
+                        <HelpTextTool Content="Input the group name." />
+                        <ValidationMessage For="(() => Model!.Name)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col">
+                    <div class="form-floating mb-3">
+                        <InputTextArea class="form-control form-control-solid" id="descriptionInput" @bind-Value="Model!.Description" placeholder="Description" maxlength="2000" style="height: 100px"></InputTextArea>
+                        <label for="descriptionInput">Description</label>
+                        <span class="chars-counter">2000 chars left</span>
+                        <HelpTextTool Content="Description." />
+                        <ValidationMessage For="(() => Model!.Description)" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col text-end">
+                    <button class="btn btn-secondary" type="button" @onclick="async () => await Dialog.CloseDialog()">Cancel</button>
+                    <SubmitSpinnerButton IsLoading="@IsLoading"></SubmitSpinnerButton>
+                </div>
+            </div>
+        </EditForm>
+    </Body>
+</Dialog>
+
+@code {
+
+    protected Dialog Dialog = null!;
+    protected override UserGroupDto InitModel => new();
+
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            /// Require loaded Tenant or move away.
+            await TenantAccessor.RequireTenantAsync(AuthenticationStateProvider, Navigation);
+
+            var result = await UserGroups.CreateAsync(Model);
+            if (result is not null && result.IsSuccess)
+            {
+                ToastService.ShowSuccess("Group was successfully created.");
+                Navigation.NavigateTo($"/usergroup/{result?.Data?.Id}");
+            }
+        });
+
+}

@@ -78,9 +78,6 @@
     protected string inputId => DisplayName?.Replace(" ", "") + "CheckbuttonsFilterInput";
     protected bool isCollapsed = true;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-        => await JSRuntime.InvokeVoidAsync("formPageLoad");
-
     protected override void OnParametersSet()
     {
         base.OnParametersSet();

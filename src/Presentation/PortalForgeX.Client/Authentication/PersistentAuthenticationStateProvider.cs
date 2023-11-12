@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using PortalForgeX.Infrastructure.Tenants;
+using PortalForgeX.Application.Tenants;
 using System.Security.Claims;
 
 namespace PortalForgeX.Client.Authentication;

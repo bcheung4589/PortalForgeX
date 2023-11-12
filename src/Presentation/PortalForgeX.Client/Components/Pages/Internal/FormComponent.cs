@@ -38,10 +38,7 @@ public abstract class FormComponent<TModel> : HttpComponentBase
     {
         await base.OnAfterRenderAsync(firstRender);
 
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("formPageLoad");
-        }
+        await JSRuntime.InvokeVoidAsync("formPageLoad");
     }
 
     protected override Task InitDataSourcesAsync()

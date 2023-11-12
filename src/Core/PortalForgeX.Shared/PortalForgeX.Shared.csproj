@@ -43,6 +43,11 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>TenantResources.resx</DependentUpon>
     </Compile>
+    <Compile Update="Features\UserGroups\UserGroupResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>UserGroupResources.resx</DependentUpon>
+    </Compile>
     <Compile Update="Resources\Common\FeaturesResources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -74,6 +79,11 @@
     <EmbeddedResource Update="Features\Tenants\TenantResources.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
       <LastGenOutput>TenantResources.Designer.cs</LastGenOutput>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Features\UserGroups\UserGroupResources.resx">
+      <Generator>PublicResXFileCodeGenerator</Generator>
+      <LastGenOutput>UserGroupResources.Designer.cs</LastGenOutput>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Update="Resources\Common\FeaturesResources.resx">

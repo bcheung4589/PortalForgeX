@@ -50,9 +50,6 @@
 
     private string inputId => DisplayName?.Replace(" ", "") + "DateFilterInput";
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-        => await JSRuntime.InvokeVoidAsync("formPageLoad");
-
     protected async Task Reset()
     {
         Model.Reset();
