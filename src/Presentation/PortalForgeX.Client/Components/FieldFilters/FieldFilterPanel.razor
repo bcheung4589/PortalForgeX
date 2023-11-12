@@ -41,6 +41,8 @@
     {
         await base.OnAfterRenderAsync(firstRender);
 
+        await JSRuntime.InvokeVoidAsync("formPageLoad");
+
         if (firstRender)
         {
             var jsObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import",

@@ -131,13 +131,21 @@
     </Dialog>
 </ModuleLoadingArea>
 
-
 @code {
     protected Dialog Dialog = null!;
     protected override PaymentDto InitModel => new() { PaymentPeriod = DateTime.UtcNow, FulfilledDate = DateTime.UtcNow };
     protected PagedList<ClientDto>? clientsDataSource;
 
-    public async Task Open() => await Dialog.OpenDialog();
+    protected async Task SaveAsync()
+        => await TryRunAsync(async () =>
+        {
+            var result = await Payments.CreateAsync(Model);
+            if (result is not null && result.IsSuccess)
+            {
+                ToastService.ShowSuccess("Payment was successfully created.");
+                Navigation.NavigateTo($"/payment/{result.Data!.Id}");
+            }
+        });
 
     protected static AutoCompleteFieldFilter clientFilter = new AutoCompleteFieldFilter(nameof(PaymentDto.ClientId));
     protected static SearchFieldsFilter searchClientFilter = new SearchFieldsFilter(new string[] { nameof(ClientDto.Name), nameof(ClientDto.Remarks) });
@@ -188,16 +196,5 @@
             }
         }
     }
-
-    protected async Task SaveAsync()
-        => await TryRunAsync(async () =>
-        {
-            var result = await Payments.CreateAsync(Model);
-            if (result is not null && result.IsSuccess)
-            {
-                ToastService.ShowSuccess("Payment was successfully created.");
-                Navigation.NavigateTo($"/payment/{result.Data!.Id}");
-            }
-        });
 
 }

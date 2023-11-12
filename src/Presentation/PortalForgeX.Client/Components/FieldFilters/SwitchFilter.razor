@@ -49,9 +49,6 @@
 
     protected string inputId => DisplayName?.Replace(" ", "") + "SwitchFilterInput";
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-        => await JSRuntime.InvokeVoidAsync("formPageLoad");
-
     protected void OnChanged(ChangeEventArgs args)
     {
         Model.Value = (bool)args.Value!;

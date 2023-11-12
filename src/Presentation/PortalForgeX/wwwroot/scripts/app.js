@@ -10,6 +10,8 @@ function pageLoad() {
 */
 function formPageLoad() {
 
+    console.log(">> formPageLoad called.");
+    
     /**
      * CHARAKTER COUNTER
      */

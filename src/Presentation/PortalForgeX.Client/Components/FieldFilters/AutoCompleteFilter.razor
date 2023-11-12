@@ -58,8 +58,6 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await JSRuntime.InvokeVoidAsync("formPageLoad");
-
         if (firstRender)
         {
             jsObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import",
