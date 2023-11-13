@@ -32,7 +32,10 @@
                 </h1>
             </div>
             <div class="col-lg-4 text-end">
-                <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+                @if (Model.RoleType != RoleType.System)
+                {
+                    <button @onclick="DeleteAsync" class="btn btn-danger" type="button">Delete</button>
+                }
             </div>
         </div>
         <div class="card-body">
@@ -129,7 +132,7 @@
 
             return;
         }
-            
+
         ToastService.ShowSuccess("Role was successfully updated.");
     });
 

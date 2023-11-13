@@ -57,7 +57,7 @@
                         <TemplateColumn>
                             <ContextMenu Model="@context">
                                 <MenuItem TEntity="ApplicationRole" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
-                                <MenuItem TEntity="ApplicationRole" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)"></MenuItem>
+                                <MenuItem TEntity="ApplicationRole" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await DeleteAsync(e)" IsVisible="@(context.RoleType != RoleType.System)"></MenuItem>
                             </ContextMenu>
                         </TemplateColumn>
                     </QuickGrid>
