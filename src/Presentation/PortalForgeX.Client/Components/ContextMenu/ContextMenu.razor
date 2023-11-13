@@ -52,7 +52,10 @@
 
     private RenderFragment RenderRow(MenuItem<TEntity> item)
     {
-        if (Items.Count < 1) return b => { };
+        if (Items.Count < 1 || !item.IsVisible)
+        {
+            return b => { };
+        }
 
         int i = 0;
         return b =>

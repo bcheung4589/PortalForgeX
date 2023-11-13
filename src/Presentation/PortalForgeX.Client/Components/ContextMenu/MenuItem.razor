@@ -17,6 +17,9 @@
     [Parameter]
     public EventCallback<TEntity> OnSelected { get; set; }
 
+    [Parameter]
+    public bool IsVisible { get; set; } = true;
+
     protected override void OnInitialized()
     {
         base.OnInitialized();
