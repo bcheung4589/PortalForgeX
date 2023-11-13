@@ -1,5 +1,7 @@
-﻿using PortalForgeX.Domain.Entities.Tenants;
+﻿using PortalForgeX.Application.Data;
+using PortalForgeX.Domain.Entities.Tenants;
 using PortalForgeX.Domain.Enums;
+using PortalForgeX.Shared.DTOs;
 using PortalForgeX.Shared.Features.Tenants;
 
 namespace PortalForgeX.Application.Tenants;
@@ -80,7 +82,7 @@ public interface ITenantService
     /// <param name="tenant"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    Task<IEnumerable<TenantUserViewModel>?> GetProfiles(Tenant tenant, CancellationToken cancellationToken = default);
+    Task<PagedList<TenantUserViewModel>?> GetProfiles(Tenant tenant, EntityPageSetting settings, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get all the user profiles from a group, registered for the given tenant.

@@ -9,6 +9,7 @@ using PortalForgeX.Domain.Entities.Tenants;
 using PortalForgeX.Domain.Enums;
 using PortalForgeX.Domain.Events;
 using PortalForgeX.Shared.Constants;
+using PortalForgeX.Shared.DTOs;
 using PortalForgeX.Shared.Extensions;
 using PortalForgeX.Shared.Features.Tenants;
 
@@ -198,7 +199,7 @@ public class TenantService(
     #region [ User Profiles ]
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<TenantUserViewModel>?> GetProfiles(Tenant tenant, CancellationToken cancellationToken = default)
+    public async Task<PagedList<TenantUserViewModel>?> GetProfiles(Tenant tenant, EntityPageSetting settings, CancellationToken cancellationToken = default)
     {
         var tenantUsers = await userManager.Users.Where(x => x.TenantId == tenant.Id).ToListAsync(cancellationToken: cancellationToken);
         if (tenantUsers.Count == 0)
@@ -206,25 +207,24 @@ public class TenantService(
             return null;
         }
 
-        using var domainContext = domainContextFactory.CreateDbContext(tenant);
         var tenantUsersIds = tenantUsers.Select(x => x.Id).ToList();
-        var userProfiles = await domainContext.UserProfiles
-            .Where(x => tenantUsersIds.Contains(x.UserId))
-            .ToListAsync(cancellationToken: cancellationToken);
+        using var domainContext = domainContextFactory.CreateDbContext(tenant);
+        var userProfilesResult = await (await EntityPage<TenantUserProfile>.Create(domainContext.UserProfiles.Where(x => tenantUsersIds.Contains(x.UserId)))
+            .ApplyAsync(settings, cancellationToken))
+            .ExecuteAsync(cancellationToken);
+        var userProfiles = mapper.Map<PagedList<TenantUserViewModel>>(userProfilesResult);
 
-        var tenantUsersViews = mapper.Map<IEnumerable<TenantUserViewModel>>(tenantUsers);
-        foreach (var userProfile in userProfiles)
+        if (userProfilesResult.Count > 0)
         {
-            var tenantUser = tenantUsersViews.FirstOrDefault(x => x.Id == userProfile.UserId);
-            if (tenantUser is null)
+            foreach (var userProfile in userProfiles.Entities)
             {
-                continue;
-            }
+                var tenantUser = tenantUsers.First(x => x.Id == userProfile.Id);
 
-            mapper.Map(userProfile, tenantUser);
+                mapper.Map(tenantUser, userProfile);
+            }
         }
 
-        return tenantUsersViews;
+        return userProfiles;
     }
 
     /// <inheritdoc/>

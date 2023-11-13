@@ -75,7 +75,8 @@ public class PortalProfiles : Profile
             .ForMember(x => x.TenantId, opt => opt.MapFrom(x => x.TenantId));
 
         CreateMap<TenantUserProfile, TenantUserViewModel>()
-            .ForMember(x => x.Title, opt => opt.MapFrom(x => x.Title));
+            .ForMember(x => x.Title, opt => opt.MapFrom(x => x.Title))
+            .ForMember(x => x.Id, opt => opt.MapFrom(x => x.UserId));
 
         CreateMap<ApplicationUser, TenantUserFormModel>()
             .ForMember(x => x.Id, opt => opt.MapFrom(x => x.Id))

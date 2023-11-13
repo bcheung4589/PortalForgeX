@@ -224,7 +224,7 @@
             projectionFields: new string[] { nameof(ClientDto.Id), nameof(ClientDto.Name) }.ToEncodedString()
         ))?.Data;
 
-        if (clientsDataSource is null || clientsDataSource.Entities is null)
+        if (clientsDataSource is null)
         {
             return;
         }
@@ -263,7 +263,7 @@
 
             // fill in the datalist options
             var businessLocationFilter = (ListedFieldFilter)Filters[nameof(PaymentDto.BusinessLocationId)];
-            if (businessLocationDataSource is not null && businessLocationDataSource.Entities is not null)
+            if (businessLocationDataSource is not null)
             {
                 businessLocationFilter.Options = businessLocationDataSource.Entities.ToDictionary(x => x.Id.ToString(), x => $"{x.Street} {x.HouseNr}");
             }
@@ -289,7 +289,7 @@
             var client = (await Clients.GetByIdAsync(payment.ClientId))?.Data;
             if (client is not null)
             {
-                foreach (var item in DataSource!.Entities!.Where(x => x.ClientId.Equals(payment.ClientId)))
+                foreach (var item in DataSource!.Entities.Where(x => x.ClientId.Equals(payment.ClientId)))
                 {
                     item.Client = client;
                 }
@@ -307,7 +307,7 @@
         var businessLocation = (await BusinessLocations.GetByIdAsync(payment.BusinessLocationId!.Value))?.Data;
         if (businessLocation is not null)
         {
-            foreach (var item in DataSource!.Entities!.Where(x => x.BusinessLocationId.Equals(payment.BusinessLocationId)))
+            foreach (var item in DataSource!.Entities.Where(x => x.BusinessLocationId.Equals(payment.BusinessLocationId)))
             {
                 item.BusinessLocation = businessLocation;
             }

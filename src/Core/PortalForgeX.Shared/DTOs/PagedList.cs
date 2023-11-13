@@ -12,6 +12,6 @@ public record PagedList<TEntity> where TEntity : class
     public bool SortAsc { get; set; }
 
     public IEnumerable<FieldFilterRecord>? AppliedFilters { get; set; }
-    public IEnumerable<TEntity>? Entities { get; set; } = null!;
-    public int PageCount => Entities?.Count() ?? 0;
+    public IEnumerable<TEntity> Entities { get; set; } = null!;
+    public int PageCount => Entities.Count();
 }

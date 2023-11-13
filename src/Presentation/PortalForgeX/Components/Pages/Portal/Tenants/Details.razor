@@ -3,6 +3,7 @@
 @using AutoMapper
 @using Microsoft.AspNetCore.Components.QuickGrid
 @using Microsoft.AspNetCore.Identity
+@using PortalForgeX.Application.Data
 @using PortalForgeX.Application.Tenants
 @using PortalForgeX.Client.Components.ContextMenu
 @using PortalForgeX.Components.Dialogs
@@ -473,7 +474,7 @@
         Mapper.Map(_tenant.TenantSettings, Model);
 
         TenantManagers = await UserManager.GetUsersInRoleAsync(SystemRolesNames.MANAGER);
-        TenantUsers = (await TenantService.GetProfiles(_tenant))?.AsQueryable();
+        TenantUsers = (await TenantService.GetProfiles(_tenant, new EntityPageSetting(0, 0, nameof(TenantUserProfile.UserId))))?.Entities.AsQueryable();
 
         BindModelContext();
         await InvokeAsync(StateHasChanged);

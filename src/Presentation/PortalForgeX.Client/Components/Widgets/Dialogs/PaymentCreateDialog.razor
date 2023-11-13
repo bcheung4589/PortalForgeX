@@ -164,7 +164,7 @@
             projectionFields: new List<string> { nameof(ClientDto.Id), nameof(ClientDto.Name) }.ToEncodedString()
         ))?.Data;
 
-        if (clientsDataSource is null || clientsDataSource.Entities is null)
+        if (clientsDataSource is null)
         {
             return;
         }

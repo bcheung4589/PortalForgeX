@@ -77,7 +77,7 @@ public class TenantReviewEventHandler(
         }
 
         // send notifications for next phase
-        await SendTenantMigratedEmailToManagerAsync(notification, cancellationToken);
+        await SendMigratedNotificationToManagerAsync(notification, cancellationToken);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public class TenantReviewEventHandler(
     /// <param name="notification"></param>
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
-    private async Task SendTenantMigratedEmailToManagerAsync(TenantApprovedEvent notification, CancellationToken cancellationToken = default)
+    private async Task SendMigratedNotificationToManagerAsync(TenantApprovedEvent notification, CancellationToken cancellationToken = default)
     {
         var tenantManagerEmail = notification.Tenant.Manager?.Email;
         if (tenantManagerEmail is null)
@@ -96,6 +96,8 @@ public class TenantReviewEventHandler(
 
         try
         {
+            // TODO: send slack notification
+
             var message = smtpService.NewMessage(tenantManagerEmail, "Portal", $"Tenant Migrated: {notification.Tenant.Name}.");
             message.Body = new TextPart()
             {
@@ -119,6 +121,8 @@ public class TenantReviewEventHandler(
     /// <exception cref="NotImplementedException"></exception>
     public Task Handle(TenantRejectedEvent notification, CancellationToken cancellationToken = default)
     {
+        // TODO: send slack notification
+
         _logger.LogInformation("Tenant {Name} has been rejected.", notification.Tenant.Name);
 
         return Task.CompletedTask;
