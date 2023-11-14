@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using PortalForgeX.Application.Tenants;
 
-namespace PortalForgeX.Infrastructure.Tenants;
+namespace PortalForgeX.Infrastructure.Middleware;
 
 /// <summary>
 /// Scan the HttpContext for potential Tenant. If found, load it into the Accessor.

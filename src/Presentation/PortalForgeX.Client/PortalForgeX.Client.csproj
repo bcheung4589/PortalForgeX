@@ -22,7 +22,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\PortalForgeX.Shared\PortalForgeX.Shared.csproj" />
     <ProjectReference Include="..\..\Infrastructure\PortalForgeX.Infrastructure\PortalForgeX.Infrastructure.csproj" />
   </ItemGroup>
 

@@ -214,14 +214,15 @@ public class TenantService(
             .ExecuteAsync(cancellationToken);
         var userProfiles = mapper.Map<PagedList<TenantUserViewModel>>(userProfilesResult);
 
-        if (userProfilesResult.Count > 0)
+        if (userProfilesResult.Count < 1)
         {
-            foreach (var userProfile in userProfiles.Entities)
-            {
-                var tenantUser = tenantUsers.First(x => x.Id == userProfile.Id);
+            return userProfiles;
+        }
 
-                mapper.Map(tenantUser, userProfile);
-            }
+        foreach (var userProfile in userProfiles.Entities)
+        {
+            var tenantUser = tenantUsers.First(x => x.Id == userProfile.Id);
+            mapper.Map(tenantUser, userProfile);
         }
 
         return userProfiles;
