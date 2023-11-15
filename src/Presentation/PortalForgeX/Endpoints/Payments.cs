@@ -6,6 +6,8 @@ using PortalForgeX.Shared;
 using PortalForgeX.Shared.Features.Payments;
 using PortalForgeX.Application.Data;
 using PortalForgeX.Application.Features.Payments;
+using PortalForgeX.Shared.Facades;
+using PortalForgeX.Domain.Entities;
 
 namespace PortalForgeX.Endpoints;
 
@@ -20,40 +22,40 @@ public class GetPaymentsEndpoint : ApiEndpoint_v1, IFeatureEndpoint
             [FromHeader] string? sortField,
             [FromHeader] bool? sortAsc,
             [FromHeader] string? filters,
-            ISender sender,
+            IPaymentFacade payments,
             CancellationToken cancellationToken)
-                => (await sender.Send(new GetPaymentsRequest(new EntityPageSetting(pageSize ?? DEFAULT_PAGE_SIZE, pageIndex, sortField, sortAsc, filters)), cancellationToken)).ToResponse()
+                => (await payments.GetAsync(pageIndex, pageSize, sortField, sortAsc, filters, cancellationToken: cancellationToken))?.ToResponse()
         ).WithTags("Payments");
 }
 
 public class GetPaymentByIdEndpoint : ApiEndpoint_v1, IFeatureEndpoint
 {
     public void AddRoutes(IEndpointRouteBuilder app)
-        => app.MapGet(BuildEndpointPath("payment/{id:Guid}"), async (Guid id, ISender sender, CancellationToken cancellationToken)
-            => (await sender.Send(new GetPaymentByIdRequest(id), cancellationToken)).ToResponse()
+        => app.MapGet(BuildEndpointPath("payment/{id:Guid}"), async (Guid id, IPaymentFacade payments, CancellationToken cancellationToken)
+            => (await payments.GetByIdAsync(id, cancellationToken))?.ToResponse()
         ).WithTags("Payments");
 }
 
 public class CreatePaymentEndpoint : ApiEndpoint_v1, IFeatureEndpoint
 {
     public void AddRoutes(IEndpointRouteBuilder app)
-        => app.MapPost(BuildEndpointPath("payment"), async ([FromBody] PaymentDto payment, ISender sender, CancellationToken cancellationToken)
-            => (await sender.Send(new CreatePaymentRequest(payment), cancellationToken)).ToResponse()
+        => app.MapPost(BuildEndpointPath("payment"), async ([FromBody] PaymentDto payment, IPaymentFacade payments, CancellationToken cancellationToken)
+            => (await payments.CreateAsync(payment, cancellationToken))?.ToResponse()
         ).WithTags("Payments");
 }
 
 public class UpdatePaymentEndpoint : ApiEndpoint_v1, IFeatureEndpoint
 {
     public void AddRoutes(IEndpointRouteBuilder app)
-        => app.MapPut(BuildEndpointPath("payment/{id:Guid}"), async ([FromBody] PaymentDto payment, Guid id, ISender sender, CancellationToken cancellationToken)
-            => (await sender.Send(new UpdatePaymentRequest(id, payment), cancellationToken)).ToResponse()
+        => app.MapPut(BuildEndpointPath("payment/{id:Guid}"), async ([FromBody] PaymentDto payment, Guid id, IPaymentFacade payments, CancellationToken cancellationToken)
+            => (await payments.UpdateAsync(id, payment, cancellationToken))?.ToResponse()
         ).WithTags("Payments");
 }
 
 public class DeletePaymentEndpoint : ApiEndpoint_v1, IFeatureEndpoint
 {
     public void AddRoutes(IEndpointRouteBuilder app)
-        => app.MapDelete(BuildEndpointPath("payment/{id:Guid}"), async (Guid id, ISender sender, CancellationToken cancellationToken)
-            => (await sender.Send(new DeletePaymentRequest(id), cancellationToken)).ToResponse()
+        => app.MapDelete(BuildEndpointPath("payment/{id:Guid}"), async (Guid id, IPaymentFacade payments, CancellationToken cancellationToken)
+            => (await payments.DeleteAsync(id, cancellationToken))?.ToResponse()
         ).WithTags("Payments");
 }
