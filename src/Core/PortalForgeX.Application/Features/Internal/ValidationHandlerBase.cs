@@ -24,7 +24,7 @@ internal abstract class ValidationHandlerBase<TRequest, TResponse>
         var response = request.NewResponse();
 
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
-        if (validationResult is null || validationResult.IsValid)
+        if (validationResult.IsValid)
         {
             return response;
         }
