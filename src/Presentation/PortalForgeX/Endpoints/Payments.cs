@@ -9,8 +9,6 @@ namespace PortalForgeX.Endpoints;
 
 public class GetPaymentsEndpoint : ApiEndpoint_v1, IFeatureEndpoint
 {
-    private const int DEFAULT_PAGE_SIZE = 25;
-
     public void AddRoutes(IEndpointRouteBuilder app)
         => app.MapGet(BuildEndpointPath("payments"), async (
             [FromHeader] int? pageIndex,
