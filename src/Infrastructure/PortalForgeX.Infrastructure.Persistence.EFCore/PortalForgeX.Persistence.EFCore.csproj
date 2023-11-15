@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\PortalForgeX.Infrastructure\PortalForgeX.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\Core\PortalForgeX.Application\PortalForgeX.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>

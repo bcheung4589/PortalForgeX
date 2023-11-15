@@ -43,7 +43,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Core\PortalForgeX.Application\PortalForgeX.Application.csproj" />
     <ProjectReference Include="..\..\Infrastructure\PortalForgeX.Infrastructure.Persistence.EFCore\PortalForgeX.Persistence.EFCore.csproj" />
     <ProjectReference Include="..\PortalForgeX.Client\PortalForgeX.Client.csproj" />
   </ItemGroup>
