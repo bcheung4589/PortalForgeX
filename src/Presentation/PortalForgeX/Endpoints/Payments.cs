@@ -1,13 +1,9 @@
-﻿using MediatR;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using PortalForgeX.Endpoints.Internal;
 using PortalForgeX.Extensions;
 using PortalForgeX.Shared;
-using PortalForgeX.Shared.Features.Payments;
-using PortalForgeX.Application.Data;
-using PortalForgeX.Application.Features.Payments;
 using PortalForgeX.Shared.Facades;
-using PortalForgeX.Domain.Entities;
+using PortalForgeX.Shared.Features.Payments;
 
 namespace PortalForgeX.Endpoints;
 
