@@ -13,12 +13,12 @@
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}")]
 
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject TenantAccessor TenantAccessor
 @inject IRenderContext RenderContext
 @inject IUserGroupFacade UserGroups
 
 <PageTitle>Groups</PageTitle>
+<RequireTenantState TenantAccessor="TenantAccessor" ReloadCallback="InitDataSourcesAsync" />
 
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
@@ -42,58 +42,49 @@
             </div>
         </div>
         <div class="card-body pt-0">
-            <ModuleLoadingArea IsLoading="RenderContext.IsPrerendering">
-                <div class="row">
-                    <div class="col-lg">
-                        <LoadingArea IsLoading="@IsLoading" IsEmpty="@(DataSource is not null && DataSource.Count < 1)">
-                            <ChildContent>
-                                <DataGrid TEntity="UserGroupDto"
-                                          DataSource="@DataSource"
-                                          OnPageSizeChanged="DataPageSizeChanged"
-                                          OnPageChanged="DataPageChanged"
-                                          OnSortChanged="DataSortChanged"
-                                          OnSortReset="ResetSorting">
-                                    <DataGridColumn TEntity="UserGroupDto" Field="@nameof(UserGroupDto.Name)" HeaderName="Name" OnSelected="(e) => NavigateTo(e)"></DataGridColumn>
-                                    <DataGridColumn Field="@nameof(UserGroupDto.Description)" HeaderName="Description"></DataGridColumn>
-                                    <DataGridColumn HeaderCssClass="text-end w-100px" RowCssClass="text-end">
-                                        <Template>
-                                            <ContextMenu Model="@context">
-                                                <MenuItem TEntity="UserGroupDto" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
-                                                <MenuItem TEntity="UserGroupDto" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
-                                            </ContextMenu>
-                                        </Template>
-                                    </DataGridColumn>
-                                </DataGrid>
-                            </ChildContent>
-                            <EmptyTemplate>
-                                <p class="text-muted">No usergroups found.</p>
-                            </EmptyTemplate>
-                        </LoadingArea>
-                    </div>
+            <div class="row">
+                <div class="col-lg">
+                    <LoadingArea IsLoading="IsLoading" IsEmpty="@(DataSource is not null && DataSource.Count < 1)">
+                        <ChildContent>
+                            <DataGrid TEntity="UserGroupDto"
+                                      DataSource="@DataSource"
+                                      OnPageSizeChanged="DataPageSizeChanged"
+                                      OnPageChanged="DataPageChanged"
+                                      OnSortChanged="DataSortChanged"
+                                      OnSortReset="ResetSorting">
+                                <DataGridColumn TEntity="UserGroupDto" Field="@nameof(UserGroupDto.Name)" HeaderName="Name" OnSelected="(e) => NavigateTo(e)"></DataGridColumn>
+                                <DataGridColumn Field="@nameof(UserGroupDto.Description)" HeaderName="Description"></DataGridColumn>
+                                <DataGridColumn HeaderCssClass="text-end w-100px" RowCssClass="text-end">
+                                    <Template>
+                                        <ContextMenu Model="@context">
+                                            <MenuItem TEntity="UserGroupDto" DisplayText="View" IconCss="fas fa-eye" OnSelected="(e) => NavigateTo(e)"></MenuItem>
+                                            <MenuItem TEntity="UserGroupDto" DisplayText="Delete" IconCss="fas fa-trash" OnSelected="async (e) => await Delete(e)"></MenuItem>
+                                        </ContextMenu>
+                                    </Template>
+                                </DataGridColumn>
+                            </DataGrid>
+                        </ChildContent>
+                        <EmptyTemplate>
+                            <p class="text-muted">No usergroups found.</p>
+                        </EmptyTemplate>
+                    </LoadingArea>
                 </div>
-            </ModuleLoadingArea>
+            </div>
         </div>
     </div>
 </div>
 
 @code {
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task InitDataSourcesAsync()
     {
-        if (RenderContext.IsPrerendering)
+        if (RenderContext.IsPrerendering || !TenantAccessor.HasTenant)
         {
-            return; // no need for prerendering
+            return;
         }
 
-        /// Require Tenant or move away.
-        await TenantAccessor.RequireTenantAsync(AuthenticationStateProvider, Navigation);
-
-        /// Run as usual.
-        await base.OnInitializedAsync();
+        DataSource = (await UserGroups.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false))?.Data;
     }
-
-    protected override async Task InitDataSourcesAsync()
-        => DataSource = (await UserGroups.GetAsync(PageIndex, PageSize, SortField, SortAsc ?? false))?.Data;
 
     protected void NavigateTo(UserGroupDto model)
         => Navigation.NavigateTo($"app-group/{model.Id}");

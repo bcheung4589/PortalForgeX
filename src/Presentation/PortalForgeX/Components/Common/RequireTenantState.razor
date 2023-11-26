@@ -1,0 +1,37 @@
+@using Microsoft.AspNetCore.Components;
+@using Microsoft.AspNetCore.Components.Authorization;
+@using PortalForgeX.Application.Tenants
+
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager Navigation
+
+@code {
+
+    [Parameter]
+    public TenantAccessor TenantAccessor { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback ReloadCallback { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (TenantAccessor.HasTenant)
+        {
+            return;
+        }
+
+        // load the tenant from the claims identity.
+        await TenantAccessor.LoadFromAsync((await AuthenticationStateProvider.GetAuthenticationStateAsync()).User);
+
+        // redirect if no tenant found.
+        if (!TenantAccessor.HasTenant)
+        {
+            Navigation.NavigateTo("/");
+            return;
+        }
+
+        // reload the parent component data, we now have tenant.
+        await ReloadCallback.InvokeAsync();
+    }
+
+}
