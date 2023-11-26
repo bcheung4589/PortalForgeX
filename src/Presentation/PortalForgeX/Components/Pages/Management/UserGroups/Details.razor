@@ -12,12 +12,13 @@
 @attribute [StreamRendering(true)]
 @attribute [Authorize(Roles = $"{SystemRolesNames.ADMIN}, {SystemRolesNames.MANAGER}, {SystemRolesNames.TENANT_ADMIN}")]
 
-@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject TenantAccessor TenantAccessor
+@inject IRenderContext RenderContext
 @inject IUserGroupFacade UserGroups
 @inject ITenantService TenantService
 
 <PageTitle>Group Details</PageTitle>
+<RequireTenantState TenantAccessor="TenantAccessor" ReloadCallback="LoadDataAsync" />
 
 <SectionContent SectionName="top-row">
     <BreadcrumbNavigation>
@@ -160,18 +161,16 @@
     private IQueryable<TenantUserViewModel>? profiles => Model.Profiles?.AsQueryable();
 
     protected override async Task OnInitializedAsync()
-    {
-        IsLoading = true;
-
-        /// Require Tenant or move away.
-        await TenantAccessor.RequireTenantAsync(AuthenticationStateProvider, Navigation);
-
-        await LoadDataAsync();
-    }
+        => await LoadDataAsync();
 
     protected async Task LoadDataAsync()
     {
         IsLoading = true;
+
+        if (RenderContext.IsPrerendering || !TenantAccessor.HasTenant)
+        {
+            return;
+        }
 
         var result = await UserGroups.GetByIdAsync(Id);
         if (result is null || !result.IsSuccess)
