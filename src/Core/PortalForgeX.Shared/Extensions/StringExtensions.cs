@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System.Buffers;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -40,6 +41,11 @@ public static partial class StringExtensions
 
     #region String Template Formatting
 
+    private const string TAG_DELIMITER_CHAR = ":";
+    private static readonly SearchValues<char> TagDelimitedSearch = SearchValues.Create(TAG_DELIMITER_CHAR);
+    private static readonly string _startTagPattern = "[";
+    private static readonly string _endTagPattern = "]";
+
     /// <summary>
     /// Format the source template. The target model will be scanned based on the tags and will be formatted appropriately.
     /// </summary>
@@ -49,13 +55,13 @@ public static partial class StringExtensions
     /// <param name="startTagPattern"></param>
     /// <param name="endTagPattern"></param>
     /// <returns>String with the model processed into the template.</returns>
-    public static string FormatTemplate<T>(this string source, T target, string startTagPattern = "[", string endTagPattern = "]")
+    public static string FormatTemplate<T>(this string source, T target)
         where T : class
     {
         /**
 		 * Dynamically find wich tags are used in the source template.
 		 */
-        var foundTags = source.ExtractTags(startTagPattern, endTagPattern);
+        var foundTags = source.ExtractTags();
 
         /**
 		 * Get the values in the target object 
@@ -71,7 +77,7 @@ public static partial class StringExtensions
         /**
 		 * Convert the source template to a suitable string for string.Format()
 		 */
-        var formatTemplate = source.ConvertTagsForFormatting(foundTags, startTagPattern, endTagPattern);
+        var formatTemplate = source.ConvertTagsForFormatting(foundTags);
 
         /**
 		 * Get the tag values as suitable array for string.Format()
@@ -89,19 +95,19 @@ public static partial class StringExtensions
     /// <param name="startTagPattern"></param>
     /// <param name="endTagPattern"></param>
     /// <returns>StringBuilder that holds a string suitable for string.Format()</returns>
-    private static StringBuilder ConvertTagsForFormatting(this string source, IEnumerable<string> foundTags, string startTagPattern, string endTagPattern)
+    private static StringBuilder ConvertTagsForFormatting(this string source, IEnumerable<string> foundTags)
     {
         var index = 0;
         var formattedSource = new StringBuilder(source);
         foreach (var tag in foundTags)
         {
             string? formatting = null;
-            if (tag.Contains(':'))
+            if (tag.AsSpan().IndexOfAny(TagDelimitedSearch) > 0)
             {
                 formatting = tag.Split(':')[1];
             }
 
-            formattedSource.Replace($"{startTagPattern}{tag}{endTagPattern}", formatting is null ? $"{{{index}}}" : $"{{{index}:{formatting}}}");
+            formattedSource.Replace($"{_startTagPattern}{tag}{_endTagPattern}", formatting is null ? $"{{{index}}}" : $"{{{index}:{formatting}}}");
 
             index++;
         }
@@ -116,14 +122,14 @@ public static partial class StringExtensions
     /// <param name="startTagPattern"></param>
     /// <param name="endTagPattern"></param>
     /// <returns>Unique list of tags.</returns>
-    private static IEnumerable<string> ExtractTags(this string source, string startTagPattern, string endTagPattern)
+    private static IEnumerable<string> ExtractTags(this string source)
     {
         var foundTags = new List<string>();
         int startIndex = 0;
         while (startIndex < source.Length)
         {
-            int openBracketIndex = source.IndexOf(startTagPattern, startIndex);
-            int closeBracketIndex = source.IndexOf(endTagPattern, openBracketIndex + 1);
+            int openBracketIndex = source.IndexOf(_startTagPattern, startIndex);
+            int closeBracketIndex = source.IndexOf(_endTagPattern, openBracketIndex + 1);
 
             if (openBracketIndex != -1 && closeBracketIndex != -1)
             {
@@ -165,7 +171,7 @@ public static partial class StringExtensions
             var currentPropertyName = path;
 
             // strip formatting
-            if (currentPropertyName.Contains(':'))
+            if (currentPropertyName.AsSpan().IndexOfAny(TagDelimitedSearch) > 0)
             {
                 currentPropertyName = currentPropertyName.Split(':')[0];
             }
