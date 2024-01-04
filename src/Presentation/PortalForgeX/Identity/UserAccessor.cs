@@ -18,7 +18,7 @@ internal sealed class UserAccessor(
         if (user is null)
         {
             // Throws NavigationException, which is handled by the framework as a redirect.
-            redirectManager.RedirectToWithStatus("/Account/InvalidUser", "Error: Unable to load user with ID '{userManager.GetUserId(principal)}'.");
+            redirectManager.RedirectToWithStatus("/Account/InvalidUser", $"Error: Unable to load user with ID '{userManager.GetUserId(principal)}'.");
         }
 
         return user;

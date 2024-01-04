@@ -39,8 +39,7 @@ public class PersistingRevalidatingAuthenticationStateProvider : RevalidatingSer
 
     protected override TimeSpan RevalidationInterval => TimeSpan.FromMinutes(30);
 
-    protected override async Task<bool> ValidateAuthenticationStateAsync(
-        AuthenticationState authenticationState, CancellationToken cancellationToken)
+    protected override async Task<bool> ValidateAuthenticationStateAsync(AuthenticationState authenticationState, CancellationToken cancellationToken)
     {
         // Get the user manager from a new scope to ensure it fetches fresh data
         await using var scope = _scopeFactory.CreateAsyncScope();
@@ -81,22 +80,25 @@ public class PersistingRevalidatingAuthenticationStateProvider : RevalidatingSer
 
         var authenticationState = await _authenticationStateTask;
         var principal = authenticationState.User;
-
-        if (principal.Identity?.IsAuthenticated == true)
+        if (principal.Identity?.IsAuthenticated != true)
         {
-            var userId = principal.FindFirst(_options.ClaimsIdentity.UserIdClaimType)?.Value;
-            var email = principal.FindFirst(_options.ClaimsIdentity.EmailClaimType)?.Value;
-            if (userId != null && email != null)
-            {
-                var tenantId = principal.FindFirst(TenantClaimTypes.TenantId)?.Value;
-                _state.PersistAsJson(nameof(UserContext), new UserContext
-                {
-                    UserId = userId,
-                    Email = email,
-                    TenantId = tenantId
-                });
-            }
+            return;
         }
+
+        var userId = principal.FindFirst(_options.ClaimsIdentity.UserIdClaimType)?.Value;
+        var email = principal.FindFirst(_options.ClaimsIdentity.EmailClaimType)?.Value;
+        if (userId is null || email is null)
+        {
+            return;
+        }
+
+        var tenantId = principal.FindFirst(TenantClaimTypes.TenantId)?.Value;
+        _state.PersistAsJson(nameof(UserContext), new UserContext
+        {
+            UserId = userId,
+            Email = email,
+            TenantId = tenantId
+        });
     }
 
     protected override void Dispose(bool disposing)
